@@ -13,7 +13,7 @@
   <a href="SETUP.md"><img alt="Docs" src="https://img.shields.io/badge/Docs-SETUP.md-1F6FEB?style=for-the-badge&logo=readthedocs&logoColor=white"></a>
 </p>
 <p>
-  <a href="VERSION"><img alt="Version" src="https://img.shields.io/badge/version-1.0.0-orange?style=flat-square"></a>
+  <a href="VERSION"><img alt="Version" src="https://img.shields.io/badge/version-1.0.0-blue?style=flat-square"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green?style=flat-square"></a>
   <a href="#requirements"><img alt="Platform" src="https://img.shields.io/badge/macOS-14%2B-lightgrey?style=flat-square&logo=apple&logoColor=white"></a>
   <a href="Package.swift"><img alt="Swift" src="https://img.shields.io/badge/swift-6.0-orange?style=flat-square&logo=swift&logoColor=white"></a>

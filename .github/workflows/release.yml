@@ -1,28 +1,13 @@
 name: release
 
+# Releases are opt-in: run this workflow by hand (Actions -> release -> Run
+# workflow) or push a v* tag. It needs the Apple signing and notarization
+# secrets listed in Scripts/release-preflight.sh.
 on:
   workflow_dispatch:
   push:
-    branches:
-      - "main"
     tags:
       - "v*"
-    paths:
-      - "VERSION"
-      - "README.md"
-      - "CHANGELOG.md"
-      - "project.yml"
-      - ".github/workflows/release.yml"
-      - "Scripts/build-app.sh"
-      - "Scripts/build-dmg.sh"
-      - "Scripts/build-xcode-app.sh"
-      - "Scripts/release-preflight.sh"
-      - "Scripts/sign-and-notarize-dmg.sh"
-      - "Scripts/verify-distribution.sh"
-      - "Scripts/verify-installed-app.sh"
-      - "Scripts/verify-privacy.sh"
-      - "Scripts/bump-version"
-
 jobs:
   build-release:
     runs-on: macos-14
