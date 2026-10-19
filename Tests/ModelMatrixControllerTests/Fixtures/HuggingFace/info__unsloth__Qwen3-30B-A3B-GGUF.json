@@ -1,0 +1,56 @@
+{
+ "baseModels": {
+  "models": [
+   {
+    "_id": "680da7c9aa6c98cb395660ac",
+    "id": "Qwen/Qwen3-30B-A3B"
+   }
+  ],
+  "relation": "quantized"
+ },
+ "cardData": {
+  "base_model": "Qwen/Qwen3-30B-A3B",
+  "library_name": "transformers",
+  "license": "apache-2.0"
+ },
+ "config": {
+  "architectures": [
+   "Qwen3MoeForCausalLM"
+  ],
+  "model_type": "qwen3_moe"
+ },
+ "downloads": 40649,
+ "gated": false,
+ "gguf": {
+  "architecture": "qwen3moe",
+  "context_length": 40960,
+  "quantize_imatrix_file": "Qwen3-30B-A3B-GGUF/imatrix_unsloth.dat",
+  "total": 30532122624,
+  "totalFileSize": 17310782016
+ },
+ "id": "unsloth/Qwen3-30B-A3B-GGUF",
+ "lastModified": "2025-06-08T08:10:02.000Z",
+ "library_name": "transformers",
+ "likes": 291,
+ "pipeline_tag": "text-generation",
+ "private": false,
+ "sha": "d5b1d57bd0b504ac62ae6c725904e96ef228dc74",
+ "tags": [
+  "transformers",
+  "gguf",
+  "qwen3_moe",
+  "text-generation",
+  "qwen3",
+  "qwen",
+  "unsloth",
+  "en",
+  "arxiv:2309.00071",
+  "base_model:Qwen/Qwen3-30B-A3B",
+  "base_model:quantized:Qwen/Qwen3-30B-A3B",
+  "license:apache-2.0",
+  "endpoints_compatible",
+  "region:us",
+  "imatrix",
+  "conversational"
+ ]
+}

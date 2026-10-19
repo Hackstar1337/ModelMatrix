@@ -1,0 +1,48 @@
+[
+ {
+  "type": "file",
+  "path": ".gitattributes",
+  "size": 1817
+ },
+ {
+  "type": "file",
+  "path": "README.md",
+  "size": 21856
+ },
+ {
+  "type": "file",
+  "path": "gemma-3-4b-it-Q4_K_M.gguf",
+  "size": 2489757856,
+  "lfs": {
+   "oid": "882e8d2db44dc554fb0ea5077cb7e4bc49e7342a1f0da57901c0802ea21a0863",
+   "size": 2489757856
+  }
+ },
+ {
+  "type": "file",
+  "path": "gemma-3-4b-it-Q8_0.gguf",
+  "size": 4130226336,
+  "lfs": {
+   "oid": "97b06383df48336e7d2f9b56b6ce545e0fa476407a62c0bd081b53447a58e644",
+   "size": 4130226336
+  }
+ },
+ {
+  "type": "file",
+  "path": "gemma-3-4b-it-f16.gguf",
+  "size": 7767474336,
+  "lfs": {
+   "oid": "29f4b518b636635613894282bda2a01bad964c8d474c4147343057b7ac442d50",
+   "size": 7767474336
+  }
+ },
+ {
+  "type": "file",
+  "path": "mmproj-model-f16.gguf",
+  "size": 851251104,
+  "lfs": {
+   "oid": "8c0fb064b019a6972856aaae2c7e4792858af3ca4561be2dbf649123ba6c40cb",
+   "size": 851251104
+  }
+ }
+]

@@ -1,0 +1,162 @@
+[
+ {
+  "id": "lmstudio-community/Qwen2.5-7B-Instruct-MLX-4bit",
+  "downloads": 2782,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Qwen2.5-7B-Instruct-MLX-8bit",
+  "downloads": 1317,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "intrect/VELA",
+  "downloads": 181,
+  "likes": 4,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "plawanrath/qwen2.5-7b-instruct-q8-mlx-cba",
+  "downloads": 165,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "plawanrath/qwen2.5-7b-instruct-q4-mlx-cba",
+  "downloads": 163,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "finansai/BIST-Financial-Qwen-7B",
+  "downloads": 153,
+  "likes": 3,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "plawanrath/qwen2.5-7b-instruct-q3-mlx-cba",
+  "downloads": 135,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "plawanrath/qwen2.5-7b-instruct-q6-mlx-cba",
+  "downloads": 133,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-7B-Instruct-3bit",
+  "downloads": 113,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "SirSahOl/Qwen2.5-7B-Instruct-chat-mlx-8bit",
+  "downloads": 108,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "SirSahOl/Qwen2.5-7B-Instruct-chat-mlx-4bit",
+  "downloads": 85,
+  "likes": 1,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "TheDrewBenson/Qwen2.5-7B-Instruct-MLX-Q4",
+  "downloads": 39,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "TheBlueObserver/Qwen2.5-7B-Instruct-MLX-7dd7f",
+  "downloads": 35,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "noricha/Qwen2.5-7B-Instruct-MLX-4bit",
+  "downloads": 33,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "johnlockejrr/Qwen2.5-7B-Instruct-mxfp4",
+  "downloads": 32,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "TheBlueObserver/Qwen2.5-7B-Instruct-MLX-9a5c2",
+  "downloads": 29,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "TheBlueObserver/Qwen2.5-7B-Instruct-MLX-2ec71",
+  "downloads": 27,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "TheBlueObserver/Qwen2.5-7B-Instruct-MLX-c79ba",
+  "downloads": 27,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "TheBlueObserver/Qwen2.5-7B-Instruct-MLX-104ce",
+  "downloads": 26,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "Outlier-Ai/Outlier-Lite-7B-MLX-4bit",
+  "downloads": 26,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ }
+]

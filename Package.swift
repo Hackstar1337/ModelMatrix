@@ -69,7 +69,8 @@ let package = Package(
         ),
         .testTarget(
             name: "ModelMatrixControllerTests",
-            dependencies: ["ModelMatrixControllerCore", "ModelMatrixCore"]
+            dependencies: ["ModelMatrixControllerCore", "ModelMatrixCore"],
+            exclude: ["Fixtures"]
         ),
         .testTarget(
             name: "BumpVersionCoreTests",

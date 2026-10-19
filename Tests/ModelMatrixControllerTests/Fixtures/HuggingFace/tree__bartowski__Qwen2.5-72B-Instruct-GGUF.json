@@ -1,0 +1,225 @@
+[
+ {
+  "type": "directory",
+  "path": "Qwen2.5-72B-Instruct-Q5_K_M",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "Qwen2.5-72B-Instruct-Q6_K",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "Qwen2.5-72B-Instruct-Q8_0",
+  "size": 0
+ },
+ {
+  "type": "file",
+  "path": ".gitattributes",
+  "size": 3271
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-IQ1_M.gguf",
+  "size": 23740212896,
+  "lfs": {
+   "oid": "b326e13fe45767e123d5c15d903a63785fb9b7f1f3abe02fd41425c6264aef0c",
+   "size": 23740212896
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-IQ2_M.gguf",
+  "size": 29338986144,
+  "lfs": {
+   "oid": "ccff8e66aa1ec83c3ad30c0a358135b969f73de184bd57c3f03f811544e86bfe",
+   "size": 29338986144
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-IQ2_XS.gguf",
+  "size": 27057645216,
+  "lfs": {
+   "oid": "a53088778f2bfcb22cbc10085139abbacadc89d7f91949365f974fc44a09ce37",
+   "size": 27057645216
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-IQ2_XXS.gguf",
+  "size": 25490024096,
+  "lfs": {
+   "oid": "5d8386e3a446ca0af914ff08adcc77f3e8b21456ca9c6a14de82de756a3c363f",
+   "size": 25490024096
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-IQ3_M.gguf",
+  "size": 35503597216,
+  "lfs": {
+   "oid": "9e33adc391b68625431f498fe2b863df1f3ed62beeb611d487039db46be71ba6",
+   "size": 35503597216
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-IQ3_XXS.gguf",
+  "size": 31845082784,
+  "lfs": {
+   "oid": "842135716af7d966fe66ac339002b786ce7155852f49fd344b7549956e8f0f95",
+   "size": 31845082784
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-IQ4_XS.gguf",
+  "size": 39709075104,
+  "lfs": {
+   "oid": "9167b346a6e1f45064e0500cf8539572e5889ba631eecb40a3cab48338b6d7df",
+   "size": 39709075104
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q2_K.gguf",
+  "size": 29811762848,
+  "lfs": {
+   "oid": "33c45709dc2638426f1b86abc71a4dc4ecf6aae94fea583308b38459d99fee71",
+   "size": 29811762848
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q2_K_L.gguf",
+  "size": 31028274848,
+  "lfs": {
+   "oid": "dc570dd5a1b3174ce4a706a40db68b4753b421ff96ba249303ea8da0731d1726",
+   "size": 31028274848
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q3_K_L.gguf",
+  "size": 39505225376,
+  "lfs": {
+   "oid": "ca994fb319f337d72d9c021c85d0b2f7841c1152823e7887b046198dfe0a7f95",
+   "size": 39505225376
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q3_K_M.gguf",
+  "size": 37698725536,
+  "lfs": {
+   "oid": "52c15684755c9b5254ba11ff79c541134657d17592c6e1c302519ab1e36299c2",
+   "size": 37698725536
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q3_K_S.gguf",
+  "size": 34487789216,
+  "lfs": {
+   "oid": "0a9015f42dacce91aaecb66408f146134022a056c0aa6b62fc7142753b8adefc",
+   "size": 34487789216
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q3_K_XL.gguf",
+  "size": 40595220128,
+  "lfs": {
+   "oid": "83e29c60b094fecee62ff5b07ab780f57d8b98cbe543b197630714413708e001",
+   "size": 40595220128
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q4_0.gguf",
+  "size": 41383126688,
+  "lfs": {
+   "oid": "1ffd70723b0a26d0f3025fc53898a8d224e27ec60992949ca8c663d39d381648",
+   "size": 41383126688
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q4_K_M.gguf",
+  "size": 47415715488,
+  "lfs": {
+   "oid": "e4c8fad16946be8cf0bbf67eb8f4e18fc7415a5a6d2854b4cda453edb4082545",
+   "size": 47415715488
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q5_K_M/Qwen2.5-72B-Instruct-Q5_K_M-00001-of-00002.gguf",
+  "size": 39977562368,
+  "lfs": {
+   "oid": "9d9506399c6a510db40fa3b0dba0ac786ea22d7268a8598beb72909712570b0f",
+   "size": 39977562368
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q5_K_M/Qwen2.5-72B-Instruct-Q5_K_M-00002-of-00002.gguf",
+  "size": 14469903968,
+  "lfs": {
+   "oid": "b00efe103bfed1fbe7f7277660b1941c3b59883c2d4c3ef0c7d3508356fe3daa",
+   "size": 14469903968
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q6_K/Qwen2.5-72B-Instruct-Q6_K-00001-of-00002.gguf",
+  "size": 39970956992,
+  "lfs": {
+   "oid": "b8bed77aaaba2f87a9a5bcc58dfb6cf57d39588473a7127efca75e2675233f4e",
+   "size": 39970956992
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q6_K/Qwen2.5-72B-Instruct-Q6_K-00002-of-00002.gguf",
+  "size": 24376672416,
+  "lfs": {
+   "oid": "2e7ee827faef6db8619ced69a84fec2b32c1749a8c3ea406c46da4946420df75",
+   "size": 24376672416
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q8_0/Qwen2.5-72B-Instruct-Q8_0-00001-of-00002.gguf",
+  "size": 39984775136,
+  "lfs": {
+   "oid": "247f91fe6a9a8f36c67b97d803a4bbadf7c9a0752a8e9206e1768467a4190155",
+   "size": 39984775136
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct-Q8_0/Qwen2.5-72B-Instruct-Q8_0-00002-of-00002.gguf",
+  "size": 37277837184,
+  "lfs": {
+   "oid": "63e7e7af4c900dcca0b70ed48260fba5d434a983eb24fd83bb4dfa0114f42972",
+   "size": 37277837184
+  }
+ },
+ {
+  "type": "file",
+  "path": "Qwen2.5-72B-Instruct.imatrix",
+  "size": 25209018,
+  "lfs": {
+   "oid": "bca34450c9b261ff092680b184fea440ae97aa46eb92819b5872a73cbf350f59",
+   "size": 25209018
+  }
+ },
+ {
+  "type": "file",
+  "path": "README.md",
+  "size": 8804
+ }
+]

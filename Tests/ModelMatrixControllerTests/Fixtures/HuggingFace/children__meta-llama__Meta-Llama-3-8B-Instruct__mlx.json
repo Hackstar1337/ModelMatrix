@@ -1,0 +1,10 @@
+[
+ {
+  "id": "weber50432/lora-Meta-Llama-3-8B-Instruct",
+  "downloads": 35,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ }
+]

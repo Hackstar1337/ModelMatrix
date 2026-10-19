@@ -1,0 +1,146 @@
+[
+ {
+  "id": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+  "downloads": 501445,
+  "likes": 423,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "MaziyarPanahi/Meta-Llama-3.1-8B-Instruct-GGUF",
+  "downloads": 96540,
+  "likes": 40,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF",
+  "downloads": 71692,
+  "likes": 264,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlabonne/Meta-Llama-3.1-8B-Instruct-abliterated-GGUF",
+  "downloads": 32922,
+  "likes": 241,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "unsloth/Llama-3.1-8B-Instruct-GGUF",
+  "downloads": 13632,
+  "likes": 49,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "shenzhi-wang/Llama3.1-8B-Chinese-Chat",
+  "downloads": 7094,
+  "likes": 266,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "modularai/Llama-3.1-8B-Instruct-GGUF",
+  "downloads": 6834,
+  "likes": 17,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "joshnader/Meta-Llama-3.1-8B-Instruct-Q4_K_M-GGUF",
+  "downloads": 4343,
+  "likes": 15,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "SanctumAI/Meta-Llama-3.1-8B-Instruct-GGUF",
+  "downloads": 3976,
+  "likes": 18,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "ErenAta00/CaptureTheFlag-CypherMindLLM-XRLAB-GGUF",
+  "downloads": 2588,
+  "likes": 8,
+  "gated": false,
+  "library_name": "llama_cpp",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mradermacher/Meta-Llama-3.1-8B-Instruct-i1-GGUF",
+  "downloads": 2474,
+  "likes": 3,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "saidutta69/Meta-Llama-3.1-8B-Instruct-heretic",
+  "downloads": 1880,
+  "likes": 1,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/Vikhr-Llama3.1-8B-Instruct-R-21-09-24-GGUF",
+  "downloads": 1653,
+  "likes": 4,
+  "gated": false
+ },
+ {
+  "id": "0xroyce/Plutus-Meta-Llama-3.1-8B-Instruct-bnb-4bit",
+  "downloads": 1649,
+  "likes": 8,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/Llama3.1-8B-Chinese-Chat-GGUF",
+  "downloads": 1412,
+  "likes": 6,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "backyardai/Meta-Llama-3.1-8B-Instruct-GGUF",
+  "downloads": 1316,
+  "likes": 1,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "legraphista/Meta-Llama-3.1-8B-Instruct-IMat-GGUF",
+  "downloads": 1271,
+  "likes": 6,
+  "gated": false,
+  "library_name": "gguf",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "starshina3003/Meta-Llama-3.1-8B-Instruct-GGUF",
+  "downloads": 1211,
+  "likes": 0,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "anicka/karma-electric-llama31-8b",
+  "downloads": 1169,
+  "likes": 1,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "GPT4All-Community/Meta-Llama-3.1-8B-Instruct-128k-GGUF",
+  "downloads": 1155,
+  "likes": 12,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ }
+]

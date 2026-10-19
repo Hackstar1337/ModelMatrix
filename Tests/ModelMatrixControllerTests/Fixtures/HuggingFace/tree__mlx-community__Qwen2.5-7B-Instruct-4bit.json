@@ -1,0 +1,61 @@
+[
+ {
+  "type": "file",
+  "path": ".gitattributes",
+  "size": 1519
+ },
+ {
+  "type": "file",
+  "path": "README.md",
+  "size": 732
+ },
+ {
+  "type": "file",
+  "path": "added_tokens.json",
+  "size": 605
+ },
+ {
+  "type": "file",
+  "path": "config.json",
+  "size": 787
+ },
+ {
+  "type": "file",
+  "path": "merges.txt",
+  "size": 1671853
+ },
+ {
+  "type": "file",
+  "path": "model.safetensors",
+  "size": 4284346255,
+  "lfs": {
+   "oid": "86110f368236b53cf4c2336f991a85703b17bcc60bb75f292b4002ec0219f071",
+   "size": 4284346255
+  }
+ },
+ {
+  "type": "file",
+  "path": "model.safetensors.index.json",
+  "size": 51711
+ },
+ {
+  "type": "file",
+  "path": "special_tokens_map.json",
+  "size": 613
+ },
+ {
+  "type": "file",
+  "path": "tokenizer.json",
+  "size": 7031673
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_config.json",
+  "size": 7280
+ },
+ {
+  "type": "file",
+  "path": "vocab.json",
+  "size": 2776833
+ }
+]

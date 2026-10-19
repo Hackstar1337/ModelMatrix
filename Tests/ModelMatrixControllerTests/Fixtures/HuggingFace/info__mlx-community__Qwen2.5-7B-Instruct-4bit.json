@@ -1,0 +1,51 @@
+{
+ "baseModels": {
+  "models": [
+   {
+    "_id": "66e6d06401e2adb00b0be996",
+    "id": "Qwen/Qwen2.5-7B"
+   }
+  ],
+  "relation": "finetune"
+ },
+ "cardData": {
+  "base_model": "Qwen/Qwen2.5-7B",
+  "license": "apache-2.0",
+  "pipeline_tag": "text-generation"
+ },
+ "config": {
+  "architectures": [
+   "Qwen2ForCausalLM"
+  ],
+  "model_type": "qwen2"
+ },
+ "downloads": 15335,
+ "gated": false,
+ "id": "mlx-community/Qwen2.5-7B-Instruct-4bit",
+ "lastModified": "2024-11-06T13:47:36.000Z",
+ "library_name": "mlx",
+ "likes": 17,
+ "pipeline_tag": "text-generation",
+ "private": false,
+ "safetensors": {
+  "parameters": {
+   "F16": 333312,
+   "U32": 7615283200
+  },
+  "total": 7615616512
+ },
+ "sha": "c26a38f6a37d0a51b4e9a1eb3026530fa35d9fed",
+ "tags": [
+  "mlx",
+  "safetensors",
+  "qwen2",
+  "chat",
+  "text-generation",
+  "conversational",
+  "en",
+  "base_model:Qwen/Qwen2.5-7B",
+  "base_model:finetune:Qwen/Qwen2.5-7B",
+  "license:apache-2.0",
+  "region:us"
+ ]
+}

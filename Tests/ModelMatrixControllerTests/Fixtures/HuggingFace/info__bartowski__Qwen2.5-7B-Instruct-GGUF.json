@@ -1,0 +1,43 @@
+{
+ "baseModels": {
+  "models": [
+   {
+    "_id": "66e81cbcd683a3f4e5291bbf",
+    "id": "Qwen/Qwen2.5-7B-Instruct"
+   }
+  ],
+  "relation": "quantized"
+ },
+ "cardData": {
+  "base_model": "Qwen/Qwen2.5-7B-Instruct",
+  "license": "apache-2.0",
+  "pipeline_tag": "text-generation"
+ },
+ "config": {},
+ "downloads": 213341,
+ "gated": false,
+ "gguf": {
+  "architecture": "qwen2",
+  "context_length": 32768,
+  "total": 7615616512,
+  "totalFileSize": 15237853600
+ },
+ "id": "bartowski/Qwen2.5-7B-Instruct-GGUF",
+ "lastModified": "2024-09-19T12:54:25.000Z",
+ "likes": 83,
+ "pipeline_tag": "text-generation",
+ "private": false,
+ "sha": "8911e8a47f92bac19d6f5c64a2e2095bd2f7d031",
+ "tags": [
+  "gguf",
+  "chat",
+  "text-generation",
+  "en",
+  "base_model:Qwen/Qwen2.5-7B-Instruct",
+  "base_model:quantized:Qwen/Qwen2.5-7B-Instruct",
+  "license:apache-2.0",
+  "endpoints_compatible",
+  "region:us",
+  "conversational"
+ ]
+}

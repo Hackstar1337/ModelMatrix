@@ -1,0 +1,477 @@
+[
+ {
+  "type": "directory",
+  "path": "scheduler",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "text_encoder",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "text_encoder_2",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "tokenizer",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "tokenizer_2",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "unet",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "vae",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "vae_1_0",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "vae_decoder",
+  "size": 0
+ },
+ {
+  "type": "directory",
+  "path": "vae_encoder",
+  "size": 0
+ },
+ {
+  "type": "file",
+  "path": ".gitattributes",
+  "size": 1562
+ },
+ {
+  "type": "file",
+  "path": "01.png",
+  "size": 4608613,
+  "lfs": {
+   "oid": "f40474e9ef8787d8209c275ade4254fc544dce290922b2e07650911ea255530c",
+   "size": 4608613
+  }
+ },
+ {
+  "type": "file",
+  "path": "LICENSE.md",
+  "size": 14109
+ },
+ {
+  "type": "file",
+  "path": "README.md",
+  "size": 8668
+ },
+ {
+  "type": "file",
+  "path": "comparison.png",
+  "size": 130252
+ },
+ {
+  "type": "file",
+  "path": "model_index.json",
+  "size": 609
+ },
+ {
+  "type": "file",
+  "path": "pipeline.png",
+  "size": 80188
+ },
+ {
+  "type": "file",
+  "path": "scheduler/scheduler_config.json",
+  "size": 479
+ },
+ {
+  "type": "file",
+  "path": "sd_xl_base_1.0.safetensors",
+  "size": 6938078334,
+  "lfs": {
+   "oid": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b",
+   "size": 6938078334
+  }
+ },
+ {
+  "type": "file",
+  "path": "sd_xl_base_1.0_0.9vae.safetensors",
+  "size": 6938078334,
+  "lfs": {
+   "oid": "e6bb9ea85bbf7bf6478a7c6d18b71246f22e95d41bcdd80ed40aa212c33cfeff",
+   "size": 6938078334
+  }
+ },
+ {
+  "type": "file",
+  "path": "sd_xl_offset_example-lora_1.0.safetensors",
+  "size": 49553604,
+  "lfs": {
+   "oid": "4852686128f953d0277d0793e2f0335352f96a919c9c16a09787d77f55cbdf6f",
+   "size": 49553604
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder/config.json",
+  "size": 565
+ },
+ {
+  "type": "file",
+  "path": "text_encoder/flax_model.msgpack",
+  "size": 492248682,
+  "lfs": {
+   "oid": "80269e53c9d09b1f19c6227cf903a5032878ed31ea8b49b8ecfa7808b81568d9",
+   "size": 492248682
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder/model.fp16.safetensors",
+  "size": 246144152,
+  "lfs": {
+   "oid": "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd",
+   "size": 246144152
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder/model.onnx",
+  "size": 492587457,
+  "lfs": {
+   "oid": "e27bafa0b3029ad637ef3ace24ce1efe85b8d0dbd22e03a2e70bda6fc88963a1",
+   "size": 492587457
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder/model.safetensors",
+  "size": 492265168,
+  "lfs": {
+   "oid": "5c3d6454dd2d23414b56aa1b5858a72487a656937847b6fea8d0606d7a42cdbc",
+   "size": 492265168
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder/openvino_model.bin",
+  "size": 492242672,
+  "lfs": {
+   "oid": "bbc78395c8cee553a17380e9b1a9a47da926c98731ba31306032d7d45fadb29b",
+   "size": 492242672
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder/openvino_model.xml",
+  "size": 1057789,
+  "lfs": {
+   "oid": "ab5cf7327374d8c984f4e963564a329f92c9dad08dac9eee9b8dca86b912f1c9",
+   "size": 1057789
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder_2/config.json",
+  "size": 575
+ },
+ {
+  "type": "file",
+  "path": "text_encoder_2/flax_model.msgpack",
+  "size": 2778657095,
+  "lfs": {
+   "oid": "dc025fc8d206bafd2ebf2f2cbf0b6f791c314612b5613c3737bf368236ac657f",
+   "size": 2778657095
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder_2/model.fp16.safetensors",
+  "size": 1389382176,
+  "lfs": {
+   "oid": "ec310df2af79c318e24d20511b601a591ca8cd4f1fce1d8dff822a356bcdb1f4",
+   "size": 1389382176
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder_2/model.onnx",
+  "size": 1041992,
+  "lfs": {
+   "oid": "162042ac6556e73f93d4172d4c67532c1cbe4dc7a6a8fa7e44dd2e3d7cbb772b",
+   "size": 1041992
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder_2/model.onnx_data",
+  "size": 2778639360,
+  "lfs": {
+   "oid": "3da7ac65349fbd092e836e3eeca2c22811317bc804fd70af157b4550f2d4bcb5",
+   "size": 2778639360
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder_2/model.safetensors",
+  "size": 2778702264,
+  "lfs": {
+   "oid": "3a6032f63d37ae02bbc74ccd6a27440578cd71701f96532229d0154f55a8d3ff",
+   "size": 2778702264
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder_2/openvino_model.bin",
+  "size": 2778640120,
+  "lfs": {
+   "oid": "549d05154b0c09d46226f85abd48552f0ef999af4f24a95b3fb62d5e7d059570",
+   "size": 2778640120
+  }
+ },
+ {
+  "type": "file",
+  "path": "text_encoder_2/openvino_model.xml",
+  "size": 2790191,
+  "lfs": {
+   "oid": "38f0a4ff68dd918b24908a264140c2ad0e057eca82616f75c17cbf4a099ad6ad",
+   "size": 2790191
+  }
+ },
+ {
+  "type": "file",
+  "path": "tokenizer/merges.txt",
+  "size": 524619
+ },
+ {
+  "type": "file",
+  "path": "tokenizer/special_tokens_map.json",
+  "size": 472
+ },
+ {
+  "type": "file",
+  "path": "tokenizer/tokenizer_config.json",
+  "size": 737
+ },
+ {
+  "type": "file",
+  "path": "tokenizer/vocab.json",
+  "size": 1059962
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_2/merges.txt",
+  "size": 524619
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_2/special_tokens_map.json",
+  "size": 460
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_2/tokenizer_config.json",
+  "size": 725
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_2/vocab.json",
+  "size": 1059962
+ },
+ {
+  "type": "file",
+  "path": "unet/config.json",
+  "size": 1680
+ },
+ {
+  "type": "file",
+  "path": "unet/diffusion_flax_model.msgpack",
+  "size": 10269915611,
+  "lfs": {
+   "oid": "0b98927b43cc771954a394ed19c08ecd3064a09e6e28b1d762270978ba6a9533",
+   "size": 10269915611
+  }
+ },
+ {
+  "type": "file",
+  "path": "unet/diffusion_pytorch_model.fp16.safetensors",
+  "size": 5135149760,
+  "lfs": {
+   "oid": "83e012a805b84c7ca28e5646747c90a243c65c8ba4f070e2d7ddc9d74661e139",
+   "size": 5135149760
+  }
+ },
+ {
+  "type": "file",
+  "path": "unet/diffusion_pytorch_model.safetensors",
+  "size": 10270077736,
+  "lfs": {
+   "oid": "357650fbfb3c7b4d94c1f5fd7664da819ad1ff5a839430484b4ec422d03f710a",
+   "size": 10270077736
+  }
+ },
+ {
+  "type": "file",
+  "path": "unet/model.onnx",
+  "size": 7293842,
+  "lfs": {
+   "oid": "6f001c090fb13c0d0f8b0a5916da814712a94400b99471fabe77c1c4a51ecaaf",
+   "size": 7293842
+  }
+ },
+ {
+  "type": "file",
+  "path": "unet/model.onnx_data",
+  "size": 10269854720,
+  "lfs": {
+   "oid": "7905b71f0044c5ea8fea8ca0451bd73cad53492ad50f964c49c3ff9250afa350",
+   "size": 10269854720
+  }
+ },
+ {
+  "type": "file",
+  "path": "unet/openvino_model.bin",
+  "size": 10269856428,
+  "lfs": {
+   "oid": "2d586bcb83c004ab07f5899adcac3d46189afe058d6a581570f0a613a010d9ec",
+   "size": 10269856428
+  }
+ },
+ {
+  "type": "file",
+  "path": "unet/openvino_model.xml",
+  "size": 22577438,
+  "lfs": {
+   "oid": "18955f96dffdba5612c4b554451f4ccc947c93e46df010173791654af4d0d7f6",
+   "size": 22577438
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae/config.json",
+  "size": 642
+ },
+ {
+  "type": "file",
+  "path": "vae/diffusion_flax_model.msgpack",
+  "size": 334623853,
+  "lfs": {
+   "oid": "1857495e1d4e28140013764ffd620f6aa1fb0311dd43d7cf083f72704c69e3ee",
+   "size": 334623853
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae/diffusion_pytorch_model.fp16.safetensors",
+  "size": 167335342,
+  "lfs": {
+   "oid": "bcb60880a46b63dea58e9bc591abe15f8350bde47b405f9c38f4be70c6161e68",
+   "size": 167335342
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae/diffusion_pytorch_model.safetensors",
+  "size": 334643268,
+  "lfs": {
+   "oid": "1598f3d24932bcfe6634e8b618ea1e30ab1d57f5aad13a6d2de446d2199f2341",
+   "size": 334643268
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae_1_0/config.json",
+  "size": 607
+ },
+ {
+  "type": "file",
+  "path": "vae_1_0/diffusion_pytorch_model.fp16.safetensors",
+  "size": 167335342,
+  "lfs": {
+   "oid": "eb6516ab7e1104d5d1a174a4d65c57835ae38061531d0a2192103aecfb790cc1",
+   "size": 167335342
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae_1_0/diffusion_pytorch_model.safetensors",
+  "size": 334643268,
+  "lfs": {
+   "oid": "27ed3b02e09638568e99d4398c67bc654dde04e6c0db61fb2d21dba630e7058a",
+   "size": 334643268
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae_decoder/config.json",
+  "size": 607
+ },
+ {
+  "type": "file",
+  "path": "vae_decoder/model.onnx",
+  "size": 198093688,
+  "lfs": {
+   "oid": "0892c5e28b35791140467f7b9c9fa148c24238a5f0c381b1d4c22dcd2ed365cb",
+   "size": 198093688
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae_decoder/openvino_model.bin",
+  "size": 197961232,
+  "lfs": {
+   "oid": "34ea744ad1d75fb6b8825e31f5adbe7d62cbe2e7d061535b0a12e69c2f72d0f4",
+   "size": 197961232
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae_decoder/openvino_model.xml",
+  "size": 992181,
+  "lfs": {
+   "oid": "dd61f43e981282b77ecaecf5fc5c842d504932bae78ac99ec581cee50978b423",
+   "size": 992181
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae_encoder/config.json",
+  "size": 607
+ },
+ {
+  "type": "file",
+  "path": "vae_encoder/model.onnx",
+  "size": 136775724,
+  "lfs": {
+   "oid": "7b117fbb21531efd59d68c95682392785999bf3e0c2ce95647c6e0de9af36e74",
+   "size": 136775724
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae_encoder/openvino_model.bin",
+  "size": 136655184,
+  "lfs": {
+   "oid": "97f04b0cf74808c7bd9b6e09f080e8cd24821943c3c06b153145989889215ce5",
+   "size": 136655184
+  }
+ },
+ {
+  "type": "file",
+  "path": "vae_encoder/openvino_model.xml",
+  "size": 849965,
+  "lfs": {
+   "oid": "a3ec36b6f3f74d0cb2b005b7c0a1e5426c5ef1e7163b33e463ea57fa049c5996",
+   "size": 849965
+  }
+ }
+]

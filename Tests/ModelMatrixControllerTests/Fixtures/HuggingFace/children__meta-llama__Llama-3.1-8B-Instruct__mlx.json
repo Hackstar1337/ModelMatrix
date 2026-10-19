@@ -1,0 +1,97 @@
+[
+ {
+  "id": "mlx-community/Llama-3.1-8B-Instruct-4bit",
+  "downloads": 10330,
+  "likes": 11,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "hellowsherlock/theranotes-Llama-3.1-8B-Instruct-4bit",
+  "downloads": 244,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Meta-Llama-3.1-8B-Instruct-3bit",
+  "downloads": 95,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "z-lab/Llama-3.1-8B-Instruct-PARO",
+  "downloads": 72,
+  "likes": 3,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "maciejonek/Llama-3.1-8B-Gandalf",
+  "downloads": 69,
+  "likes": 1,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "weber50432/lora-Meta-Llama-3.1-8B-Instruct",
+  "downloads": 59,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "gumush/turkish-finance-llama3.1-8b-mlx-8bit",
+  "downloads": 32,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "warrenm/llama3.1-8B-writer-Q8",
+  "downloads": 28,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "gumush/turkish-finance-llama3.1-8b-mlx-4bit",
+  "downloads": 27,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "atmanhealth/rasa_med_test",
+  "downloads": 19,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "biomisc/gat_llama3_8b_it_qlora_mlx",
+  "downloads": 11,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "biomisc/mlx_retrieverapp_orig_8B",
+  "downloads": 7,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx"
+ }
+]

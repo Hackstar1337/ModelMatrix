@@ -1,0 +1,70 @@
+[
+ {
+  "type": "file",
+  "path": ".gitattributes",
+  "size": 1518
+ },
+ {
+  "type": "file",
+  "path": "LICENSE",
+  "size": 11343
+ },
+ {
+  "type": "file",
+  "path": "README.md",
+  "size": 6368
+ },
+ {
+  "type": "file",
+  "path": "config.json",
+  "size": 841
+ },
+ {
+  "type": "file",
+  "path": "generation_config.json",
+  "size": 243
+ },
+ {
+  "type": "file",
+  "path": "merges.txt",
+  "size": 1671839
+ },
+ {
+  "type": "file",
+  "path": "model-00001-of-00002.safetensors",
+  "size": 3996422976,
+  "lfs": {
+   "oid": "4ad6e70f93823a9228931615e04b5e9293854c236fb4bd5f85e27f3b600605ad",
+   "size": 3996422976
+  }
+ },
+ {
+  "type": "file",
+  "path": "model-00002-of-00002.safetensors",
+  "size": 1574406784,
+  "lfs": {
+   "oid": "920a8cc9d3c81668f18014a69bb041ab8bab22a31640a713f90f5e7580e2f126",
+   "size": 1574406784
+  }
+ },
+ {
+  "type": "file",
+  "path": "model.safetensors.index.json",
+  "size": 62662
+ },
+ {
+  "type": "file",
+  "path": "tokenizer.json",
+  "size": 7031645
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_config.json",
+  "size": 7305
+ },
+ {
+  "type": "file",
+  "path": "vocab.json",
+  "size": 2776833
+ }
+]

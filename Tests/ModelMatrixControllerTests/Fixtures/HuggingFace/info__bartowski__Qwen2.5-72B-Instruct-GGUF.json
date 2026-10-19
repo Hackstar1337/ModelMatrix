@@ -1,0 +1,46 @@
+{
+ "baseModels": {
+  "models": [
+   {
+    "_id": "66e81cefd1b1391042d0e47e",
+    "id": "Qwen/Qwen2.5-72B-Instruct"
+   }
+  ],
+  "relation": "quantized"
+ },
+ "cardData": {
+  "base_model": "Qwen/Qwen2.5-72B-Instruct",
+  "license": "other",
+  "license_name": "qwen",
+  "pipeline_tag": "text-generation"
+ },
+ "config": {},
+ "downloads": 58057,
+ "gated": false,
+ "gguf": {
+  "architecture": "qwen2",
+  "context_length": 32768,
+  "quantize_imatrix_file": "/models_out/Qwen2.5-72B-Instruct-GGUF/Qwen2.5-72B-Instruct.imatrix",
+  "total": 72706203648,
+  "totalFileSize": 23740212896
+ },
+ "id": "bartowski/Qwen2.5-72B-Instruct-GGUF",
+ "lastModified": "2024-09-19T10:11:31.000Z",
+ "likes": 48,
+ "pipeline_tag": "text-generation",
+ "private": false,
+ "sha": "d43fd973131bce821f41e2df3c78c6fe15c5627a",
+ "tags": [
+  "gguf",
+  "chat",
+  "text-generation",
+  "en",
+  "base_model:Qwen/Qwen2.5-72B-Instruct",
+  "base_model:quantized:Qwen/Qwen2.5-72B-Instruct",
+  "license:other",
+  "endpoints_compatible",
+  "region:us",
+  "imatrix",
+  "conversational"
+ ]
+}

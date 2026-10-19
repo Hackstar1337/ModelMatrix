@@ -1,0 +1,116 @@
+[
+ {
+  "type": "directory",
+  "path": "original",
+  "size": 0
+ },
+ {
+  "type": "file",
+  "path": ".gitattributes",
+  "size": 1519
+ },
+ {
+  "type": "file",
+  "path": "LICENSE",
+  "size": 7627
+ },
+ {
+  "type": "file",
+  "path": "README.md",
+  "size": 44044
+ },
+ {
+  "type": "file",
+  "path": "USE_POLICY.md",
+  "size": 4691
+ },
+ {
+  "type": "file",
+  "path": "config.json",
+  "size": 855
+ },
+ {
+  "type": "file",
+  "path": "generation_config.json",
+  "size": 184
+ },
+ {
+  "type": "file",
+  "path": "model-00001-of-00004.safetensors",
+  "size": 4976698672,
+  "lfs": {
+   "oid": "****************************************************************",
+   "size": 4976698672
+  }
+ },
+ {
+  "type": "file",
+  "path": "model-00002-of-00004.safetensors",
+  "size": 4999802720,
+  "lfs": {
+   "oid": "****************************************************************",
+   "size": 4999802720
+  }
+ },
+ {
+  "type": "file",
+  "path": "model-00003-of-00004.safetensors",
+  "size": 4915916176,
+  "lfs": {
+   "oid": "****************************************************************",
+   "size": 4915916176
+  }
+ },
+ {
+  "type": "file",
+  "path": "model-00004-of-00004.safetensors",
+  "size": 1168138808,
+  "lfs": {
+   "oid": "****************************************************************",
+   "size": 1168138808
+  }
+ },
+ {
+  "type": "file",
+  "path": "model.safetensors.index.json",
+  "size": 23950
+ },
+ {
+  "type": "file",
+  "path": "original/consolidated.00.pth",
+  "size": 16060617592,
+  "lfs": {
+   "oid": "****************************************************************",
+   "size": 16060617592
+  }
+ },
+ {
+  "type": "file",
+  "path": "original/params.json",
+  "size": 199
+ },
+ {
+  "type": "file",
+  "path": "original/tokenizer.model",
+  "size": 2183982,
+  "lfs": {
+   "oid": "****************************************************************",
+   "size": 2183982
+  }
+ },
+ {
+  "type": "file",
+  "path": "special_tokens_map.json",
+  "size": 296
+ },
+ {
+  "type": "file",
+  "path": "tokenizer.json",
+  "size": 9085657
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_config.json",
+  "size": 55351
+ }
+]

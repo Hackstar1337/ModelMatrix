@@ -20,13 +20,16 @@ public final class ControllerRouter: @unchecked Sendable {
   public var usage: UsageService?
   /// App <-> controller bridge (remote hosts and app-side actions).
   public let bridge: BridgeState
+  /// Read-only Hugging Face model check for `GET /api/hf/*`.
+  public let huggingFace: HFCheckService
 
   public init(
     service: ControllerService,
     authToken: String?,
     dashboard: DashboardAssets? = nil,
     usage: UsageService? = nil,
-    bridge: BridgeState = BridgeState()
+    bridge: BridgeState = BridgeState(),
+    huggingFace: HFCheckService? = nil
   ) {
     self.service = service
     self.authToken = authToken
@@ -35,6 +38,7 @@ public final class ControllerRouter: @unchecked Sendable {
     self.hostMetrics = MacHostMetricsSampler()
     self.usage = usage
     self.bridge = bridge
+    self.huggingFace = huggingFace ?? HFCheckService()
   }
 
   public func handle(_ request: ControllerHTTPRequest) -> ControllerHTTPResponse {
@@ -111,13 +115,13 @@ public final class ControllerRouter: @unchecked Sendable {
 
   /// Routes that never touch the profile service's mutable state and may run
   /// on the server's concurrent queue (static files, usage stats, host
-  /// metrics, bridge, remote proxy).
+  /// metrics, bridge, remote proxy, read-only Hugging Face checks).
   public func runsConcurrently(_ request: ControllerHTTPRequest) -> Bool {
     let path = request.path
     if !path.hasPrefix("/api/") { return true }
     for prefix in [
       "/api/usage/", "/api/host/", "/api/bridge/", "/api/remote/", "/api/ollama/",
-      "/api/dashboard/", "/api/optimize/purge",
+      "/api/dashboard/", "/api/optimize/purge", "/api/hf/",
     ] where path.hasPrefix(prefix) {
       return true
     }

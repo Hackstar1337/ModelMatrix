@@ -1,0 +1,145 @@
+[
+ {
+  "id": "bartowski/Qwen2.5-7B-Instruct-GGUF",
+  "downloads": 213341,
+  "likes": 83,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+  "downloads": 181341,
+  "likes": 193,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "MaziyarPanahi/Qwen2.5-7B-Instruct-GGUF",
+  "downloads": 94272,
+  "likes": 11,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/Qwen2.5-7B-Instruct-abliterated-v2-GGUF",
+  "downloads": 20735,
+  "likes": 13,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Qwen2.5-7B-Instruct-GGUF",
+  "downloads": 20503,
+  "likes": 7,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "saidutta69/Qwen2.5-7B-Instruct-heretic",
+  "downloads": 14502,
+  "likes": 0,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/Qwen2.5-7B-Instruct-Uncensored-GGUF",
+  "downloads": 11682,
+  "likes": 32,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "paultimothymooney/Qwen2.5-7B-Instruct-Q4_K_M-GGUF",
+  "downloads": 11450,
+  "likes": 13,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "richardyoung/Qwen2.5-7B-Instruct-abliterated-GGUF",
+  "downloads": 7159,
+  "likes": 4,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "Szymon-Wachelko/GPT-neo-Custom-7B-GGUF",
+  "downloads": 2822,
+  "likes": 0,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "kepom/Qwen2.5-7B-Instruct-abliterated-v2-GGUF",
+  "downloads": 2761,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mradermacher/Qwen2.5-7B-Instruct-i1-GGUF",
+  "downloads": 2676,
+  "likes": 2,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "mradermacher/Qwen2.5-7B-Instruct-GGUF",
+  "downloads": 2195,
+  "likes": 4,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "Mungert/pokee_research_7b-GGUF",
+  "downloads": 2040,
+  "likes": 1,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "Xangel0s/ozyvler-Ozygram-Neural-7B-Coder-MCTS",
+  "downloads": 1376,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "pbhappliedsystems/qwen-2.5-7B-instruct-gguf-Q4-K-M",
+  "downloads": 1350,
+  "likes": 2,
+  "gated": false
+ },
+ {
+  "id": "QuantFactory/Math-IIO-7B-Instruct-GGUF",
+  "downloads": 1291,
+  "likes": 3,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/chinese-text-correction-7b-GGUF",
+  "downloads": 1241,
+  "likes": 2,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "oyi77/qwen2.5-7b-GGUF",
+  "downloads": 1185,
+  "likes": 0,
+  "gated": false
+ },
+ {
+  "id": "Mungert/VulnLLM-R-7B-GGUF",
+  "downloads": 1026,
+  "likes": 5,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ }
+]

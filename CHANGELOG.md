@@ -6,6 +6,7 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- **Hugging Face model check**: `modelmatrixctl check <owner/name>` (or a link, `owner/name:VERSION`, or search words) tells you, before anything is downloaded, the model's format (GGUF, MLX, MLC-LLM, original weights, AWQ/GPTQ/EXL2 and others), whether it is a chat model, its licence and login requirement, every version with its download size, quality and memory fit on this Mac, a recommended version and context length, and which engine it needs and whether that engine is installed. Formats ModelMatrix can't run point to ready-to-run versions of the same model. The check is read-only: it downloads no model and installs nothing. Also available as `GET /api/hf/check` and `GET /api/hf/search`.
 - **Optimize** frees as much memory as possible: it unloads idle Ollama models, stops idle model servers and clears the macOS file cache (after the standard password dialog), then shows memory before and after. Choose **Maximum** or **Recommended** or tick items yourself; anything answering a request is left alone. Available from the web dashboard (header and This Mac card), the menu bar (sparkles icon) and `modelmatrixctl optimize`. It also lists the other apps using the most memory: tick the ones to close (or **Select all apps that can quit**), confirm the list, and they close the way they do with ⌘Q as part of the same run, with each reported as closed, still open or not allowed.
 
 ### Changed

@@ -1,0 +1,1014 @@
+[
+ {
+  "type": "file",
+  "path": ".gitattributes",
+  "size": 1519
+ },
+ {
+  "type": "file",
+  "path": "README.md",
+  "size": 1502
+ },
+ {
+  "type": "file",
+  "path": "logs.txt",
+  "size": 105448
+ },
+ {
+  "type": "file",
+  "path": "mlc-chat-config.json",
+  "size": 2090
+ },
+ {
+  "type": "file",
+  "path": "ndarray-cache.json",
+  "size": 148396
+ },
+ {
+  "type": "file",
+  "path": "params_shard_0.bin",
+  "size": 262668288,
+  "lfs": {
+   "oid": "d2ed37d77cd108bf6f4ae44b752deb6d9ff230cab0d1dd6e498a7afc24733099",
+   "size": 262668288
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_1.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "c45006b20e9cbbf1941a106dbddd5b043a24a4484cc15f7dca444031d5e59ada",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_10.bin",
+  "size": 33046528,
+  "lfs": {
+   "oid": "92423d1e470526664d2cdd09bcf9111d813fea4cf22223636b05c2d9229a1618",
+   "size": 33046528
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_100.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "d7b1f5a47bef6b9c1087ae3865ecedede9e19f9bf6b1ea3e94a76a81a1e68843",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_101.bin",
+  "size": 25174016,
+  "lfs": {
+   "oid": "068171b489cc7cbd43dcca11b5520127ad201c59802530681dada0940060d72f",
+   "size": 25174016
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_102.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "dc6f005ac098bd8aef30fb032aba815bb08a66c35f9a1353516d964df44278e3",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_103.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "eea3b928e9e76e9b7a4f1dd98e98a12f5e34df364c28867f6b27d52ae2675a11",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_104.bin",
+  "size": 33046528,
+  "lfs": {
+   "oid": "ef049ca8e8ae1623db544b23546248657a232e29dd6fcc4951e6b998eaca9044",
+   "size": 33046528
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_105.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "bec5e57d1eae4044ce2ed6b5de14220d6ab4aa81d367abd1df1f5e391c4209bd",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_106.bin",
+  "size": 32505856,
+  "lfs": {
+   "oid": "148236900677871920dd45b0c0ef57928d3098f304662700e5b2d1778c672d1a",
+   "size": 32505856
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_107.bin",
+  "size": 9437184,
+  "lfs": {
+   "oid": "44f5ce12208ff6abd5779a75ba0bda156318f3766256659431dd446f4992b154",
+   "size": 9437184
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_11.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "c745443ff322319bd8120fb43169e40167159e9dc96047b544015e601114522d",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_12.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "ddcb0155d652d7dcbdf83af1c8da095c66a2e94f30a755c7889cfc7456e30485",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_13.bin",
+  "size": 22036480,
+  "lfs": {
+   "oid": "ee8a779df967099cc3684157d4c68badd7a4df554ee7ae57f7249cde1180c77e",
+   "size": 22036480
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_14.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "028dcb0f5706b25a6173bf9cb2ebd4aa833f04a3bb6c0756415f63afdad91833",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_15.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "6434d2b1cedfb96b5105758c697fafcc2380e41c29350ca1d5942f64ec7a005e",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_16.bin",
+  "size": 27271168,
+  "lfs": {
+   "oid": "687c80c5494efe7efa0288ef9d3ffb44c1eedc8558c151da9b84d0a6f4eff583",
+   "size": 27271168
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_17.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "54126705bc9a09bb3310855a4ecd3d5e57c5d94b3facf877a1a400c21e871ef6",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_18.bin",
+  "size": 30949376,
+  "lfs": {
+   "oid": "7e05bfa4a2c5d0bc93573a75ecd287a4938b83ee4af669fe5e9e0d3c43146bc2",
+   "size": 30949376
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_19.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "30130ce7c89c60aa54c00c167ca8962411178a59c24207f0ad00bfb863404fab",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_2.bin",
+  "size": 32841728,
+  "lfs": {
+   "oid": "63962a1a538ff2ecc296c6d07ff461247cfe1fa28950a97a7779dd80c4bb4d1e",
+   "size": 32841728
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_20.bin",
+  "size": 25174016,
+  "lfs": {
+   "oid": "f655c2bf134b5b9a85f6247651ef076f624d8165b8f531e6aaa52cde8395c603",
+   "size": 25174016
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_21.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "7bc9128b9f3c5abca94c4e13619347a1f36f539e7795552cbdbf437055e0cd9f",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_22.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "6fa3a2a4c7742eb08bc6b8b8e17d78dfeb2ec1d6490e1a16add6925ca4e79009",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_23.bin",
+  "size": 33046528,
+  "lfs": {
+   "oid": "d90de65f027fb1fc916f02ff73b55ae84e036fcf2f35fc5407ef25da61c20931",
+   "size": 33046528
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_24.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "36605734cb52b92aa8635262f13b15d82610da79722877194557d69b37e6463a",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_25.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "dc13fb93d3054955f68a3840818dd74ee39941c682d45e4ddcaceeca46d9b9f3",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_26.bin",
+  "size": 22036480,
+  "lfs": {
+   "oid": "ab76e5856b186751326e893e227802986deaa8151329a3d2a5ba35a9e2d84b1b",
+   "size": 22036480
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_27.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "6597b2a99b385cb36d77a387f3a035eec1e0a2c53de017c8db246c2774d0471f",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_28.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "0f9787abf533597067187590595ca737771f089ecabe53ef76770b37e8f58f18",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_29.bin",
+  "size": 27271168,
+  "lfs": {
+   "oid": "fa3a9e9df3c533bdcafa8819381d0bb3efc67d277177349cf6cafbfa84af8fca",
+   "size": 27271168
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_3.bin",
+  "size": 262668288,
+  "lfs": {
+   "oid": "2d34f1fcb18350c4f89329f1db8ae657b37ae48926dfaf8a9aa25d98c26f9a03",
+   "size": 262668288
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_30.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "5b59ffd98eb25881c21bbc6b0843cccf12d3f98a08fe26f1030c93812131cf4f",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_31.bin",
+  "size": 30949376,
+  "lfs": {
+   "oid": "1c50b2f9ff6744c1cadedb37ee0ad1c7f800ad3f607fb76003b127377b75d72d",
+   "size": 30949376
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_32.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "d7d78304a26c4164b72a5d71450c21979e711fb88ea963e142d34165f33deb9b",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_33.bin",
+  "size": 25174016,
+  "lfs": {
+   "oid": "3223acb25be3c6f301ea8f88e2c4d0f07c6f49c65faae047984e9805cb9486fc",
+   "size": 25174016
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_34.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "3051a8f94165689c4cfc0c05563c9b02e351f7667d0da97f123a2ee405d38dc6",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_35.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "de466d5e972ee871cea39086fff82049da244b471a136af264af64c4279cceb4",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_36.bin",
+  "size": 33046528,
+  "lfs": {
+   "oid": "4a192ac9f10be719ca8780c989693583b894c84817205189d3b0d69f4db96f27",
+   "size": 33046528
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_37.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "f23031f20e901678c3188e63e5e09ced63d4395c8c34ae87b22cbb349fa3a72d",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_38.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "64b9dc05e957ab2f7df4b5699231ad6b8a0cf5e8919ee749ee11debbbd9ae18e",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_39.bin",
+  "size": 22036480,
+  "lfs": {
+   "oid": "ef42d957681f632ec441cf7ddf8374c7394d6d29685a1c683624a457a4caced7",
+   "size": 22036480
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_4.bin",
+  "size": 32833536,
+  "lfs": {
+   "oid": "2328a9e043f74b15f0843a8b02637a4b1b6e5925809c2dc53dd131aeefdc2958",
+   "size": 32833536
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_40.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "1c1a32e5f9d72ec6a3a6e03bd929c5a0d8d3c5cca4dbc33e2234476532477e7f",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_41.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "c925ab081cb0f0e5171b6a4111eb469e3268b5b62352e461f5f00af2093c00ed",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_42.bin",
+  "size": 27271168,
+  "lfs": {
+   "oid": "9bc9760e7e0b84d91c4a674d29cf59a3f96f12a4f010190381f4e8ed08e86bca",
+   "size": 27271168
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_43.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "bfae6aaee7745e8173fa56a0c6215cae83c01965552c0df972252bc7e190ec0a",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_44.bin",
+  "size": 30949376,
+  "lfs": {
+   "oid": "918cf3dcea91beffd39225a5150ae89b4436558224d8dc7f5100c55770f45c0c",
+   "size": 30949376
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_45.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "0dc0ca0b511de2388e20d5f72167ed747378f33fcfcedacca43ad5eec3bcb9db",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_46.bin",
+  "size": 25174016,
+  "lfs": {
+   "oid": "a92a6f8b7e040d97d542c7abe8c53eae25f9d474f0d1c0f51f55559e71989793",
+   "size": 25174016
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_47.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "a4dc8c5169ca64950b8e2d836811e8a5e839d8dec1782507c5f6f4b7cb59a137",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_48.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "2ee03a62715c12b3762a8fa1ebad16d5f45bb770c8e961f24ecaf29000d3fc34",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_49.bin",
+  "size": 33046528,
+  "lfs": {
+   "oid": "91552281ad4b0958fab076436b134a0b83501dc67cb302996bc1b277c7625dc9",
+   "size": 33046528
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_5.bin",
+  "size": 33054720,
+  "lfs": {
+   "oid": "ace01f913511f79d5795ab41f53a6d98bbd2cbd3aa5f33131bd7d9721a0ba5a5",
+   "size": 33054720
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_50.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "120c9cc985228f3d2df78dbfa93c107521526897c1ff51e9539d084343cd40c2",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_51.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "0fc37d82901d34c2dd1cbc777d22ff8bc8772947a1986b79685f1b8e5d339e46",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_52.bin",
+  "size": 22036480,
+  "lfs": {
+   "oid": "4299d7c37f0e3b9fcf40c96ef811ff699447b383fc011e3e21c4db9e2f88403b",
+   "size": 22036480
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_53.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "fa00e2a9e517ab591067a282bb8e6a3b808e9fcc1fe4c2ff37a0fea7c6557867",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_54.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "ebcef20ab4fc19a3a48826230004f528528ac3154e00bd7f4304707eb516dc0c",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_55.bin",
+  "size": 27271168,
+  "lfs": {
+   "oid": "4312a9850425e21daa54f324e729d4089ae08e3aee0dc8e0353691a318b6428a",
+   "size": 27271168
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_56.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "d080551dcac93147182a3beee9338eac1d359fc4c0e5450ddb2c12c7e5ea76aa",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_57.bin",
+  "size": 30949376,
+  "lfs": {
+   "oid": "5eb01f2553fcf3b37d0f0778aac8d3bb61599e7d6e62a2a6afe155c7207ad8d1",
+   "size": 30949376
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_58.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "a08ca962ef1406deef8798621e3f11d095b9062f1f8f8e4d8f9b4291665aa68e",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_59.bin",
+  "size": 25174016,
+  "lfs": {
+   "oid": "4b4e9d6e52e070bb97aa8b449c10397b1540684c0cb62c02caa5033b31e1e1af",
+   "size": 25174016
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_6.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "bdaff259537e0b1983653bbca938c46b9a252fbf2f71f47bad24a47345878934",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_60.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "f719a1bc9c188a93fbe97d9b7cfdddb87dd180f634163aef88f047acb370cfce",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_61.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "1f731baeb783e2973354413a8bf96cd6b55e8308ea941e2bf637d023fb2b7420",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_62.bin",
+  "size": 33046528,
+  "lfs": {
+   "oid": "ed502036e9f81f116c6dfd3724a6913edaf1f7ccabc4a9e7972edff1214546da",
+   "size": 33046528
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_63.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "5f863e59ec5fdfa41face261c62430a687dbd9d4dd2f4fccf0a1940aec52a601",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_64.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "700e6398fe1b9d05cf45c63978a2aa9dcadc4db7de492bf8d6eb48fd0d30d848",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_65.bin",
+  "size": 22036480,
+  "lfs": {
+   "oid": "0e0c6b6215c032df992939f5c62d7bf7c2038c4dcd4c498a3d17144508f9e429",
+   "size": 22036480
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_66.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "aec6a82d52bbf6053d740a359b0426805d14136d100e33cf3c28d87579130c6a",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_67.bin",
+  "size": 30932992,
+  "lfs": {
+   "oid": "14789bba2a6354d9b08c8f1e03927fb23e4a3c60135f561bcf6aabbc1a36b25c",
+   "size": 30932992
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_68.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "80c5f88250f9b46378320f37f6bada78e96ecf24f811c09c978006881b9c6d62",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_69.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "95fcb0d56e41591d479d51f9c481630ecb3baaf68139601b7aab7db1285582ea",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_7.bin",
+  "size": 25174016,
+  "lfs": {
+   "oid": "a9bbe0976d31440f126c07af81d44f41bc66d15aeee7f2660811bc58639555b4",
+   "size": 25174016
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_70.bin",
+  "size": 27271168,
+  "lfs": {
+   "oid": "176691e3e26b4596c785147ce0702d15c349d175b6a9bd884405998cb4f4770a",
+   "size": 27271168
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_71.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "8ec83023276e4caf41963494ee24137208a4d006d74a9c0426594b43f8d4caa4",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_72.bin",
+  "size": 30949376,
+  "lfs": {
+   "oid": "3fe29fc00505a95f6225cd8d49e6bc856a30eeec69f38fccc88ec99135eb9f09",
+   "size": 30949376
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_73.bin",
+  "size": 33046528,
+  "lfs": {
+   "oid": "84b378a1ff50a4d359a76d411aaf3d9e60a98fd99dc2b2cd046083fe895c6038",
+   "size": 33046528
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_74.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "6398e8e1f318a3c86090b045b4fad8d53c51fbea91e2cc049c3c6d9d353184cb",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_75.bin",
+  "size": 25174016,
+  "lfs": {
+   "oid": "967674f4d0c339977eefaf55cee8fe142263ec620eb19f88522445039db051a2",
+   "size": 25174016
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_76.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "b44cd4ec5cb815e294e605991bec486d2c83fde508dde563be0abc4ff6b954dc",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_77.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "53161299ff43c1d4091a5cf4851bf2740f7f853b64b7132d505aaf5aafd76e8f",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_78.bin",
+  "size": 33046528,
+  "lfs": {
+   "oid": "4973742d96297230ae4ce3296bc0c259e09e006eafeea1c39f382ad31d516ba6",
+   "size": 33046528
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_79.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "e5b0242cc9139aa0b4919adcd2db0f92a821a05f89aa50ee20ada5e43cbe2724",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_8.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "36d66f07102ee7013773b205e1dcb5db900906e78d6970c29876619daa18a337",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_80.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "ea3e1edf29e78dfec880959f663eb2442ee8ab8c2051f3de0446d94871bdb23f",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_81.bin",
+  "size": 22036480,
+  "lfs": {
+   "oid": "d0afa57961faf7e15a2747074bf081f7d8f35e9035dbc5f12d931ca95431dd21",
+   "size": 22036480
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_82.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "23fa7433076ac8a3bacf723523c34355c9a5cbdb2568dd0868b6f35d5690b350",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_83.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "40a6e1b0e46da37534125842b057dea7eba95796fc85cd9b8bab1b555ccd530a",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_84.bin",
+  "size": 27271168,
+  "lfs": {
+   "oid": "6d3a32ce2df8c94ce14107f0a26c3bc5ebdeef39382efa4a76d083350a7e65db",
+   "size": 27271168
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_85.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "5b0d4eeae08a34d3a7962c2e38de177253144b38db7e7fec8276db641ef86247",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_86.bin",
+  "size": 30949376,
+  "lfs": {
+   "oid": "5c3768cfd39c46384f0495eac567223b6986b07a23c689b1852f97ae2baa265d",
+   "size": 30949376
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_87.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "c8596797e9718c90daf945c414df30741c5d64fc04a7c3cc9a635d6f8a65fcac",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_88.bin",
+  "size": 25174016,
+  "lfs": {
+   "oid": "113a667b6ce649ee7d0c966e432d93d056f83d7a10565b8cbeb203156d799fa5",
+   "size": 25174016
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_89.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "77190aa603c61165d39beb3505bf7f97aef1ae2bf0f799a4ab65b0cb2b27a98a",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_9.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "1e1e87a74d1d9d9dffca9f0cb4f5bc023373cbc711ce2ad0c7af8122b26fa662",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_90.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "50014fa0bd521c2f21e87a55635d6f9f418c5afee15bb50dfb9349dfb156c78b",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_91.bin",
+  "size": 33046528,
+  "lfs": {
+   "oid": "21674af8e4b18549abd6e5f84b0e71866aeffe5f5540fbe0ee6edd96d0e45976",
+   "size": 33046528
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_92.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "e8b4efc8aa76db62b4da7d4a7a9c0f7c5ea0577aa9e1884f5ee646dc4e2d757c",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_93.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "ad442b503da84fe2a9a0cfeca9d31e7d200125ef365b8c2220d1901fe1800b45",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_94.bin",
+  "size": 22036480,
+  "lfs": {
+   "oid": "b19a3fb0d8679a79220a8f83891a8af8dc024a6ae107828d14c8a7da157fdceb",
+   "size": 22036480
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_95.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "dfc07de548db649ae5e85ab697b51dc4c13e0e8d9188373b26f58f9cc944df50",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_96.bin",
+  "size": 58720256,
+  "lfs": {
+   "oid": "d26566659a8e0aa694a27dcebe135ac8050d16fc71be2c59e2d2b82ecc7bed8b",
+   "size": 58720256
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_97.bin",
+  "size": 27271168,
+  "lfs": {
+   "oid": "7542f1a9717777f3df6af6a6a26598572813629eb50826c33ed2be0dfdab5bef",
+   "size": 27271168
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_98.bin",
+  "size": 29360128,
+  "lfs": {
+   "oid": "d3cec6ad7a5d267231cd66717ab61ad047939c2ce31b2cf122b5b365bf9efc2a",
+   "size": 29360128
+  }
+ },
+ {
+  "type": "file",
+  "path": "params_shard_99.bin",
+  "size": 30949376,
+  "lfs": {
+   "oid": "dbe0dcc58a0715ecc4ce9a2d3f6d819683b5069a07c15ffa58640a83c4cb099a",
+   "size": 30949376
+  }
+ },
+ {
+  "type": "file",
+  "path": "tensor-cache.json",
+  "size": 148396
+ },
+ {
+  "type": "file",
+  "path": "tokenizer.json",
+  "size": 9085698
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_config.json",
+  "size": 50977
+ }
+]

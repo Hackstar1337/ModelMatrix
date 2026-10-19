@@ -122,6 +122,8 @@ The dashboard uses the controller API documented in [SETUP.md](SETUP.md#controll
 | GET | `/api/optimize/plan` | Memory snapshot, items with sizes and in-use state, presets and estimates, other apps |
 | POST | `/api/optimize/run` | `{items: [ids]}` or `{preset: "maximum" or "recommended"}`; unloads and stops, returns results with memory before and after |
 | POST | `/api/optimize/purge` | Clears the file cache after the macOS password dialog; returns memory before and after |
+| GET | `/api/hf/check?name=` | Read-only Hugging Face model check: format, versions, memory fit, recommendation, engines. Optional `context` (tokens, `16k` accepted), `format=text`, `refresh=1` to look for engines again |
+| GET | `/api/hf/search?q=` | Ready-to-run (GGUF, and MLX on Apple Silicon) models matching the words, most downloaded first |
 | GET | `/api/bridge/state` | Menu bar app status and remote hosts |
 | POST | `/api/bridge/commands` | Queue an app action; poll `GET /api/bridge/commands/{id}` |
 | GET / POST | `/api/remote/{host-id}/...` | Proxy to a remote host's agent, limited to status, metrics, doctor, usage, Ollama, start, stop, restart, switch, stop-all and benchmark routes |

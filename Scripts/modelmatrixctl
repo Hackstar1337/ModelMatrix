@@ -54,6 +54,15 @@ Commands:
                         --recommended  only idle models/servers, no password
                         --no-purge     skip clearing the file cache
                         --dry-run      print the plan without freeing anything
+  check <model> [options]
+                        Check a Hugging Face model before downloading: its
+                        format, versions, memory fit on this Mac, and which
+                        engine it needs. Read-only: downloads and installs
+                        nothing. <model> is owner/name, owner/name:LABEL, a
+                        huggingface.co link, or search words.
+                        --context N    plan for N tokens of context (e.g. 16k)
+                        --json         print the full report as JSON
+                        --refresh      look for installed engines again
   open-app              Launch ModelMatrix
   open-profiles         Open the profiles directory
   completions <shell>   Print shell completions
@@ -61,6 +70,58 @@ USAGE
 }
 
 api() { curl -fsS "$@"; }
+
+# GET with URL-encoded parameters; prints the controller's own error
+# message (not curl's) when the request fails.
+hf_get() {
+  local endpoint="$1" output status body message
+  shift
+  if ! output="$(curl -sS --max-time 180 -G -w '\n%{http_code}' "$@" "$CONTROLLER_URL$endpoint" 2>&1)"; then
+    printf 'error: cannot reach ModelMatrix at %s. Is ModelMatrix running? (modelmatrixctl open-app)\n' "$CONTROLLER_URL" >&2
+    exit 3
+  fi
+  status="${output##*$'\n'}"
+  body="${output%$'\n'*}"
+  if [ "$status" -ge 200 ] && [ "$status" -lt 300 ]; then
+    printf '%s\n' "${body%$'\n'}"
+    return 0
+  fi
+  case "$body" in
+    error:*) printf '%s\n' "${body%$'\n'}" >&2 ;;
+    *)
+      message="$(printf '%s' "$body" | plutil -extract message raw -o - -- - 2>/dev/null || true)"
+      printf 'error: %s\n' "${message:-the controller answered HTTP $status}" >&2
+      ;;
+  esac
+  exit 1
+}
+
+check_model() {
+  local name="" context="" format=text refresh=0
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --json) format=json ;;
+      --refresh) refresh=1 ;;
+      --context)
+        [ "$#" -ge 2 ] || { printf 'error: --context needs a number of tokens, for example --context 16k\n' >&2; exit 64; }
+        context="$2"; shift ;;
+      --context=*) context="${1#--context=}" ;;
+      --) shift; name="${name:+$name }$*"; break ;;
+      -*) printf 'error: unknown check option: %s\n' "$1" >&2; exit 64 ;;
+      *) name="${name:+$name }$1" ;;
+    esac
+    shift
+  done
+  if [ -z "$name" ]; then
+    printf 'error: check needs a Hugging Face model, for example:\n  modelmatrixctl check bartowski/Qwen2.5-7B-Instruct-GGUF\n' >&2
+    exit 64
+  fi
+  local args=(--data-urlencode "name=$name")
+  [ "$format" = text ] && args+=(--data-urlencode "format=text")
+  [ -n "$context" ] && args+=(--data-urlencode "context=$context")
+  [ "$refresh" = 1 ] && args+=(--data-urlencode "refresh=1")
+  hf_get /api/hf/check "${args[@]}"
+}
 
 native() {
   if [ -z "$CONTROLLER_BIN" ]; then
@@ -89,7 +150,7 @@ extract_path() {
 }
 
 completions() {
-  local commands='status summary profiles-dir controller-root capabilities robot-docs triage doctor start stop restart switch bench bench-all stop-all dashboard usage optimize open-app open-profiles'
+  local commands='status summary profiles-dir controller-root capabilities robot-docs triage doctor start stop restart switch bench bench-all stop-all dashboard usage optimize check open-app open-profiles'
   case "${1:-}" in
     bash)
       cat <<EOF
@@ -113,7 +174,7 @@ print_capabilities() {
   "contract_version": "1.0",
   "default_probe": "modelmatrixctl triage",
   "native_controller": true,
-  "commands": ["status", "summary", "profiles-dir", "controller-root", "capabilities", "robot-docs", "triage", "doctor", "start", "stop", "restart", "switch", "bench", "bench-all", "stop-all", "dashboard", "usage", "optimize", "open-app", "open-profiles"]
+  "commands": ["status", "summary", "profiles-dir", "controller-root", "capabilities", "robot-docs", "triage", "doctor", "start", "stop", "restart", "switch", "bench", "bench-all", "stop-all", "dashboard", "usage", "optimize", "check", "open-app", "open-profiles"]
 }
 JSON
 }
@@ -130,6 +191,8 @@ ModelMatrix native controller
 - `modelmatrixctl status` is the default read-only probe.
 - `modelmatrixctl capabilities` describes available commands.
 - Lifecycle commands support `--dry-run` or `--plan` before mutation.
+- `modelmatrixctl check <owner/name> --json` checks a Hugging Face model
+  (format, versions, memory fit, engine) without downloading or installing.
 DOCS
 }
 
@@ -218,6 +281,7 @@ case "$command" in
       json_action '/api/optimize/purge' '{}'
     fi
     ;;
+  check) check_model "$@" ;;
   open-app)
     open -a 'ModelMatrix'
     ;;

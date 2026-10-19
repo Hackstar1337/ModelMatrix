@@ -1,0 +1,62 @@
+{
+ "baseModels": {
+  "models": [
+   {
+    "_id": "66e81cbcd683a3f4e5291bbf",
+    "id": "Qwen/Qwen2.5-7B-Instruct"
+   }
+  ],
+  "relation": "quantized"
+ },
+ "cardData": {
+  "base_model": "Qwen/Qwen2.5-7B-Instruct",
+  "library_name": "transformers",
+  "license": "apache-2.0",
+  "pipeline_tag": "text-generation"
+ },
+ "config": {
+  "architectures": [
+   "Qwen2ForCausalLM"
+  ],
+  "model_type": "qwen2",
+  "quantization_config": {
+   "bits": 4,
+   "quant_method": "awq"
+  }
+ },
+ "downloads": 2183730,
+ "gated": false,
+ "id": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+ "lastModified": "2024-10-09T12:26:45.000Z",
+ "library_name": "transformers",
+ "likes": 58,
+ "pipeline_tag": "text-generation",
+ "private": false,
+ "safetensors": {
+  "parameters": {
+   "F16": 1090328064,
+   "I32": 6525288448
+  },
+  "total": 7615616512
+ },
+ "sha": "b25037543e9394b818fdfca67ab2a00ecc7dd641",
+ "tags": [
+  "transformers",
+  "safetensors",
+  "qwen2",
+  "text-generation",
+  "chat",
+  "conversational",
+  "en",
+  "arxiv:2309.00071",
+  "arxiv:2407.10671",
+  "base_model:Qwen/Qwen2.5-7B-Instruct",
+  "base_model:quantized:Qwen/Qwen2.5-7B-Instruct",
+  "license:apache-2.0",
+  "text-generation-inference",
+  "endpoints_compatible",
+  "4-bit",
+  "awq",
+  "region:us"
+ ]
+}

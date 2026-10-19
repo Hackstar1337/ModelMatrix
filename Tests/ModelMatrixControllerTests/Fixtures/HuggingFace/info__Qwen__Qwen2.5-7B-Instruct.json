@@ -1,0 +1,58 @@
+{
+ "baseModels": {
+  "models": [
+   {
+    "_id": "66e6d06401e2adb00b0be996",
+    "id": "Qwen/Qwen2.5-7B"
+   }
+  ],
+  "relation": "finetune"
+ },
+ "cardData": {
+  "base_model": "Qwen/Qwen2.5-7B",
+  "library_name": "transformers",
+  "license": "apache-2.0",
+  "pipeline_tag": "text-generation"
+ },
+ "config": {
+  "architectures": [
+   "Qwen2ForCausalLM"
+  ],
+  "model_type": "qwen2"
+ },
+ "downloads": 6777731,
+ "gated": false,
+ "id": "Qwen/Qwen2.5-7B-Instruct",
+ "lastModified": "2025-01-12T02:10:10.000Z",
+ "library_name": "transformers",
+ "likes": 2445,
+ "pipeline_tag": "text-generation",
+ "private": false,
+ "safetensors": {
+  "parameters": {
+   "BF16": 7615616512
+  },
+  "total": 7615616512
+ },
+ "sha": "a09a35458c702b33eeacc393d103063234e8bc28",
+ "tags": [
+  "transformers",
+  "safetensors",
+  "qwen2",
+  "text-generation",
+  "chat",
+  "conversational",
+  "en",
+  "arxiv:2309.00071",
+  "arxiv:2407.10671",
+  "base_model:Qwen/Qwen2.5-7B",
+  "base_model:finetune:Qwen/Qwen2.5-7B",
+  "license:apache-2.0",
+  "eval-results",
+  "text-generation-inference",
+  "endpoints_compatible",
+  "deploy:sagemaker",
+  "deploy:azure",
+  "region:us"
+ ]
+}

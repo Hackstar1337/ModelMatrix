@@ -1,0 +1,146 @@
+[
+ {
+  "id": "MaziyarPanahi/Meta-Llama-3-8B-Instruct-GGUF",
+  "downloads": 109052,
+  "likes": 103,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF",
+  "downloads": 42587,
+  "likes": 337,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF",
+  "downloads": 5542,
+  "likes": 193,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "qwp4w3hyb/Meta-Llama-3-8B-Instruct-iMat-GGUF",
+  "downloads": 2322,
+  "likes": 6,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/Llama-3-13B-Instruct-v0.1-GGUF",
+  "downloads": 1547,
+  "likes": 1,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/Llama-3-8B-Instruct-Finance-RAG-GGUF",
+  "downloads": 1178,
+  "likes": 64,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "shenzhi-wang/Llama3-8B-Chinese-Chat-GGUF-8bit",
+  "downloads": 1001,
+  "likes": 166,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/Meta-Llama-3-8B-Instruct-GGUF-v2",
+  "downloads": 908,
+  "likes": 16,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "LiteLLMs/Meta-Llama-3-13B-Instruct-GGUF",
+  "downloads": 815,
+  "likes": 2,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "QuantFactory/Bio-Medical-Llama-3-8B-GGUF",
+  "downloads": 738,
+  "likes": 9,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "ruslandev/llama-3-8b-gpt-4o-ru1.0-gguf",
+  "downloads": 680,
+  "likes": 32,
+  "gated": false
+ },
+ {
+  "id": "matrixportalx/Meta-Llama-3-8B-Instruct-GGUF",
+  "downloads": 573,
+  "likes": 0,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "brittlewis12/Meta-Llama-3-8B-Instruct-GGUF",
+  "downloads": 548,
+  "likes": 0,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "second-state/Llama-3-8B-Instruct-GGUF",
+  "downloads": 516,
+  "likes": 7,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Meta-Llama-3-8B-Instruct-BPE-fix-GGUF",
+  "downloads": 447,
+  "likes": 11,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "chibifire/Llama-3-Kimodo-GGML",
+  "downloads": 432,
+  "likes": 0,
+  "gated": false,
+  "library_name": "ggml"
+ },
+ {
+  "id": "QuantFactory/Llama-3-MAAL-8B-Instruct-v0.1-GGUF",
+  "downloads": 399,
+  "likes": 2,
+  "gated": false
+ },
+ {
+  "id": "PawanKrd/Meta-Llama-3-8B-Instruct-GGUF",
+  "downloads": 398,
+  "likes": 6,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "jburmeister/Meta-Llama-3-8B-Instruct-GGUF",
+  "downloads": 376,
+  "likes": 0,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "LiteLLMs/Llama3-8B-Chinese-Chat-GGUF",
+  "downloads": 281,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ }
+]

@@ -1,0 +1,135 @@
+[
+ {
+  "type": "file",
+  "path": ".gitattributes",
+  "size": 1519
+ },
+ {
+  "type": "file",
+  "path": "README.md",
+  "size": 21829
+ },
+ {
+  "type": "file",
+  "path": "added_tokens.json",
+  "size": 34648
+ },
+ {
+  "type": "file",
+  "path": "config.json",
+  "size": 1272
+ },
+ {
+  "type": "file",
+  "path": "flax_model.msgpack",
+  "size": 6174007324,
+  "lfs": {
+   "oid": "e9c7b745947df8856bb809974ac7f9ef2704f7834ab1760fc925f38f8f5517f5",
+   "size": 6174007324
+  }
+ },
+ {
+  "type": "file",
+  "path": "generation_config.json",
+  "size": 3903
+ },
+ {
+  "type": "file",
+  "path": "merges.txt",
+  "size": 493869
+ },
+ {
+  "type": "file",
+  "path": "model.fp32-00001-of-00002.safetensors",
+  "size": 4993448880,
+  "lfs": {
+   "oid": "08e0005225b3dbaf55dd13ac62926cc7e02c1025d66fa375e6fb305ff79cd4f9",
+   "size": 4993448880
+  }
+ },
+ {
+  "type": "file",
+  "path": "model.fp32-00002-of-00002.safetensors",
+  "size": 1180663192,
+  "lfs": {
+   "oid": "630ca774672856d2e0e39a702e590f635a1cfc5726a64b6578ab46dd367369a9",
+   "size": 1180663192
+  }
+ },
+ {
+  "type": "file",
+  "path": "model.safetensors",
+  "size": 3087130976,
+  "lfs": {
+   "oid": "a8e94b85976e5864ba3e9525c7e6c83b2a1eca42d4b797a0c7c24d778e40fd95",
+   "size": 3087130976
+  }
+ },
+ {
+  "type": "file",
+  "path": "model.safetensors.index.fp32.json",
+  "size": 117893
+ },
+ {
+  "type": "file",
+  "path": "normalizer.json",
+  "size": 52666
+ },
+ {
+  "type": "file",
+  "path": "preprocessor_config.json",
+  "size": 340
+ },
+ {
+  "type": "file",
+  "path": "pytorch_model.bin",
+  "size": 3087394553,
+  "lfs": {
+   "oid": "8f3dd0108a56caf505b47740a385a6f61be03e670f4fc34e21e3d2bc98d7b6d1",
+   "size": 3087394553
+  }
+ },
+ {
+  "type": "file",
+  "path": "pytorch_model.bin.index.fp32.json",
+  "size": 117957
+ },
+ {
+  "type": "file",
+  "path": "pytorch_model.fp32-00001-of-00002.bin",
+  "size": 4993677094,
+  "lfs": {
+   "oid": "fed9e023b3519cba5b7279bdfbfd81aacfeb001f04bbe0cd9b8d1995a900b0d8",
+   "size": 4993677094
+  }
+ },
+ {
+  "type": "file",
+  "path": "pytorch_model.fp32-00002-of-00002.bin",
+  "size": 1180725482,
+  "lfs": {
+   "oid": "aadd3bdfecf9bc81e6ef6acf3c1ccaf3124c82eb06a94190064a28fdee096d64",
+   "size": 1180725482
+  }
+ },
+ {
+  "type": "file",
+  "path": "special_tokens_map.json",
+  "size": 2072
+ },
+ {
+  "type": "file",
+  "path": "tokenizer.json",
+  "size": 2480617
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_config.json",
+  "size": 282843
+ },
+ {
+  "type": "file",
+  "path": "vocab.json",
+  "size": 1036558
+ }
+]

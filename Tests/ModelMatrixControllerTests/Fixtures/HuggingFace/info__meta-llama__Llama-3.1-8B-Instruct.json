@@ -1,0 +1,65 @@
+{
+ "baseModels": {
+  "models": [
+   {
+    "_id": "66944f1fe0c5c2e493a804f5",
+    "id": "meta-llama/Llama-3.1-8B"
+   }
+  ],
+  "relation": "finetune"
+ },
+ "cardData": {
+  "base_model": "meta-llama/Meta-Llama-3.1-8B",
+  "license": "llama3.1",
+  "pipeline_tag": "text-generation"
+ },
+ "config": {
+  "architectures": [
+   "LlamaForCausalLM"
+  ],
+  "model_type": "llama"
+ },
+ "downloads": 5490624,
+ "gated": "manual",
+ "id": "meta-llama/Llama-3.1-8B-Instruct",
+ "lastModified": "2024-09-25T17:00:57.000Z",
+ "library_name": "transformers",
+ "likes": 8509,
+ "pipeline_tag": "text-generation",
+ "private": false,
+ "safetensors": {
+  "parameters": {
+   "BF16": 8030261248
+  },
+  "total": 8030261248
+ },
+ "sha": "0e9e39f249a16976918f6564b8830bc894c89659",
+ "tags": [
+  "transformers",
+  "safetensors",
+  "llama",
+  "text-generation",
+  "facebook",
+  "meta",
+  "pytorch",
+  "llama-3",
+  "conversational",
+  "en",
+  "de",
+  "fr",
+  "it",
+  "pt",
+  "hi",
+  "es",
+  "th",
+  "arxiv:2204.05149",
+  "base_model:meta-llama/Llama-3.1-8B",
+  "base_model:finetune:meta-llama/Llama-3.1-8B",
+  "license:llama3.1",
+  "eval-results",
+  "text-generation-inference",
+  "endpoints_compatible",
+  "deploy:sagemaker",
+  "region:us"
+ ]
+}

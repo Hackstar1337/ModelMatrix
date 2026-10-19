@@ -140,6 +140,32 @@ From the terminal: `modelmatrixctl optimize` (Maximum), `--recommended`, `--no-p
 
 ---
 
+## Check a Hugging Face model
+
+Before you download a model, ModelMatrix can tell you whether it will run on your Mac and which version to pick:
+
+```bash
+modelmatrixctl check bartowski/Qwen2.5-7B-Instruct-GGUF
+modelmatrixctl check Qwen/Qwen2.5-7B-Instruct            # original weights: lists ready-to-run versions
+modelmatrixctl check "qwen2.5 coder 7b"                   # search words: lists matching models
+modelmatrixctl check bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M --context 16k --json
+```
+
+You can type `owner/name`, `owner/name:VERSION`, a `huggingface.co` link (including a link to one file), or search words. The check reports:
+
+- **Format**: GGUF, MLX, MLC-LLM, original weights, or a GPU-server format such as AWQ, GPTQ or EXL2. For formats ModelMatrix can't run, it lists ready-to-run GGUF (and, on Apple Silicon, MLX) versions of the same model, with plain conversions before modified ones.
+- **Type and licence**: chat, vision chat, or not a chat model (speech, image generation, embeddings), the licence, and whether Hugging Face needs a login to download it.
+- **This Mac**: processor, memory, how much of it a model may use (measured from the GPU on Apple Silicon), and free disk space.
+- **Every version** with its download size, quality, estimated memory at your context length, and whether it fits well, fits tightly or is too big. Large models split into several files are counted as one version, and image adapters (`mmproj`) for vision models are included in the size.
+- **A recommendation**: the best quality that fits comfortably, at the longest context that still fits. Versions under 3.5 bits lose a lot of quality, so they are never recommended automatically; you can still name one (`owner/name:IQ2_M`).
+- **The engine it needs** (llama.cpp for GGUF, mlx-lm for MLX, Ollama as a backup), whether it is installed and which version, and how to install it on this Mac.
+
+The check is read-only. It reads the model's details from Hugging Face and at most the first few megabytes of one GGUF file (its settings, not the model itself). It downloads no model, installs nothing and changes no profiles. Memory figures are estimates. Run it again with `--refresh` after installing an engine.
+
+The check is available from the terminal and the controller API (`GET /api/hf/check?name=`). Downloading, engine installs (only after you approve them), automatic profiles, and the dashboard and menu bar screens for this feature are coming in later updates.
+
+---
+
 ## Runtimes supported
 
 ModelMatrix keys off the runtime. Any backend with an OpenAI-compatible endpoint can be health-checked, switched and tagged.

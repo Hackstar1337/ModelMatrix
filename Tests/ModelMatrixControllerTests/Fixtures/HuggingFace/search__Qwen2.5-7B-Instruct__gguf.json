@@ -1,0 +1,145 @@
+[
+ {
+  "id": "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
+  "downloads": 331459,
+  "likes": 557,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "unsloth/Qwen2.5-VL-7B-Instruct-GGUF",
+  "downloads": 223533,
+  "likes": 238,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "image-text-to-text"
+ },
+ {
+  "id": "bartowski/Qwen2.5-7B-Instruct-GGUF",
+  "downloads": 213341,
+  "likes": 83,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+  "downloads": 181341,
+  "likes": 193,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "MaziyarPanahi/Qwen2.5-7B-Instruct-GGUF",
+  "downloads": 94272,
+  "likes": 11,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "ggml-org/Qwen2.5-VL-7B-Instruct-GGUF",
+  "downloads": 71429,
+  "likes": 19,
+  "gated": false
+ },
+ {
+  "id": "bartowski/Qwen2.5-Coder-7B-Instruct-GGUF",
+  "downloads": 58773,
+  "likes": 74,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Qwen2.5-VL-7B-Instruct-GGUF",
+  "downloads": 46770,
+  "likes": 11,
+  "gated": false,
+  "pipeline_tag": "image-text-to-text"
+ },
+ {
+  "id": "mradermacher/Qwen2.5-VL-7B-Instruct-abliterated-GGUF",
+  "downloads": 45117,
+  "likes": 56,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "mradermacher/Qwen2.5-VL-7B-Instruct-GGUF",
+  "downloads": 42969,
+  "likes": 6,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "bartowski/Qwen2.5-Coder-7B-Instruct-abliterated-GGUF",
+  "downloads": 41230,
+  "likes": 75,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Qwen2.5-Coder-7B-Instruct-GGUF",
+  "downloads": 28756,
+  "likes": 33,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "bartowski/Qwen2.5-Math-7B-Instruct-GGUF",
+  "downloads": 21260,
+  "likes": 15,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "QuantFactory/Qwen2.5-7B-Instruct-abliterated-v2-GGUF",
+  "downloads": 20735,
+  "likes": 13,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Qwen2.5-7B-Instruct-GGUF",
+  "downloads": 20503,
+  "likes": 7,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "BlossomsAI/Qwen2.5-Coder-7B-Instruct-Uncensored-GGUF",
+  "downloads": 16894,
+  "likes": 25,
+  "gated": false
+ },
+ {
+  "id": "criscar22/Qwen2.5-Coder-7B-Instruct-abliterated",
+  "downloads": 15559,
+  "likes": 1,
+  "gated": false
+ },
+ {
+  "id": "mradermacher/Qwen2.5-7B-Instruct-abliterated-v2-GGUF",
+  "downloads": 15220,
+  "likes": 22,
+  "gated": false,
+  "library_name": "transformers"
+ },
+ {
+  "id": "saidutta69/Qwen2.5-7B-Instruct-heretic",
+  "downloads": 14502,
+  "likes": 0,
+  "gated": false,
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mradermacher/Qwen2.5-7B-Instruct-abliterated-GGUF",
+  "downloads": 14420,
+  "likes": 10,
+  "gated": false,
+  "library_name": "transformers"
+ }
+]

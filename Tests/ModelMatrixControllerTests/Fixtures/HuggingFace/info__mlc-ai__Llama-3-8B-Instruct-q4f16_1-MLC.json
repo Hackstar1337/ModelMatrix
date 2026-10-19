@@ -1,0 +1,31 @@
+{
+ "baseModels": {
+  "models": [
+   {
+    "_id": "661f97d0b00f5f1f620c4f25",
+    "id": "meta-llama/Meta-Llama-3-8B-Instruct"
+   }
+  ],
+  "relation": "quantized"
+ },
+ "cardData": {
+  "base_model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "library_name": "mlc-llm"
+ },
+ "config": {},
+ "downloads": 485,
+ "gated": false,
+ "id": "mlc-ai/Llama-3-8B-Instruct-q4f16_1-MLC",
+ "lastModified": "2025-09-07T18:53:39.000Z",
+ "library_name": "mlc-llm",
+ "likes": 7,
+ "private": false,
+ "sha": "70a52480d0967025f4aa9d7e509573a357ed559a",
+ "tags": [
+  "mlc-llm",
+  "web-llm",
+  "base_model:meta-llama/Meta-Llama-3-8B-Instruct",
+  "base_model:quantized:meta-llama/Meta-Llama-3-8B-Instruct",
+  "region:us"
+ ]
+}

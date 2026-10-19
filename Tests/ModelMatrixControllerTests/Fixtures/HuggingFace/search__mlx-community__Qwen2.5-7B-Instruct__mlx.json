@@ -1,0 +1,162 @@
+[
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "downloads": 255445,
+  "likes": 31,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
+  "downloads": 19559,
+  "likes": 6,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "image-text-to-text"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-7B-Instruct-4bit",
+  "downloads": 15335,
+  "likes": 17,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-VL-7B-Instruct-8bit",
+  "downloads": 2488,
+  "likes": 17,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "image-text-to-text"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-7B-Instruct-Uncensored-4bit",
+  "downloads": 1534,
+  "likes": 7,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-Instruct-8bit",
+  "downloads": 1128,
+  "likes": 1,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-Instruct-MLX",
+  "downloads": 1096,
+  "likes": 6,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5.1-Coder-7B-Instruct-4bit",
+  "downloads": 502,
+  "likes": 9,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-Instruct-bf16",
+  "downloads": 436,
+  "likes": 2,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-7B-Instruct-8bit",
+  "downloads": 325,
+  "likes": 3,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-Instruct-3bit",
+  "downloads": 301,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Josiefied-Qwen2.5-7B-Instruct-abliterated-v2-4-bit",
+  "downloads": 296,
+  "likes": 3,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-7B-Instruct-1M-4bit",
+  "downloads": 270,
+  "likes": 11,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Josiefied-Qwen2.5-Coder-7B-Instruct-abliterated-v1-4bit",
+  "downloads": 254,
+  "likes": 1,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5.1-Coder-7B-Instruct-8bit",
+  "downloads": 226,
+  "likes": 3,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-VL-7B-Instruct-bf16",
+  "downloads": 220,
+  "likes": 4,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "image-text-to-text"
+ },
+ {
+  "id": "mlx-community/Josiefied-Qwen2.5-7B-Instruct-abliterated-v2",
+  "downloads": 215,
+  "likes": 4,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-VL-7B-Instruct-6bit",
+  "downloads": 207,
+  "likes": 3,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "image-text-to-text"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-7B-Instruct-bf16",
+  "downloads": 206,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-VL-7B-Instruct-3bit",
+  "downloads": 170,
+  "likes": 1,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "image-text-to-text"
+ }
+]

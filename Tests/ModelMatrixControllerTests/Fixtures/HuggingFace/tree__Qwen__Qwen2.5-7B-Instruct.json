@@ -1,0 +1,88 @@
+[
+ {
+  "type": "file",
+  "path": ".gitattributes",
+  "size": 1519
+ },
+ {
+  "type": "file",
+  "path": "LICENSE",
+  "size": 11343
+ },
+ {
+  "type": "file",
+  "path": "README.md",
+  "size": 6240
+ },
+ {
+  "type": "file",
+  "path": "config.json",
+  "size": 663
+ },
+ {
+  "type": "file",
+  "path": "generation_config.json",
+  "size": 243
+ },
+ {
+  "type": "file",
+  "path": "merges.txt",
+  "size": 1671839
+ },
+ {
+  "type": "file",
+  "path": "model-00001-of-00004.safetensors",
+  "size": 3945441440,
+  "lfs": {
+   "oid": "a1333e6293854747c481288ea83b348226af178dd565c49b6f9495ba1966aba7",
+   "size": 3945441440
+  }
+ },
+ {
+  "type": "file",
+  "path": "model-00002-of-00004.safetensors",
+  "size": 3864726352,
+  "lfs": {
+   "oid": "f5d25a2772cb825164a2a2c0fb6d51a87e282abf21e4dd75bc5cfb3cd0ea6185",
+   "size": 3864726352
+  }
+ },
+ {
+  "type": "file",
+  "path": "model-00003-of-00004.safetensors",
+  "size": 3864726424,
+  "lfs": {
+   "oid": "8efdec4c1bc12317ae1a38dc42b595ce777738a64deea3fcb8a0a91381bcdfd5",
+   "size": 3864726424
+  }
+ },
+ {
+  "type": "file",
+  "path": "model-00004-of-00004.safetensors",
+  "size": 3556377672,
+  "lfs": {
+   "oid": "1a72d403cdf0c1ec3cb7f289f17b394a01e64394c2e9b3c0f94dbce3faf879bd",
+   "size": 3556377672
+  }
+ },
+ {
+  "type": "file",
+  "path": "model.safetensors.index.json",
+  "size": 27752
+ },
+ {
+  "type": "file",
+  "path": "tokenizer.json",
+  "size": 7031645
+ },
+ {
+  "type": "file",
+  "path": "tokenizer_config.json",
+  "size": 7305
+ },
+ {
+  "type": "file",
+  "path": "vocab.json",
+  "size": 2776833
+ }
+]

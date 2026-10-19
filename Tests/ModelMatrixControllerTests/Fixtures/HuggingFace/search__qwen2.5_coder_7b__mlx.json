@@ -1,0 +1,82 @@
+[
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "downloads": 255445,
+  "likes": 31,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Qwen2.5-Coder-7B-Instruct-MLX-4bit",
+  "downloads": 15095,
+  "likes": 7,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "lmstudio-community/Qwen2.5-Coder-7B-Instruct-MLX-8bit",
+  "downloads": 5413,
+  "likes": 1,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "yuvit-batra/qwen2.5-coder-7b-cadquery-gguf",
+  "downloads": 1310,
+  "likes": 5,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-Instruct-8bit",
+  "downloads": 1128,
+  "likes": 1,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-Instruct-MLX",
+  "downloads": 1096,
+  "likes": 6,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-4bit",
+  "downloads": 945,
+  "likes": 0,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5-Coder-7B-8bit",
+  "downloads": 729,
+  "likes": 2,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "mlx-community/Qwen2.5.1-Coder-7B-Instruct-4bit",
+  "downloads": 502,
+  "likes": 9,
+  "gated": false,
+  "library_name": "transformers",
+  "pipeline_tag": "text-generation"
+ },
+ {
+  "id": "apolloransom/Qwen2.5-Coder-7B-Instruct-MLX",
+  "downloads": 469,
+  "likes": 0,
+  "gated": false,
+  "library_name": "mlx",
+  "pipeline_tag": "text-generation"
+ }
+]
