@@ -27,6 +27,10 @@ ModelMatrix is a macOS control center for local language models. It starts, stop
 
 You can drive it two ways, and both offer the same features: a native **SwiftUI menu bar app**, and a **web dashboard** that the bundled controller serves on `http://localhost:7700`.
 
+## Latest feature: add models from Hugging Face
+
+Enter a Hugging Face model name and ModelMatrix checks its format, available versions, memory and disk requirements, login status and required engine **before downloading anything**. Choose a version, download it with resume and checksum verification, and get an automatically configured profile, startup and test chat. Missing engines are installed **only after you approve the install plan**. Available in the dashboard, menu bar and CLI, on Apple Silicon and Intel Macs and managed Linux hosts. See [the full update notes](CHANGELOG.md#unreleased).
+
 <table>
 <tr>
 <td align="center" width="33%" valign="top">
@@ -57,11 +61,11 @@ Open it from the menu bar (the compass button in the header, or **Usage → Open
 | Page | What you get |
 |---|---|
 | **Overview** | Live feed of in-flight and recent requests, fleet cards per host (GPU, memory, loaded models, last-hour traffic), KPI strip (requests, tokens, average t/s, inference time, clients, local vs cloud), requests and token volume chart, local vs cloud split, PDF export |
-| **Models & Servers** | Every profile with Activate / Start / Stop / Restart / Benchmark, create, edit (form or raw file), duplicate, delete, capture mode, remote hosts (pair, add, edit, pause, install or update agent, remove), benchmark results |
+| **Models & Servers** | Every profile with Activate / Start / Stop / Restart / Benchmark, create, edit (form or raw file), duplicate, delete, capture mode, **Add from Hugging Face**, Downloads and Downloaded models, remote hosts (pair, add, edit, pause, install or update agent, remove), benchmark results |
 | **Clients** | Every app that called a model, with friendly renames, request and token totals, favourite model, last seen |
 | **Model Insights** | Model split, per-model speed and latency, Ollama installed and loaded models, runtime catalog |
 | **Requests & Latency** | TTFT and throughput charts with percentiles, searchable request log, CSV export |
-| **Settings** | Theme and accent, relay and retention, capture mode, controller doctor, integrations, profiles folder, menu bar shortcuts |
+| **Settings** | Theme and accent, relay and retention, Hugging Face (models folder, mirror, token, download options), engines (install, update, remove, custom paths), capture mode, controller doctor, integrations, profiles folder, menu bar shortcuts |
 | **Optimize** (sparkles button in the header, or **Optimize** on the This Mac card) | Frees memory: see [Free up memory](#free-up-memory-optimize) |
 
 <table>
@@ -93,6 +97,7 @@ The menu bar panel is the quick way in. It has everything the dashboard has:
 | **Usage** (chart icon) | The dashboard's KPIs, live feed, model split, local vs cloud, clients with rename, relay URLs, retention and clear history, CSV export, capture mode switches, Ollama status |
 | **Profiles** (stack icon) | Create from a template, edit any key or the raw file, duplicate, delete |
 | **Optimize** (sparkles icon in the header) | The same memory breakdown, presets, checklist, app selection (with Select all) and results as the dashboard's Optimize window |
+| **Hugging Face Downloads** (download arrow in the header, with a count while downloads run) | The same check, version choice, approve-first engine installs, Downloads list (pause, resume, cancel) and Downloaded models (start, delete) as the dashboard, for this Mac and remote hosts, plus a Download settings card (models folder, mirror, speed, token, engine locations) |
 | **Benchmarks** | Latest run, prefill scaling (TTFT at 1k/4k/8k context), ranked decode speed, CSV export |
 | **Remote Hosts / Settings** | Pairing, SSH agent install and update, appearance, launch at login, controller connection, doctor, integrations |
 
@@ -140,29 +145,62 @@ From the terminal: `modelmatrixctl optimize` (Maximum), `--recommended`, `--no-p
 
 ---
 
-## Check a Hugging Face model
+## Models from Hugging Face
 
-Before you download a model, ModelMatrix can tell you whether it will run on your Mac and which version to pick:
+Type a model name from Hugging Face and ModelMatrix does the rest: it checks the model first, tells you what it is and whether it will run, downloads the version you choose (resumable), creates the profile, starts it and sends it a test message. It works the same from the web dashboard, the menu bar and the terminal, on any supported Mac and on your Linux hosts.
 
 ```bash
-modelmatrixctl check bartowski/Qwen2.5-7B-Instruct-GGUF
-modelmatrixctl check Qwen/Qwen2.5-7B-Instruct            # original weights: lists ready-to-run versions
-modelmatrixctl check "qwen2.5 coder 7b"                   # search words: lists matching models
-modelmatrixctl check bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M --context 16k --json
+modelmatrixctl check bartowski/Qwen2.5-7B-Instruct-GGUF     # what is it, will it run, which version?
+modelmatrixctl pull bartowski/Qwen2.5-7B-Instruct-GGUF --wait
+modelmatrixctl models                                        # downloaded models and their profiles
 ```
 
-You can type `owner/name`, `owner/name:VERSION`, a `huggingface.co` link (including a link to one file), or search words. The check reports:
+In the dashboard, open **Models & Servers → Add from Hugging Face**. In the menu bar, press the download arrow in the header.
+
+### 1. Check before downloading
+
+You can type `owner/name`, `owner/name:VERSION`, a `huggingface.co` link (including a link to one file), or search words. Nothing is downloaded or installed by a check. It reports:
 
 - **Format**: GGUF, MLX, MLC-LLM, original weights, or a GPU-server format such as AWQ, GPTQ or EXL2. For formats ModelMatrix can't run, it lists ready-to-run GGUF (and, on Apple Silicon, MLX) versions of the same model, with plain conversions before modified ones.
 - **Type and licence**: chat, vision chat, or not a chat model (speech, image generation, embeddings), the licence, and whether Hugging Face needs a login to download it.
-- **This Mac**: processor, memory, how much of it a model may use (measured from the GPU on Apple Silicon), and free disk space.
-- **Every version** with its download size, quality, estimated memory at your context length, and whether it fits well, fits tightly or is too big. Large models split into several files are counted as one version, and image adapters (`mmproj`) for vision models are included in the size.
-- **A recommendation**: the best quality that fits comfortably, at the longest context that still fits. Versions under 3.5 bits lose a lot of quality, so they are never recommended automatically; you can still name one (`owner/name:IQ2_M`).
-- **The engine it needs** (llama.cpp for GGUF, mlx-lm for MLX, Ollama as a backup), whether it is installed and which version, and how to install it on this Mac.
+- **The machine**: processor, memory, how much of it a model may use (measured from the GPU on Apple Silicon, processor-only on Intel Macs, NVIDIA/AMD/Vulkan GPU or processor on Linux), and free disk space.
+- **Every version** with its download size, quality, estimated memory at your context length, and whether it fits well, fits tightly or is too big. Large models split into several files count as one version, and image adapters (`mmproj`) for vision models are included in the size.
+- **A recommendation**: the best quality that fits comfortably, at the longest context that still fits. Versions under 3.5 bits lose a lot of quality, so they are never recommended automatically; you can still pick one yourself.
+- **The engine it needs** (llama.cpp for GGUF, mlx-lm for MLX on Apple Silicon, Ollama as a backup), whether it is installed, which version and where.
 
-The check is read-only. It reads the model's details from Hugging Face and at most the first few megabytes of one GGUF file (its settings, not the model itself). It downloads no model, installs nothing and changes no profiles. Memory figures are estimates. Run it again with `--refresh` after installing an engine.
+The check reads the model's details from Hugging Face and at most the first few megabytes of one GGUF file (its settings, not the model). Memory figures are estimates.
 
-The check is available from the terminal and the controller API (`GET /api/hf/check?name=`). Downloading, engine installs (only after you approve them), automatic profiles, and the dashboard and menu bar screens for this feature are coming in later updates.
+### 2. Engines are installed only when you approve
+
+If the engine a model needs is missing, ModelMatrix says so and offers to install it. Before anything runs you see the exact plan: the command (for example `brew install llama.cpp`) or the official download with its SHA-256 checksum, where it goes, how much space it takes, and how to remove it. Nothing is installed until you press **Approve** (or answer `y` in the terminal). An approval is used once and expires after 10 minutes.
+
+| Engine | How ModelMatrix can install it |
+|---|---|
+| llama.cpp | Homebrew (`brew install llama.cpp`) if you have Homebrew, or the official llama.cpp release for your Mac or Linux host (checksum verified) into `~/ModelMatrix/Engines/llama.cpp` |
+| mlx-lm (Apple Silicon) | Homebrew, or a private Python made by the official `uv` tool into `~/ModelMatrix/Engines/mlx-lm` (nothing is added to your shell or system Python) |
+| Ollama | Homebrew or the official app; on Linux hosts it shows the official command for you to run yourself |
+
+Engines already on the machine are found automatically (Homebrew, MacPorts, pip, pipx, uv, conda, `~/.local/bin`, Ollama) or at a path you set in Settings. ModelMatrix only updates or removes engines it installed itself. From the terminal: `modelmatrixctl engines`, `modelmatrixctl engine install llama.cpp [--method homebrew|official]`.
+
+### 3. Resumable downloads
+
+Downloads continue where they stopped after a network drop, sleep, quitting the app or a restart. Large files download in several pieces at once, every file is checked against Hugging Face's SHA-256, and files you already have are reused instead of downloaded again. Pause, resume or cancel from the **Downloads** list in either interface, or with `modelmatrixctl downloads pause|resume|cancel <id>`. ModelMatrix checks free disk space first, keeps the Mac awake while downloading (optional), and shows a notification when a model is ready or needs your attention.
+
+Models go to `~/ModelMatrix/Models/<owner>/<name>` unless you choose another folder. Settings (dashboard **Settings → Hugging Face**, or `modelmatrixctl hf-settings`) cover the models folder, a Hugging Face mirror for regions where the site is slow or blocked, connections per file, a speed limit, starting after download, and keeping the Mac awake. System proxy settings are used automatically.
+
+### 4. Profiles are made for you
+
+When a download finishes, ModelMatrix creates a profile with sensible settings for the machine (context length, GPU or processor use, a free port), starts it, sends a short test message, and shows the model name and address to use. If the engine is still missing, the model waits and starts by itself once you install it. If there isn't enough free memory, it says so and suggests Optimize. If it doesn't start, it shows the reason from the log and a suggested fix, with **Start and test** to try again. Requests go through the usage relay like any other profile.
+
+**Downloaded models** lists every model with its disk use and profile. Deleting one removes its profile, and optionally its files. Models you already had in Ollama before ModelMatrix pulled them are never deleted from Ollama.
+
+### Gated models
+
+Some models (for example Meta's Llama) need you to accept their terms on huggingface.co and sign in. Create a read token at huggingface.co/settings/tokens and save it with **Settings → Hugging Face → Token** or `modelmatrixctl hf-token set`. It is stored in the macOS Keychain and sent only to Hugging Face.
+
+### Remote Linux hosts
+
+Choose a remote host in the check (`--host NAME` in the terminal) and the model downloads directly onto that host from Hugging Face, using the llama.cpp build that matches its GPU (CUDA, Vulkan or processor-only). Engine installs on a host follow the same approve-first plan. The host's models, downloads and profiles appear next to your Mac's.
 
 ---
 
@@ -197,7 +235,8 @@ See [RemoteAgent/README.md](RemoteAgent/README.md) and [SETUP.md](SETUP.md#remot
 
 - **macOS 14** (Sonoma) or later
 - **Apple Silicon recommended.** Intel Macs run the app, but MLX runtimes need Apple Silicon
-- A model runtime and weights on the machine that will serve them (ModelMatrix does not run models itself)
+- A model runtime and weights on the machine that will serve them. ModelMatrix can download models from Hugging Face and, after you approve, install llama.cpp, mlx-lm or Ollama for you
+- Remote hosts: Linux with Python 3.10 or later (x86_64 or arm64)
 - To build from source: Xcode 16+, [XcodeGen](https://github.com/yonaskolb/XcodeGen), and Node.js 20+ with pnpm or npm for the web dashboard
 
 ---

@@ -5,6 +5,8 @@ import { AppProvider, useApp } from "./lib/state";
 import { Header, KpiStrip, Rail, SubNav } from "./components/Shell";
 import { MatrixMark, Notice, Toasts } from "./components/ui";
 import { OptimizeHost } from "./components/Optimize";
+import { HuggingFaceHost } from "./components/HuggingFace";
+import { HFDataProvider } from "./components/Downloads";
 import { OverviewPage } from "./pages/Overview";
 import { ServersPage } from "./pages/Servers";
 import { ClientsPage } from "./pages/Clients";
@@ -66,6 +68,7 @@ function Dashboard() {
     setEditorRequest(true);
   };
   return (
+    <HFDataProvider>
     <div className="app">
       <Header />
       <KpiStrip />
@@ -87,8 +90,10 @@ function Dashboard() {
         </main>
       </div>
       <OptimizeHost />
+      <HuggingFaceHost />
       <Toasts />
     </div>
+    </HFDataProvider>
   );
 }
 

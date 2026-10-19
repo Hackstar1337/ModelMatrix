@@ -27,6 +27,7 @@ If the page says the controller is unreachable, start ModelMatrix from Applicati
 | **Requests & Latency** | TTFT and throughput over time with p50 / p95; searchable, filterable request log; CSV export for the current filter or everything |
 | **Settings** | Theme and accent; relay URLs, retention, clear history; capture mode; controller details and doctor report; integrations; open the profiles or logs folder; open Settings, Usage, Profiles or Optimize in the menu bar app; refresh the app |
 | **Optimize** (header button, or the This Mac card) | Memory breakdown, Maximum and Recommended presets, checklist of what to free, before and after results, other apps using memory with checkboxes and Select all. See [Optimize](#optimize) |
+| **Add from Hugging Face** (Models & Servers) | Check a model before downloading (format, versions with memory fit, recommendation, engine), choose a version and machine, approve-first engine installs; **Downloads** and **Downloaded models** sections with pause, resume, cancel, start and delete; Hugging Face and Engines sections in Settings |
 
 **Standard / Advanced** (top right) toggles latency percentiles, CPU meters, raw identifiers (endpoint, client process), the 1h range and the full key list in the profile editor. The chosen mode and appearance are remembered in the browser.
 
@@ -67,6 +68,7 @@ Every dashboard feature is also in the menu bar app:
 | Fleet metrics | Host sparklines and remote host sections |
 | Theme, accent, doctor, integrations, folders | **Settings** |
 | Optimize: presets, checklist, file cache, results, select and close other apps | **Optimize** panel (sparkles icon in the header) |
+| Hugging Face: check, download, engine install approval, downloads, downloaded models, settings, token, engine locations | **Hugging Face Downloads** panel (download arrow in the header), with a **Download settings** card at the bottom |
 
 Remote hosts live in the app (their SSH tunnels and Keychain tokens belong to it). The app reports them to the controller every few seconds, which lets the dashboard show and proxy them, and the dashboard queues host actions for the app to carry out. If the app is not running, the dashboard shows remote hosts as unavailable and everything on this Mac keeps working.
 
@@ -124,6 +126,17 @@ The dashboard uses the controller API documented in [SETUP.md](SETUP.md#controll
 | POST | `/api/optimize/purge` | Clears the file cache after the macOS password dialog; returns memory before and after |
 | GET | `/api/hf/check?name=` | Read-only Hugging Face model check: format, versions, memory fit, recommendation, engines. Optional `context` (tokens, `16k` accepted), `format=text`, `refresh=1` to look for engines again |
 | GET | `/api/hf/search?q=` | Ready-to-run (GGUF, and MLX on Apple Silicon) models matching the words, most downloaded first |
+| GET, POST | `/api/hf/downloads` | List downloads (`host=NAME` or `host=all`); start one with `{name, version?, engine?, context?, start_after?, host?}`. The model is checked first and only versions that run on that machine are accepted |
+| GET, DELETE | `/api/hf/downloads/{id}` | One download; remove it from the list |
+| POST | `/api/hf/downloads/{id}/pause`, `/resume`, `/cancel`, `/start` | Pause, resume, cancel (`{delete_files}`), or create the profile, start it and send a test message |
+| GET | `/api/hf/models` | Downloaded models with disk use and profiles, plus untracked folders (`host=NAME` or `all`) |
+| POST | `/api/hf/models/delete` | `{id, delete_files}`: delete the profile and optionally the files. Ollama models that were there before are kept |
+| GET | `/api/hf/engines` | llama.cpp, mlx-lm and Ollama: installed, version, location, who installed them, install options (`host`, `refresh=1`) |
+| POST | `/api/hf/engines/plan` | `{engine, action: install, update or uninstall, method?, host?}`: the exact plan with a single-use `plan_id` that expires after 10 minutes. Runs nothing |
+| POST | `/api/hf/engines/run` | `{plan_id}`: run an approved plan; returns a job |
+| GET | `/api/hf/engines/jobs`, `/api/hf/engines/jobs/{id}?since=N` | Engine jobs and their live log; `POST /api/hf/engines/jobs/{id}/cancel` stops one |
+| GET, PUT | `/api/hf/settings` | Models folder, mirror, connections per file, speed limit, start after download, keep awake, engine paths |
+| POST, DELETE | `/api/hf/token` | Save (`{token}`, checked with Hugging Face, stored in the Keychain) or remove the Hugging Face token; the token is never returned |
 | GET | `/api/bridge/state` | Menu bar app status and remote hosts |
 | POST | `/api/bridge/commands` | Queue an app action; poll `GET /api/bridge/commands/{id}` |
 | GET / POST | `/api/remote/{host-id}/...` | Proxy to a remote host's agent, limited to status, metrics, doctor, usage, Ollama, start, stop, restart, switch, stop-all and benchmark routes |

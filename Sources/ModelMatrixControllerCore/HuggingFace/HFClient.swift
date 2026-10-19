@@ -8,20 +8,75 @@ public final class HFClient: @unchecked Sendable {
   static let maxTreePages = 50
   static let cacheSeconds: TimeInterval = 600
 
-  public let endpoint: URL
   let transport: HFTransport
   let timeout: TimeInterval
   private let lock = NSLock()
   private var cache: [String: (Date, HFHTTPResponse)] = [:]
+  private var currentEndpoint: URL
+  private var tokenProvider: (@Sendable () -> String?)?
 
   /// `endpoint` defaults to `HF_ENDPOINT` from the environment (a mirror),
   /// otherwise huggingface.co.
   public init(
     endpoint: URL? = nil, transport: HFTransport = URLSessionHFTransport(), timeout: TimeInterval = 20
   ) {
-    self.endpoint = endpoint ?? HFClient.environmentEndpoint() ?? HFClient.defaultEndpoint
+    self.currentEndpoint = endpoint ?? HFClient.environmentEndpoint() ?? HFClient.defaultEndpoint
     self.transport = transport
     self.timeout = timeout
+  }
+
+  /// The Hugging Face address in use (huggingface.co or a mirror).
+  public var endpoint: URL {
+    lock.lock()
+    defer { lock.unlock() }
+    return currentEndpoint
+  }
+
+  /// Switches to a mirror (or back to huggingface.co with nil) and forgets
+  /// cached answers from the previous address.
+  public func configure(endpoint: URL?) {
+    lock.lock()
+    currentEndpoint = endpoint ?? HFClient.environmentEndpoint() ?? HFClient.defaultEndpoint
+    cache.removeAll()
+    lock.unlock()
+  }
+
+  /// Supplies the saved Hugging Face token. It is sent only to the
+  /// configured Hugging Face address, never to download servers.
+  public func setTokenProvider(_ provider: (@Sendable () -> String?)?) {
+    lock.lock()
+    tokenProvider = provider
+    cache.removeAll()
+    lock.unlock()
+  }
+
+  func token() -> String? {
+    lock.lock()
+    let provider = tokenProvider
+    lock.unlock()
+    return provider?()?.nonEmptyTrimmed
+  }
+
+  /// Authorization header for a request to `url`, when a token is saved and
+  /// `url` is on the Hugging Face address.
+  func authorization(for url: URL) -> String? {
+    guard url.host?.lowercased() == endpoint.host?.lowercased(), let token = token() else { return nil }
+    return "Bearer \(token)"
+  }
+
+  /// The account name a token belongs to, or nil when Hugging Face rejects it.
+  public func whoami(token: String) throws -> String? {
+    guard let url = url(path: "/api/whoami-v2", query: []) else { return nil }
+    let response = try transport.get(
+      url,
+      headers: [
+        "Authorization": "Bearer \(token)", "Accept": "application/json",
+        "User-Agent": "ModelMatrix/\(ControllerVersion.current)",
+      ], maxBytes: 1024 * 1024, timeout: timeout)
+    if response.status == 401 || response.status == 403 { return nil }
+    if response.status == 429 { throw HFError.rateLimited(retryAfterSeconds: Self.retryAfter(response.headers)) }
+    guard response.status == 200 else { throw HFError.upstream(status: response.status) }
+    return (try? Self.object(response.body))?["name"] as? String ?? "your account"
   }
 
   static func environmentEndpoint() -> URL? {
@@ -143,9 +198,14 @@ public final class HFClient: @unchecked Sendable {
   func get(_ url: URL, headers: [String: String] = [:], limit: Int, cacheable: Bool = true) throws
     -> HFHTTPResponse
   {
-    let key = url.absoluteString + "|" + headers.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ",")
-    if cacheable, let hit = cached(key) { return hit }
     var allHeaders = headers
+    let auth = authorization(for: url)
+    // The token itself is never part of the cache key.
+    let key =
+      url.absoluteString + "|" + (auth == nil ? "" : "auth|")
+      + headers.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ",")
+    if cacheable, let hit = cached(key) { return hit }
+    if let auth { allHeaders["Authorization"] = auth }
     allHeaders["User-Agent"] = "ModelMatrix/\(ControllerVersion.current)"
     allHeaders["Accept"] = allHeaders["Range"] == nil ? "application/json" : "*/*"
     let response = try transport.get(url, headers: allHeaders, maxBytes: limit, timeout: timeout)

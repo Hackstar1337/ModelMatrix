@@ -29,7 +29,8 @@ public struct URLSessionHFTransport: HFTransport {
   public func get(_ url: URL, headers: [String: String], maxBytes: Int, timeout: TimeInterval)
     throws -> HFHTTPResponse
   {
-    let collector = HFResponseCollector(maxBytes: maxBytes, allowedScheme: url.scheme ?? "https")
+    let collector = HFResponseCollector(
+      maxBytes: maxBytes, allowedScheme: url.scheme ?? "https", originalHost: url.host?.lowercased() ?? "")
     let configuration = URLSessionConfiguration.ephemeral
     configuration.timeoutIntervalForRequest = timeout
     configuration.timeoutIntervalForResource = timeout
@@ -55,13 +56,15 @@ final class HFResponseCollector: NSObject, URLSessionDataDelegate, @unchecked Se
   private let done = DispatchSemaphore(value: 0)
   private let maxBytes: Int
   private let allowedScheme: String
+  private let originalHost: String
   private var response: HTTPURLResponse?
   private var data = Data()
   private var failure: HFError?
 
-  init(maxBytes: Int, allowedScheme: String) {
+  init(maxBytes: Int, allowedScheme: String, originalHost: String) {
     self.maxBytes = maxBytes
     self.allowedScheme = allowedScheme.lowercased()
+    self.originalHost = originalHost
   }
 
   func wait(seconds: TimeInterval) -> Bool {
@@ -87,7 +90,8 @@ final class HFResponseCollector: NSObject, URLSessionDataDelegate, @unchecked Se
     // File reads redirect to a signed CDN address. Follow only secure
     // redirects (or same-scheme ones for a plain-HTTP mirror).
     let scheme = request.url?.scheme?.lowercased() ?? ""
-    completionHandler(scheme == "https" || scheme == allowedScheme ? request : nil)
+    guard scheme == "https" || scheme == allowedScheme else { return completionHandler(nil) }
+    completionHandler(HFRedirect.stripCredentials(request, originalHost: originalHost))
   }
 
   func urlSession(
@@ -119,5 +123,16 @@ final class HFResponseCollector: NSObject, URLSessionDataDelegate, @unchecked Se
     }
     lock.unlock()
     done.signal()
+  }
+}
+
+enum HFRedirect {
+  /// The Hugging Face token must never reach a download server: drop it
+  /// whenever a redirect leaves the host it was meant for.
+  static func stripCredentials(_ request: URLRequest, originalHost: String) -> URLRequest {
+    guard request.url?.host?.lowercased() != originalHost else { return request }
+    var copy = request
+    copy.setValue(nil, forHTTPHeaderField: "Authorization")
+    return copy
   }
 }

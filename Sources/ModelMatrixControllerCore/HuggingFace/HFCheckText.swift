@@ -25,12 +25,16 @@ public enum HFCheckText {
       let access = repo.loginRequired ? "needs a Hugging Face login" : "open, no login needed"
       lines.append(row("License", "\(repo.license ?? "not stated") (\(access))"))
     }
-    lines.append(row("This Mac", machine(report.machine)))
+    if let name = report.machine.hostName {
+      lines.append(row("Host", "\(name): " + machine(report.machine)))
+    } else {
+      lines.append(row("This Mac", machine(report.machine)))
+    }
     if let engine = report.engine, engine.needed != nil || report.verdict.runnable {
-      renderEngines(engine, into: &lines)
+      renderEngines(engine, host: hostFlag(report.machine), into: &lines)
     }
     lines.append("")
-    lines.append(row("Result", "\(report.verdict.title.uppercased()). \(report.verdict.detail)"))
+    lines.append(row("Result", "\(shout(report.verdict.title, keeping: report.machine.hostName)). \(report.verdict.detail)"))
     if let pick = report.recommendation {
       let fitText = pick.level == "good" ? "fits well" : "fits tightly"
       lines.append(
@@ -38,7 +42,12 @@ public enum HFCheckText {
       lines.append(row("", pick.reason))
     }
     if let folder = report.downloadFolder {
-      lines.append(row("Saves to", "\((folder as NSString).abbreviatingWithTildeInPath) (downloading comes in the next update)"))
+      let shown = (folder as NSString).abbreviatingWithTildeInPath
+      lines.append(row("Saves to", report.downloadAvailable ? shown : "\(shown) (downloading comes in the next update)"))
+      if report.downloadAvailable, let repo = report.repo {
+        let label = report.recommendation.map { ":" + $0.label } ?? ""
+        lines.append(row("Download", "modelmatrixctl download \(repo.id)\(label)\(hostFlag(report.machine))"))
+      }
     }
     if !report.variants.isEmpty, let model = report.model {
       renderVariants(report, model: model, into: &lines)
@@ -47,7 +56,7 @@ public enum HFCheckText {
       lines.append("")
       lines.append(report.verdict.code == "use_alternative" ? "Ready-to-run versions of this model:" : "Other versions:")
       for item in report.alternatives { lines.append("  " + alternative(item)) }
-      lines.append("Check one with: modelmatrixctl check <owner/name>")
+      lines.append("Check one with: modelmatrixctl check <owner/name>\(hostFlag(report.machine))")
     }
     if !report.notes.isEmpty {
       lines.append("")
@@ -65,22 +74,28 @@ public enum HFCheckText {
       lines.append("")
       for item in report.searchResults { lines.append("  " + alternative(item)) }
       lines.append("")
-      lines.append("Check one with: modelmatrixctl check <owner/name>")
+      lines.append("Check one with: modelmatrixctl check <owner/name>\(hostFlag(report.machine))")
     }
   }
 
-  static func renderEngines(_ engine: HFEngineSummary, into lines: inout [String]) {
+  static func renderEngines(_ engine: HFEngineSummary, host: String = "", into lines: inout [String]) {
     for status in engine.engines where status.id == engine.needed || status.id == engine.backup {
       let label = status.id == engine.needed ? "Engine" : "Backup"
       lines.append(row(label, engineLine(status)))
       if !status.installed, let install = status.install {
         let how = install.command ?? "download from \(install.source ?? "the official site")"
-        lines.append(row("", "To install: \(how)"))
-        lines.append(row("", "            \(install.summary)"))
-        lines.append(row("", "To remove:  \(install.removal)"))
-        if status.id == engine.needed, !engine.installerAvailable {
-          lines.append(row("", "ModelMatrix will offer to install it for you, only after you approve, in a coming update."))
+        if install.method == "manual" {
+          lines.append(row("", "To install: run this yourself: \(how)"))
+          lines.append(row("", "            \(install.summary)"))
+        } else if engine.installerAvailable {
+          lines.append(row("", "To install: modelmatrixctl engine install \(status.id.rawValue)\(host)"))
+          lines.append(row("", "            (shows the plan first and installs only after you confirm)"))
+          lines.append(row("", "            Method: \(install.command ?? install.summary)"))
+        } else {
+          lines.append(row("", "To install: \(how)"))
+          lines.append(row("", "            \(install.summary)"))
         }
+        lines.append(row("", "To remove:  \(install.removal)"))
       }
     }
   }
@@ -91,7 +106,7 @@ public enum HFCheckText {
     var text = "\(status.name): installed"
     var details: [String] = []
     if let version = status.version { details.append(version) }
-    if let by = status.installedBy { details.append("by \(by)") }
+    if let by = status.installedBy { details.append("by \(installer(by))") }
     if let running = status.running { details.append(running ? "running" : "not running") }
     if !details.isEmpty { text += " (" + details.joined(separator: ", ") + ")" }
     if let path = status.path { text += " at \(path)" }
@@ -121,12 +136,30 @@ public enum HFCheckText {
         [mark, pad(variant.label, 14), pad(gb(variant.downloadBytes), 10), pad(quality, 30), pad(memory, 9), pad(fit, 12), longest]
           .joined())
       if let reason = variant.unsupportedReason { lines.append("    " + reason) }
+      if variant.supported, variant.fitsOnDisk == false { lines.append("    Not enough free disk space for this version.") }
     }
     lines.append("* recommended   x can't be used")
   }
 
+  /// " --host NAME" for a remote host's commands (quoted when needed), else "".
+  static func hostFlag(_ machine: HFMachine) -> String {
+    guard let name = machine.hostName, !name.isEmpty else { return "" }
+    let plain = name.unicodeScalars.allSatisfy { CharacterSet.alphanumerics.contains($0) || "._-".unicodeScalars.contains($0) }
+    return " --host " + (plain ? name : "'" + name.replacingOccurrences(of: "'", with: "'\\''") + "'")
+  }
+
+  /// Who installed an engine, in plain words ("manual" means the user did).
+  static func installer(_ by: String) -> String {
+    switch by.lowercased() {
+    case "manual", "user", "unknown": return "you"
+    case "homebrew", "brew": return "Homebrew"
+    default: return by
+    }
+  }
+
   static func machine(_ machine: HFMachine) -> String {
     var parts = ["\(machine.chip), \(mem(machine.memoryBytes)) memory"]
+    if let gpu = machine.gpu, !gpu.isEmpty { parts.append(gpu) }
     let source = machine.budgetSource == "metal" ? "measured" : (machine.budgetSource == "cpu" ? "processor only" : "estimated")
     parts.append("a model may use \(mem(machine.budgetBytes)) (\(source))")
     if let free = machine.freeDiskBytes { parts.append("\(gb(free)) free disk") }
@@ -158,7 +191,7 @@ public enum HFCheckText {
 
   static func params(_ value: Int64) -> String {
     let billions = Double(value) / 1e9
-    return billions >= 1 ? String(format: "%.1fB", billions) : String(format: "%.0fM", billions * 1000)
+    return billions >= 0.9995 ? String(format: "%.1fB", billions) : String(format: "%.0fM", billions * 1000)
   }
 
   static func grouped(_ value: Int) -> String {
@@ -166,5 +199,12 @@ public enum HFCheckText {
     formatter.numberStyle = .decimal
     formatter.locale = Locale(identifier: "en_US")
     return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+  }
+
+  /// Upper-cases a verdict title for emphasis but keeps a host's own spelling.
+  static func shout(_ title: String, keeping name: String?) -> String {
+    let loud = title.uppercased()
+    guard let name, !name.isEmpty, let range = loud.range(of: name.uppercased()) else { return loud }
+    return loud.replacingCharacters(in: range, with: name)
   }
 }

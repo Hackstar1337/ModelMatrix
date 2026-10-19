@@ -1,8 +1,9 @@
 import Foundation
 
-/// `GET /api/hf/check?name=<owner/name>[&context=N][&format=text]` and
-/// `GET /api/hf/search?q=<text>`. Both are read-only: they look things up
-/// on Hugging Face and on this machine, and never download or install.
+/// `GET /api/hf/check?name=<owner/name>[&context=N][&host=H][&format=text]`
+/// and `GET /api/hf/search?q=<text>[&host=H]`. Both are read-only: they
+/// look things up on Hugging Face and on this Mac (or, with `host`, on that
+/// remote host), and never download or install.
 extension ControllerRouter {
   var huggingFaceRoutes: [RouteKey: Route] {
     [
@@ -31,7 +32,12 @@ extension ControllerRouter {
     }
     if query["refresh"] == "1" { huggingFace.engines.refresh() }
     do {
-      let report = try huggingFace.check(name, context: context)
+      let report: HFCheckReport
+      if let host = try hub.remoteHost(query["host"]) {
+        report = try huggingFace.check(name, context: context, target: try hub.hostTarget(host))
+      } else {
+        report = try huggingFace.check(name, context: context)
+      }
       if query["format"] == "text" {
         return ControllerHTTPResponse(
           status: 200, headers: ["Content-Type": "text/plain; charset=utf-8"],
@@ -52,7 +58,8 @@ extension ControllerRouter {
       return try error(status: 400, code: "invalid_query", message: "q must be 1-100 letters, digits, spaces or . _ - + /")
     }
     do {
-      let results = try huggingFace.search(text, machine: HFMachine.current(), limit: 10)
+      let machine = try hub.remoteHost(query["host"]).map { try hub.hostTarget($0).machine } ?? HFMachine.current()
+      let results = try huggingFace.search(text, machine: machine, limit: 10)
       return ControllerHTTPResponse(status: 200, body: try HFJSON.data(["results": results]))
     } catch let failure as HFError {
       return try huggingFaceError(failure, text: false)

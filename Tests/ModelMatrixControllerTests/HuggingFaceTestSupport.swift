@@ -20,6 +20,8 @@ final class FakeHFTransport: HFTransport, @unchecked Sendable {
   /// Repo id -> GGUF header bytes served for ranged reads of .gguf files.
   var ggufHeaders: [String: Data] = [:]
   var gated: Set<String> = ["meta-llama/Llama-3.1-8B-Instruct"]
+  /// Repos whose model info says they are login-only (files stay readable).
+  var markedGated: Set<String> = []
 
   var calls: [Call] {
     lock.lock()
@@ -40,9 +42,9 @@ final class FakeHFTransport: HFTransport, @unchecked Sendable {
         return fixture("tree__" + Self.slug(String(rest[..<range.lowerBound])))
       }
       if let range = rest.range(of: "/revision/") {
-        return fixture("info__" + Self.slug(String(rest[..<range.lowerBound])))
+        return info(String(rest[..<range.lowerBound]))
       }
-      return fixture("info__" + Self.slug(rest))
+      return info(rest)
     }
     // /owner/name/resolve/revision/file
     let parts = path.split(separator: "/").map(String.init)
@@ -79,6 +81,14 @@ final class FakeHFTransport: HFTransport, @unchecked Sendable {
     if let empty { return HFHTTPResponse(status: 200, body: Data(empty.utf8)) }
     // Unknown and private repositories answer 401 without an error code.
     return HFHTTPResponse(status: 401)
+  }
+
+  func info(_ repo: String) -> HFHTTPResponse {
+    let response = fixture("info__" + Self.slug(repo))
+    guard markedGated.contains(repo), var object = try? JSONSerialization.jsonObject(with: response.body) as? [String: Any]
+    else { return response }
+    object["gated"] = "manual"
+    return HFHTTPResponse(status: 200, body: (try? JSONSerialization.data(withJSONObject: object)) ?? response.body)
   }
 
   static func slug(_ text: String) -> String {

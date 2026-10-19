@@ -376,6 +376,129 @@ spawn_detached() {
     printf '%s\n' "$pid"
 }
 
+# Set while waiting for a server this script just started, so a server
+# that exits during startup is reported at once instead of at the timeout.
+WATCH_PID=""
+server_exited() {
+    [ -n "$WATCH_PID" ] || return 1
+    kill -0 "$WATCH_PID" 2>/dev/null && return 1
+    warn "The model server exited while starting"
+    return 0
+}
+
+# llama.cpp renames and re-types options between versions (for example
+# --reasoning none -> off, --flash-attn 1 -> on, --mmap -> --load-mode).
+# The option list of the installed llama-server is read from its --help,
+# cached per build, and each version-dependent option is matched to it.
+# When the list can't be read, options are passed as written.
+LLAMA_OPTIONS=""
+load_llama_options() {
+    local bin="$1" stamp key cache pid tries=0
+    stamp="$(stat -L -f '%m %z' "$bin" 2>/dev/null || stat -L -c '%Y %s' "$bin" 2>/dev/null || true)"
+    key="$(printf '%s %s' "$bin" "$stamp" | cksum | awk '{print $1}')"
+    cache="$RUN_DIR/llama-options-$key.txt"
+    if [ ! -s "$cache" ]; then
+        "$bin" --help </dev/null >"$cache.tmp" 2>&1 &
+        pid=$!
+        while kill -0 "$pid" 2>/dev/null && [ "$tries" -lt 60 ]; do
+            sleep 0.25
+            tries=$((tries + 1))
+        done
+        kill "$pid" 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
+        if grep -q -- '--port' "$cache.tmp" 2>/dev/null; then
+            # Keep only the option column of each option line.
+            awk '/^-/ { if (length($0) > 40 && substr($0, 39, 2) != "  ") print $0; else print substr($0, 1, 40) }' \
+                "$cache.tmp" >"$cache"
+        fi
+        rm -f "$cache.tmp"
+    fi
+    LLAMA_OPTIONS="$(cat "$cache" 2>/dev/null || true)"
+    [ -n "$LLAMA_OPTIONS" ] || warn "Could not read the options of $bin; passing the profile's options as written"
+}
+
+llama_has() {
+    [ -n "$LLAMA_OPTIONS" ] || return 0
+    grep -E -q -- "(^|[ ,])$1([ ,=]|\$)" <<<"$LLAMA_OPTIONS"
+}
+
+llama_takes_value() {
+    grep -E -q -- "(^|[ ,])$1 [^ ,-]" <<<"$LLAMA_OPTIONS"
+}
+
+# Accepted values such as "on|off|auto", or nothing.
+llama_choices() {
+    local line
+    line="$(grep -E -m 1 -- "(^|[ ,])$1 \\[" <<<"$LLAMA_OPTIONS" || true)"
+    [ -n "$line" ] || return 0
+    line="${line#*"$1 ["}"
+    printf '%s\n' "${line%%]*}"
+}
+
+llama_choice_ok() {
+    case "|$1|" in *"|$2|"*) return 0 ;; esac
+    return 1
+}
+
+# Adds FLAG VALUE to cmd in the form the installed llama-server accepts.
+llama_value_arg() {
+    local flag="$1" value="$2" choices wanted
+    [ -n "$value" ] || return 0
+    if ! llama_has "$flag"; then
+        warn "Leaving out $flag: this llama-server version doesn't have it"
+        return 0
+    fi
+    if [ -n "$LLAMA_OPTIONS" ] && ! llama_takes_value "$flag"; then
+        # A plain on/off switch in this version.
+        case "$value" in 0|off|false|no|none|disabled) return 0 ;; esac
+        cmd+=("$flag")
+        return 0
+    fi
+    choices="$(llama_choices "$flag")"
+    if [ -n "$choices" ] && ! llama_choice_ok "$choices" "$value"; then
+        case "$value" in
+            1|on|true|yes|enabled) wanted=on ;;
+            0|off|false|no|none|disabled) wanted=off ;;
+            *) wanted="" ;;
+        esac
+        if [ -n "$wanted" ] && llama_choice_ok "$choices" "$wanted"; then
+            value="$wanted"
+        else
+            warn "Leaving out $flag $value: this llama-server accepts $choices"
+            return 0
+        fi
+    fi
+    cmd+=("$flag" "$value")
+}
+
+llama_switch() {
+    if llama_has "$1"; then
+        cmd+=("$1")
+    else
+        warn "Leaving out $1: this llama-server version doesn't have it"
+    fi
+}
+
+# USE_MMAP / USE_MLOCK as --load-mode (newer builds) or --mmap/--no-mmap/--mlock.
+llama_load_mode() {
+    local mmap="$1" mlock="$2" mode=""
+    if [ -n "$LLAMA_OPTIONS" ] && llama_has --load-mode; then
+        case "$mmap:$mlock" in
+            1:1) mode="mmap+mlock" ;;
+            0:1) mode="mlock" ;;
+            0:*) mode="none" ;;
+        esac
+        [ -z "$mode" ] || cmd+=(--load-mode "$mode")
+        return 0
+    fi
+    if [ "$mmap" = "1" ]; then
+        if [ -z "$LLAMA_OPTIONS" ] || llama_has --mmap; then cmd+=(--mmap); fi
+    else
+        llama_switch --no-mmap
+    fi
+    if [ "$mlock" = "1" ]; then llama_switch --mlock; fi
+}
+
 wait_for_models_endpoint() {
     local models_url="$1"
     local expected_id="$2"
@@ -390,6 +513,9 @@ wait_for_models_endpoint() {
             fi
             return 0
         fi
+        if server_exited; then
+            return 1
+        fi
         sleep 2
         retries=$((retries - 1))
     done
@@ -402,6 +528,9 @@ wait_for_http_200() {
     while [ "$retries" -gt 0 ]; do
         if curl -fsS "$url" >/dev/null 2>&1; then
             return 0
+        fi
+        if server_exited; then
+            return 1
         fi
         sleep 2
         retries=$((retries - 1))
@@ -544,36 +673,24 @@ if [ "$RUNTIME" = "llama.cpp" ]; then
             --ubatch-size "$UBATCH_SIZE"
             --cache-type-k "$CACHE_TYPE_K"
             --cache-type-v "$CACHE_TYPE_V"
-            --flash-attn "$FLASH_ATTN"
-            --reasoning "$REASONING"
-            --fit "$FIT"
-            --fit-target "$FIT_TARGET"
-            --fit-ctx "$FIT_CTX"
-            --metrics
-            --cont-batching
         )
-        if [ -n "${REASONING_FORMAT:-}" ]; then
-            cmd+=(--reasoning-format "$REASONING_FORMAT")
-        fi
-        if [ -n "${REASONING_BUDGET:-}" ]; then
-            cmd+=(--reasoning-budget "$REASONING_BUDGET")
-        fi
-        if [ -n "${CHAT_TEMPLATE_KWARGS:-}" ]; then
-            cmd+=(--chat-template-kwargs "$CHAT_TEMPLATE_KWARGS")
-        fi
-        if [ -n "${CACHE_RAM:-}" ]; then
-            cmd+=(--cache-ram "$CACHE_RAM")
-        fi
-        if [ "${USE_MMAP:-1}" = "1" ]; then
-            cmd+=(--mmap)
-        else
-            cmd+=(--no-mmap)
-        fi
-        if [ "${USE_MLOCK:-0}" = "1" ]; then
-            cmd+=(--mlock)
-        fi
+        # Options whose name or values differ between llama.cpp versions.
+        load_llama_options "$LLAMA_SERVER"
+        llama_value_arg --flash-attn "$FLASH_ATTN"
+        llama_value_arg --reasoning "$REASONING"
+        llama_value_arg --fit "$FIT"
+        llama_value_arg --fit-target "$FIT_TARGET"
+        llama_value_arg --fit-ctx "$FIT_CTX"
+        llama_switch --metrics
+        llama_switch --cont-batching
+        llama_value_arg --reasoning-format "${REASONING_FORMAT:-}"
+        llama_value_arg --reasoning-budget "${REASONING_BUDGET:-}"
+        llama_value_arg --chat-template-kwargs "${CHAT_TEMPLATE_KWARGS:-}"
+        llama_value_arg --cache-ram "${CACHE_RAM:-}"
+        llama_load_mode "${USE_MMAP:-1}" "${USE_MLOCK:-0}"
         append_json_args "$SERVER_ARGS_JSON"
         GGML_METAL_N_CB="${METAL_N_CB:-1}" spawn_detached "$LOG_PATH" "$PID_PATH" "${cmd[@]}" >/dev/null
+        WATCH_PID="$(cat "$PID_PATH" 2>/dev/null || true)"
         if ! wait_for_profile_ready "$HEALTHCHECK_MODE" "$HEALTHCHECK_URL" "$SERVER_MODEL_ID" 90; then
             tail -n 80 "$LOG_PATH" || true
             die "llama.cpp server failed to become ready for $MODEL_PROFILE"
@@ -608,6 +725,7 @@ elif [ "$RUNTIME" = "mlx" ]; then
         )
         append_json_args "$SERVER_ARGS_JSON"
         spawn_detached "$LOG_PATH" "$PID_PATH" "${cmd[@]}" >/dev/null
+        WATCH_PID="$(cat "$PID_PATH" 2>/dev/null || true)"
         if ! wait_for_profile_ready "$HEALTHCHECK_MODE" "$HEALTHCHECK_URL" "$SERVER_MODEL_ID" 180; then
             tail -n 120 "$LOG_PATH" || true
             die "MLX server failed to become ready for $MODEL_PROFILE"

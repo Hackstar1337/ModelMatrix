@@ -136,3 +136,14 @@ enum HFJSON {
 
   static func data<T: Encodable>(_ value: T) throws -> Data { try encoder.encode(value) }
 }
+
+/// A remote host to check for: its measured machine and its engines.
+public struct HFCheckTarget: Sendable {
+  public var machine: HFMachine
+  public var engines: [HFEngineStatus]
+
+  public init(machine: HFMachine, engines: [HFEngineStatus]) {
+    self.machine = machine
+    self.engines = engines
+  }
+}

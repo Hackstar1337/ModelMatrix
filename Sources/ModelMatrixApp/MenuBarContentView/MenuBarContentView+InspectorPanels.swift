@@ -29,6 +29,15 @@ extension MenuBarContentView {
             ProfilesPanelView(store: store, theme: theme, accent: accent)
         case .optimize:
             OptimizePanelView(monitor: optimizeMonitor, store: store, theme: theme, accent: accent)
+        case .downloads:
+            DownloadsPanelView(
+                monitor: hfDownloads,
+                check: hfCheck,
+                store: store,
+                hostNames: hub.remoteRuntimes.filter(\.config.enabled).map(\.name),
+                theme: theme,
+                accent: accent
+            )
         }
     }
 }

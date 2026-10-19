@@ -8,6 +8,17 @@ public final class HFCheckService: @unchecked Sendable {
   let engines: HFEngineProbe
   let machineProbe: @Sendable () -> HFMachine
   static let headerReads = [512 * 1024, 4 * 1024 * 1024]
+  /// Where models are saved (from Settings once the hub is set up).
+  public var modelsFolder: @Sendable () -> URL = {
+    URL(fileURLWithPath: HFMachine.expandTilde(HFMachine.defaultModelsFolder), isDirectory: true)
+  }
+  /// Measures free space for the models folder (set by the hub, so the
+  /// check and the downloader agree on the same disk).
+  public var freeSpace: (@Sendable (URL) -> Int64?)?
+  /// True once downloading is available (the check then offers Download).
+  public var downloadsEnabled = false
+  /// True once ModelMatrix can install a missing engine after approval.
+  public var installerEnabled = false
   public static let contextRange = 512...1_048_576
 
   public init(
@@ -19,16 +30,30 @@ public final class HFCheckService: @unchecked Sendable {
     self.machineProbe = machine
   }
 
-  /// `input` is what the user typed; `context` overrides the context length.
-  public func check(_ input: String, context: Int? = nil) throws -> HFCheckReport {
+  /// `input` is what the user typed; `context` overrides the context length;
+  /// `version` picks a version (e.g. "Q4_K_M") as if typed after a colon.
+  ///
+  /// With a `target`, the check is for that remote host (its measured
+  /// machine and engines) instead of this Mac.
+  public func check(
+    _ input: String, context: Int? = nil, version: String? = nil, target: HFCheckTarget? = nil
+  ) throws -> HFCheckReport {
     if let context, !Self.contextRange.contains(context) {
       throw HFError.invalidName("Context must be between 512 and 1048576 tokens.")
     }
-    let machine = machineProbe()
+    var machine = target?.machine ?? machineProbe()
+    if target == nil, let freeSpace {
+      // Free space where models are saved, which may be another disk.
+      let folder = modelsFolder()
+      let home = NSHomeDirectory()
+      machine.modelsFolder = folder.path.hasPrefix(home + "/") ? "~" + folder.path.dropFirst(home.count) : folder.path
+      machine.freeDiskBytes = freeSpace(folder) ?? machine.freeDiskBytes
+    }
     switch try HFQuery.parse(input, extraHost: client.mirrorHost) {
     case .search(let text):
       return try searchReport(input: input, text: text, machine: machine)
-    case .repo(let reference):
+    case .repo(var reference):
+      if let version = version?.trimmed, !version.isEmpty { reference.variant = version }
       let infoJSON: [String: Any]
       do {
         infoJSON = try client.modelInfo(reference)
@@ -40,7 +65,8 @@ public final class HFCheckService: @unchecked Sendable {
         report.searchResults = (try? search(reference.name, machine: machine, limit: 6)) ?? []
         return report
       }
-      return try modelReport(input: input, reference: reference, infoJSON: infoJSON, machine: machine, context: context)
+      return try modelReport(
+        input: input, reference: reference, infoJSON: infoJSON, machine: machine, context: context, target: target)
     }
   }
 
@@ -80,27 +106,31 @@ public final class HFCheckService: @unchecked Sendable {
   }
 
   func modelReport(
-    input: String, reference: HFRepoReference, infoJSON: [String: Any], machine: HFMachine, context requested: Int?
+    input: String, reference: HFRepoReference, infoJSON: [String: Any], machine: HFMachine, context requested: Int?,
+    target: HFCheckTarget? = nil
   ) throws -> HFCheckReport {
     let info = HFModelInfo(json: infoJSON)
     let revision = reference.revision ?? info.sha ?? "main"
     let files = HFFile.list(from: try client.tree(reference, revision: revision))
     let format = HFFormat.detect(info: info, files: files)
     let task = HFTask.detect(info: info, files: files, format: format)
-    let login = info.gated != nil
+    // Gated: files need a login. With a saved token they are readable
+    // (once the model's license is accepted on huggingface.co).
+    let gated = info.gated != nil
+    let login = gated && client.token() == nil
     let repoID = info.id.isEmpty ? reference.id : info.id
     var report = HFCheckReport(
       input: input, kind: "model",
       repo: HFRepoSummary(
         id: repoID, url: "\(client.endpoint.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/")))/\(repoID)",
-        revision: reference.revision ?? "main", sha: info.sha, license: info.license, gated: login,
+        revision: reference.revision ?? "main", sha: info.sha, license: info.license, gated: gated,
         loginRequired: login, downloads: info.downloads, likes: info.likes, library: info.libraryName,
         pipelineTag: info.pipelineTag, baseModel: info.baseModels.first, baseRelation: info.baseRelation,
         lastModified: info.lastModified),
       format: HFFormatSummary(id: format, name: format.displayName, summary: format.summary), task: task,
       verdict: HFVerdict(code: "not_supported", title: "", detail: "", runnable: false), machine: machine,
       checkedAt: Self.timestamp())
-    let statuses = engines.detect(machine: machine)
+    let statuses = target?.engines ?? engines.detect(machine: machine)
     let needed: HFEngineID? = (format == .mlx && !machine.appleSilicon) ? nil : format.engine
     let neededStatus = statuses.first { $0.id == needed }
     report.engine = HFEngineSummary(
@@ -126,7 +156,9 @@ public final class HFCheckService: @unchecked Sendable {
     if format.offersAlternatives || (format == .mlx && !machine.appleSilicon) {
       report.alternatives = alternatives(info: info, machine: machine)
       let why = format == .mlx
-        ? "MLX runs only on Apple Silicon Macs, and this Mac has an Intel processor."
+        ? (machine.isRemote
+          ? "MLX runs only on Apple Silicon Macs, not on \(machine.hostName ?? "this host")."
+          : "MLX runs only on Apple Silicon Macs, and this Mac has an Intel processor.")
         : format == .original
           ? "ModelMatrix can't run original full-size weights directly."
           : "ModelMatrix can't run \(format.displayName) files directly."
@@ -204,7 +236,8 @@ public final class HFCheckService: @unchecked Sendable {
         longestGoodContext: variant.supported
           ? HFMemoryPlanner.longestGoodContext(weights: variant.totalBytes, projector: extra, arch: layout, budget: budget)
           : nil,
-        fitsOnDisk: machine.freeDiskBytes.map { variant.totalBytes + extra <= $0 })
+        // Same rule as the download itself: the files plus 2 GB to spare.
+        fitsOnDisk: machine.freeDiskBytes.map { variant.totalBytes + extra + HFDownloadManager.minimumFreeBytes <= $0 })
     }
     if let projector {
       report.notes.append("Vision: \(projector.path) (\(Self.gb(projector.size))) is included with every version; it lets the model read images.")
@@ -212,7 +245,9 @@ public final class HFCheckService: @unchecked Sendable {
     if variants.contains(where: \.fullPrecision) {
       report.notes.append("F16/BF16 versions keep the original size; they are listed but not recommended for chatting.")
     }
-    if !machine.appleSilicon {
+    if machine.isRemote {
+      report.notes += Self.hostNotes(machine)
+    } else if !machine.appleSilicon {
       report.notes.append("Intel Macs run models on the processor, which is much slower than Apple Silicon. Smaller versions respond faster.")
     }
     report.notes.append("Memory numbers are estimates: model files + chat memory for the context length + 1 GB working space, compared with the \(Self.mem(budget)) this machine can give a model.")
@@ -236,6 +271,11 @@ public final class HFCheckService: @unchecked Sendable {
     }
     if let pick {
       report.variants[pick.index].recommended = true
+      if report.variants[pick.index].fitsOnDisk == false, let free = machine.freeDiskBytes {
+        let need = report.variants[pick.index].downloadBytes + HFDownloadManager.minimumFreeBytes
+        report.notes.append(
+          "Not enough free disk space in \(machine.modelsFolder) for \(variants[pick.index].label): it needs \(Self.gb(need)) (download plus 2 GB to spare) and \(Self.gb(free)) is free. Free up space or choose another models folder in Settings.")
+      }
       report.recommendation = HFRecommendation(
         label: variants[pick.index].label, context: pick.fit.context, needBytes: pick.fit.needBytes,
         downloadBytes: variants[pick.index].totalBytes + extra, level: pick.fit.level, reason: pick.reason)
@@ -244,7 +284,12 @@ public final class HFCheckService: @unchecked Sendable {
       && HFMemoryPlanner.anythingFits(variants: variants, projector: extra, arch: layout, budget: budget)
     report.verdict = verdict(
       report: report, repoID: repoID, login: login, machine: machine, picked: pick?.fit, onlyLowQualityFits: smallFits)
-    if report.verdict.runnable { report.downloadFolder = Self.downloadFolder(for: repoID) }
+    if report.verdict.runnable {
+      let base = machine.isRemote ? URL(fileURLWithPath: machine.modelsFolder, isDirectory: true) : modelsFolder()
+      report.downloadFolder = base.appendingPathComponent(repoID, isDirectory: true).path
+      report.downloadAvailable = downloadsEnabled
+    }
+    report.engine?.installerAvailable = installerEnabled
     return report
   }
 
@@ -253,19 +298,21 @@ public final class HFCheckService: @unchecked Sendable {
     onlyLowQualityFits: Bool = false
   ) -> HFVerdict {
     let engineName = report.engine?.neededName ?? "the engine"
+    let place = machine.isRemote ? (machine.hostName ?? "this host") : "this machine"
+    let here = machine.isRemote ? "on \(machine.hostName ?? "this host")" : "here"
     guard report.variants.contains(where: \.supported) else {
       return HFVerdict(code: "not_supported", title: "No usable version", detail: "None of the files in \(repoID) can be run by current engines.", runnable: false)
     }
     guard let picked else {
       if onlyLowQualityFits {
         return HFVerdict(
-          code: "too_big", title: "Too big for this machine",
-          detail: "Only versions under 3.5 bits would fit in the \(Self.mem(machine.budgetBytes)) this machine can give a model, and they lose too much quality to recommend. Try a smaller model, or name a version to try it anyway (\(repoID):LABEL).",
+          code: "too_big", title: "Too big for \(place)",
+          detail: "Only versions under 3.5 bits would fit in the \(Self.mem(machine.budgetBytes)) \(place) can give a model, and they lose too much quality to recommend. Try a smaller model, or name a version to try it anyway (\(repoID):LABEL).",
           runnable: false)
       }
       return HFVerdict(
-        code: "too_big", title: "Too big for this machine",
-        detail: "Even the smallest version needs more than the \(Self.mem(machine.budgetBytes)) this machine can give a model. Try a smaller model (fewer parameters).",
+        code: "too_big", title: "Too big for \(place)",
+        detail: "Even the smallest version needs more than the \(Self.mem(machine.budgetBytes)) \(place) can give a model. Try a smaller model (fewer parameters).",
         runnable: false)
     }
     if picked.level == "too_big" {
@@ -276,19 +323,34 @@ public final class HFCheckService: @unchecked Sendable {
     }
     if login {
       return HFVerdict(
-        code: "login_required", title: "Runs here, but needs a Hugging Face login",
-        detail: "Accept the model's license on huggingface.co while logged in; ModelMatrix can't download login-only models yet.",
+        code: "login_required", title: "Runs \(here), but needs a Hugging Face login",
+        detail:
+          "Accept the model's license on huggingface.co while logged in, then save a read token in ModelMatrix (modelmatrixctl hf-token set) and check again.",
         runnable: true)
     }
     if report.engine?.ready != true {
       return HFVerdict(
-        code: "needs_engine", title: "Runs here once \(engineName) is installed",
-        detail: "This model needs \(engineName), which isn't installed on this machine yet.", runnable: true)
+        code: "needs_engine", title: "Runs \(here) once \(engineName) is installed",
+        detail: "This model needs \(engineName), which isn't installed on \(place) yet.", runnable: true)
     }
-    return HFVerdict(code: "ready", title: "Ready to run on this machine", detail: "\(engineName) is installed and the recommended version fits.", runnable: true)
+    return HFVerdict(code: "ready", title: "Ready to run on \(place)", detail: "\(engineName) is installed and the recommended version fits.", runnable: true)
   }
 
   // MARK: Helpers
+
+  /// What to know about running models on a remote host.
+  static func hostNotes(_ machine: HFMachine) -> [String] {
+    let name = machine.hostName ?? "This host"
+    switch (machine.accelerator, machine.budgetSource) {
+    case ("cuda", "unified"):
+      return ["\(name)'s NVIDIA GPU shares the system memory, so a model may use about three quarters of it."]
+    case ("cuda", _), ("amd", _):
+      let gpu = machine.gpu.map { " (\($0))" } ?? ""
+      return ["Memory figures are for the GPU memory\(gpu): models run fastest when they fit there completely."]
+    default:
+      return ["\(name) has no supported GPU, so models run on its processor, which is much slower. Smaller versions respond faster."]
+    }
+  }
 
   /// Reads the start of a GGUF file (at most 4 MB, never the whole model).
   func readGGUFLayout(_ reference: HFRepoReference, revision: String, path: String) -> HFArchitecture? {
@@ -348,11 +410,6 @@ public final class HFCheckService: @unchecked Sendable {
     }
   }
 
-  static func downloadFolder(for repoID: String) -> String {
-    FileManager.default.homeDirectoryForCurrentUser
-      .appendingPathComponent("ModelMatrix/Models", isDirectory: true)
-      .appendingPathComponent(repoID, isDirectory: true).path
-  }
 
   /// "Llama-3-8B-Instruct-q4f16_1-MLC" -> "Llama-3-8B-Instruct".
   static func modelStem(_ repo: String) -> String {

@@ -295,7 +295,8 @@ import Testing
     #expect(text.headers["Content-Type"]?.hasPrefix("text/plain") == true)
     let body = String(decoding: text.body, as: UTF8.self)
     #expect(body.contains("Recommended: Q8_0") && body.contains("at 8K context"))
-    #expect(body.contains("To install: brew install llama.cpp"))
+    #expect(body.contains("To install: modelmatrixctl engine install llama.cpp"))
+    #expect(body.contains("Method: brew install llama.cpp"))
     #expect(body.contains("Saves to:    ~/ModelMatrix/Models/bartowski/Qwen2.5-7B-Instruct-GGUF"))
     #expect(body.hasSuffix("Nothing was downloaded or installed.\n"))
 

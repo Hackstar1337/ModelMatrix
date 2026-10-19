@@ -20,8 +20,10 @@ public final class ControllerRouter: @unchecked Sendable {
   public var usage: UsageService?
   /// App <-> controller bridge (remote hosts and app-side actions).
   public let bridge: BridgeState
-  /// Read-only Hugging Face model check for `GET /api/hf/*`.
+  /// Read-only Hugging Face model check for `GET /api/hf/check` and search.
   public let huggingFace: HFCheckService
+  /// Hugging Face downloads, settings and token (`/api/hf/*`).
+  public let hub: HFHub
 
   public init(
     service: ControllerService,
@@ -29,7 +31,8 @@ public final class ControllerRouter: @unchecked Sendable {
     dashboard: DashboardAssets? = nil,
     usage: UsageService? = nil,
     bridge: BridgeState = BridgeState(),
-    huggingFace: HFCheckService? = nil
+    huggingFace: HFCheckService? = nil,
+    hub: HFHub? = nil
   ) {
     self.service = service
     self.authToken = authToken
@@ -38,7 +41,24 @@ public final class ControllerRouter: @unchecked Sendable {
     self.hostMetrics = MacHostMetricsSampler()
     self.usage = usage
     self.bridge = bridge
-    self.huggingFace = huggingFace ?? HFCheckService()
+    let createsHub = hub == nil
+    let hub = hub ?? HFHub(
+      directory: service.configuration.root.appendingPathComponent("huggingface", isDirectory: true),
+      check: huggingFace ?? HFCheckService())
+    self.hub = hub
+    self.huggingFace = hub.check
+    if createsHub {
+      // Automatic profiles use the controller's own profiles and the relay.
+      hub.profiles.host = ControllerProfileHost(service: service)
+      hub.profiles.relayURL = { [weak usage] in
+        guard let usage, usage.relay != nil else { return nil }
+        return URL(string: usage.relayURL)
+      }
+    }
+    // Remote hosts are the ones the menu bar app reports (tests may set their own).
+    if hub.hostDirectory == nil { hub.hostDirectory = HFBridgeHostDirectory(bridge: bridge) }
+    hub.downloads.onChange = { [bridge] in bridge.bumpStatusRevision() }
+    hub.onEngineChange = { [bridge] _ in bridge.bumpStatusRevision() }
   }
 
   public func handle(_ request: ControllerHTTPRequest) -> ControllerHTTPResponse {

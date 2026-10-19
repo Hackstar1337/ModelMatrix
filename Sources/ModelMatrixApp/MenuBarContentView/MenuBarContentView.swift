@@ -67,6 +67,8 @@ struct MenuBarContentView: View {
     @State var hostMetricsMonitor = RemoteHostMetricsMonitor()
     @State var usageMonitor = UsageMonitor()
     @State var optimizeMonitor = OptimizeMonitor()
+    @State var hfDownloads = HFDownloadsMonitor.shared
+    @State var hfCheck = HFCheckModel()
     @State var dashboardBridge = DashboardBridge.shared
     @State var activeResizeStartFrame: NSRect?
     @State var updateStatus = AppUpdateStatus(currentVersion: MenuBarContentView.appVersion)

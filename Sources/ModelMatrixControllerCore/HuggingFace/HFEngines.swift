@@ -53,6 +53,10 @@ public struct HFEngineStatus: Sendable, Encodable, Equatable {
   public var running: Bool?
   public var note: String?
   public var install: HFInstallOption?
+  /// ModelMatrix installed it, so it can update or uninstall it.
+  public var managed: Bool?
+  /// What ModelMatrix can do with it now (install, update, uninstall).
+  public var actions: [String]?
 }
 
 /// Where to look and how to run probes; replaceable in tests.
@@ -63,12 +67,17 @@ public struct HFEngineEnvironment: Sendable {
   public var resolve: @Sendable (String) -> String
   public var run: @Sendable (String, [String]) -> String?
   public var ollamaServerVersion: @Sendable () -> String?
+  /// Where ModelMatrix installs engines.
+  public var enginesRoot: String
+  /// Act as if Homebrew weren't installed (tests of the official route).
+  public var ignoreHomebrew: Bool
 
   public init(
     home: String, searchDirectories: @escaping @Sendable () -> [String],
     isExecutable: @escaping @Sendable (String) -> Bool, resolve: @escaping @Sendable (String) -> String,
     run: @escaping @Sendable (String, [String]) -> String?,
-    ollamaServerVersion: @escaping @Sendable () -> String?
+    ollamaServerVersion: @escaping @Sendable () -> String?,
+    enginesRoot: String? = nil, ignoreHomebrew: Bool = false
   ) {
     self.home = home
     self.searchDirectories = searchDirectories
@@ -76,20 +85,25 @@ public struct HFEngineEnvironment: Sendable {
     self.resolve = resolve
     self.run = run
     self.ollamaServerVersion = ollamaServerVersion
+    self.enginesRoot = enginesRoot ?? "\(home)/ModelMatrix/Engines"
+    self.ignoreHomebrew = ignoreHomebrew
   }
 
   public static func live() -> HFEngineEnvironment {
     let home = NSHomeDirectory()
+    let root = HFEngineFolders.root(home: home)
+    let ignoreHomebrew = HFEngineFolders.ignoreHomebrew
     return HFEngineEnvironment(
       home: home,
-      searchDirectories: { HFEngineSearchPath.directories(home: home) },
+      searchDirectories: { HFEngineSearchPath.directories(home: home, enginesRoot: root, ignoreHomebrew: ignoreHomebrew) },
       isExecutable: { FileManager.default.isExecutableFile(atPath: $0) },
       resolve: { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path },
       run: { HFProbeProcess.run($0, $1, timeout: 8) },
       ollamaServerVersion: {
         let url = URL(string: "http://127.0.0.1:11434/api/version")!
         return UsageService.fetchJSON(url, timeout: 1)?["version"] as? String
-      })
+      },
+      enginesRoot: root, ignoreHomebrew: ignoreHomebrew)
   }
 }
 
@@ -99,12 +113,12 @@ enum HFEngineSearchPath {
   nonisolated(unsafe) private static var cachedShellPath: (Date, [String])?
   private static let lock = NSLock()
 
-  static func directories(home: String) -> [String] {
-    var list = loginShellPath()
+  static func directories(home: String, enginesRoot: String, ignoreHomebrew: Bool = false) -> [String] {
+    var list = [HFEngineFolders.llamaBin(enginesRoot), HFEngineFolders.mlxBin(enginesRoot)]
+    list += loginShellPath()
     list += [
       "/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin", "\(home)/.local/bin", "\(home)/bin",
-      "\(home)/ModelMatrix/Engines/bin", "\(home)/ModelMatrix/Engines/llama.cpp",
-      "\(home)/ModelMatrix/Engines/llama.cpp/bin", "\(home)/ModelMatrix/Engines/mlx-lm/bin",
+      "\(enginesRoot)/bin", "\(home)/ModelMatrix/Engines/llama.cpp/bin", "\(home)/ModelMatrix/Engines/mlx-lm/venv/bin",
       "\(home)/miniforge3/bin", "\(home)/mambaforge/bin", "\(home)/miniconda3/bin", "\(home)/anaconda3/bin",
       "/opt/homebrew/Caskroom/miniforge/base/bin", "/opt/miniconda3/bin", "\(home)/.pyenv/shims",
       "/Applications/Ollama.app/Contents/Resources", "\(home)/Applications/Ollama.app/Contents/Resources",
@@ -112,6 +126,9 @@ enum HFEngineSearchPath {
     for base in ["\(home)/miniforge3/envs", "\(home)/mambaforge/envs", "\(home)/miniconda3/envs", "\(home)/anaconda3/envs"] {
       let envs = (try? FileManager.default.contentsOfDirectory(atPath: base)) ?? []
       list += envs.sorted().prefix(20).map { "\(base)/\($0)/bin" }
+    }
+    if ignoreHomebrew {
+      list.removeAll { $0.hasPrefix("/opt/homebrew/") || $0.hasPrefix("/usr/local/") }
     }
     var seen = Set<String>()
     return list.filter { !$0.isEmpty && $0.hasPrefix("/") && seen.insert($0).inserted }
@@ -152,7 +169,24 @@ public final class HFEngineProbe: @unchecked Sendable {
   let environment: HFEngineEnvironment
   private let lock = NSLock()
   private var cache: (Date, String, [HFEngineStatus])?
+  private var configured: [String: String] = [:]
   static let cacheSeconds: TimeInterval = 30
+
+  /// Engine locations set in Settings; they win over the search.
+  public func setConfiguredPaths(_ paths: [String: String]) {
+    lock.lock()
+    if paths != configured {
+      configured = paths
+      cache = nil
+    }
+    lock.unlock()
+  }
+
+  var configuredPaths: [String: String] {
+    lock.lock()
+    defer { lock.unlock() }
+    return configured
+  }
 
   public init(environment: HFEngineEnvironment = .live()) {
     self.environment = environment
@@ -194,6 +228,7 @@ public final class HFEngineProbe: @unchecked Sendable {
   }
 
   func homebrew(directories: [String], machine: HFMachine) -> String? {
+    if environment.ignoreHomebrew { return nil }
     let preferred = machine.architecture == "arm64" ? "/opt/homebrew/bin/brew" : "/usr/local/bin/brew"
     if environment.isExecutable(preferred) { return preferred }
     return find("brew", in: directories)
@@ -210,11 +245,15 @@ public final class HFEngineProbe: @unchecked Sendable {
         : "MLX runs only on Apple Silicon Macs."
       return result
     }
-    if let path = find(id.executable, in: directories) {
+    let chosen = configuredPaths[id.rawValue].flatMap { environment.isExecutable($0) ? $0 : nil }
+    if let path = chosen ?? find(id.executable, in: directories) {
       let resolved = environment.resolve(path)
       result.installed = true
       result.path = path
-      result.installedBy = Self.installedBy(path: path, resolved: resolved, home: environment.home)
+      result.installedBy =
+        chosen != nil
+        ? "you (set in Settings)"
+        : Self.installedBy(path: path, resolved: resolved, home: environment.home, enginesRoot: environment.enginesRoot)
       result.version = version(id, path: path, resolved: resolved)
     }
     if id == .ollama {
@@ -226,7 +265,9 @@ public final class HFEngineProbe: @unchecked Sendable {
         result.running = false
       }
     }
-    if !result.installed { result.install = Self.installOption(id, brew: brew, machine: machine, home: environment.home) }
+    if !result.installed {
+      result.install = Self.installOption(id, brew: brew, machine: machine, home: environment.home, enginesRoot: environment.enginesRoot)
+    }
     return result
   }
 
@@ -234,8 +275,12 @@ public final class HFEngineProbe: @unchecked Sendable {
     if let cellar = Self.cellarVersion(resolved), id != .llamaCpp { return cellar }
     switch id {
     case .llamaCpp:
-      // "version: 7034 (a1b2c3d)" (build number) or "version: 0.7.0 (a1b2c3d)".
+      // "version: 7034 (a1b2c3d)" (build number), "version: 0.7.0 (a1b2c3d)",
+      // or "version: 0.7.0-dev (build 11738, commit f174553e1)".
       guard let output = environment.run(path, ["--version"]) else { return Self.cellarVersion(resolved) }
+      if let match = output.range(of: #"\(build [0-9]+"#, options: .regularExpression) {
+        return "b" + output[match].dropFirst(7)
+      }
       if let match = output.range(of: #"version: [0-9][0-9.]* \([0-9a-f]+\)"#, options: .regularExpression) {
         let text = String(output[match].dropFirst(9))
         return text.first(where: { $0 == "." || $0 == " " }) == " " ? "b" + text : text
@@ -274,9 +319,10 @@ public final class HFEngineProbe: @unchecked Sendable {
     return command.contains("python") ? command : nil
   }
 
-  static func installedBy(path: String, resolved: String, home: String) -> String {
+  static func installedBy(path: String, resolved: String, home: String, enginesRoot: String? = nil) -> String {
     let both = path + "\n" + resolved
     if both.contains("/ModelMatrix/Engines/") { return "ModelMatrix" }
+    if let enginesRoot, path.hasPrefix(enginesRoot + "/") || resolved.hasPrefix(enginesRoot + "/") { return "ModelMatrix" }
     if both.contains("/Cellar/") || path.hasPrefix("/opt/homebrew/") { return "Homebrew" }
     if both.contains("Ollama.app") { return "Ollama app" }
     if both.contains("/.local/") { return "pipx or uv" }
@@ -286,7 +332,10 @@ public final class HFEngineProbe: @unchecked Sendable {
     return "manual"
   }
 
-  static func installOption(_ id: HFEngineID, brew: String?, machine: HFMachine, home: String) -> HFInstallOption {
+  static func installOption(
+    _ id: HFEngineID, brew: String?, machine: HFMachine, home: String, enginesRoot: String? = nil
+  ) -> HFInstallOption {
+    let root = enginesRoot ?? "\(home)/ModelMatrix/Engines"
     let prefix = brew.map { (($0 as NSString).deletingLastPathComponent as NSString).deletingLastPathComponent }
     let platform = machine.architecture == "arm64" ? "macos-arm64" : "macos-x64"
     switch id {
@@ -301,7 +350,7 @@ public final class HFEngineProbe: @unchecked Sendable {
         method: "official",
         summary: "Download the official llama.cpp build for this Mac (llama-<build>-bin-\(platform).tar.gz, about 12 MB, checked against its SHA-256).",
         command: nil, source: "https://github.com/ggml-org/llama.cpp/releases",
-        location: "\(home)/ModelMatrix/Engines/llama.cpp", removal: "Delete \(home)/ModelMatrix/Engines/llama.cpp")
+        location: "\(root)/llama.cpp", removal: "modelmatrixctl engine uninstall llama.cpp")
     case .mlxLM:
       if let prefix {
         return HFInstallOption(
@@ -313,7 +362,7 @@ public final class HFEngineProbe: @unchecked Sendable {
         method: "official",
         summary: "Install mlx-lm into a private Python made by uv, the official Python tool from Astral (about 400 MB).",
         command: nil, source: "https://docs.astral.sh/uv/",
-        location: "\(home)/ModelMatrix/Engines/mlx-lm", removal: "Delete \(home)/ModelMatrix/Engines/mlx-lm")
+        location: "\(root)/mlx-lm", removal: "modelmatrixctl engine uninstall mlx-lm")
     case .ollama:
       if prefix != nil {
         return HFInstallOption(
@@ -323,8 +372,8 @@ public final class HFEngineProbe: @unchecked Sendable {
       }
       return HFInstallOption(
         method: "official", summary: "Download the official Ollama app for macOS.", command: nil,
-        source: "https://ollama.com/download/mac", location: "/Applications/Ollama.app",
-        removal: "Move Ollama.app to the Trash")
+        source: "https://github.com/ollama/ollama/releases", location: "\(home)/Applications/Ollama.app",
+        removal: "modelmatrixctl engine uninstall ollama")
     }
   }
 }

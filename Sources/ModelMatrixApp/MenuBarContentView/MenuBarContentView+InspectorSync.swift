@@ -23,9 +23,10 @@ extension MenuBarContentView {
             // Menu bar sits on the right; always open the inspector to the left
             // of the dashboard (flips only if the left edge of the screen blocks it).
             side: .leading,
-            // Settings needs SecureField key focus; other panels must not steal
-            // activation or the MenuBarExtra stays stuck when clicking outside.
-            allowsKeyFocus: currentPanel == .settings,
+            // Settings (SecureField) and Downloads (model name field) need key focus;
+            // other panels must not steal activation or the MenuBarExtra stays stuck
+            // when clicking outside.
+            allowsKeyFocus: currentPanel == .settings || currentPanel == .downloads,
             content: AnyView(inspectorCard(currentPanel))
         )
     }

@@ -298,7 +298,22 @@ final class RelayConnection: @unchecked Sendable {
         if metered {
             inflightID = usage.beginInflight(record)
         }
+        var request = request
+        if let upstreamModel = target.upstreamModel, let model, model != upstreamModel,
+            let rewritten = Self.replacingModel(in: request.body, with: upstreamModel)
+        {
+            request.body = rewritten
+        }
         connectUpstream(target: target, request: request)
+    }
+
+    /// The request body with its "model" replaced (nil if it has none).
+    static func replacingModel(in body: Data, with name: String) -> Data? {
+        guard var object = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+            object["model"] is String
+        else { return nil }
+        object["model"] = name
+        return try? JSONSerialization.data(withJSONObject: object, options: [.withoutEscapingSlashes])
     }
 
     static func rejectsHost(_ raw: String?, relayHost: String) -> Bool {

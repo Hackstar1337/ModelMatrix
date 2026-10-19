@@ -33,12 +33,17 @@ import {
   Laptop,
   Network,
   Sparkles,
+  PackagePlus,
+  Wrench,
+  Database,
 } from "lucide-react";
 import { compact, duration, num } from "../lib/format";
 import { useApp, type Page } from "../lib/state";
 import { api } from "../lib/api";
 import { MatrixMark } from "./ui";
 import { openOptimize } from "./Optimize";
+import { DownloadsIndicator } from "./Downloads";
+import { openHuggingFace } from "./HuggingFace";
 
 export function Header() {
   const { settings, update, online, info, bridge } = useApp();
@@ -52,6 +57,7 @@ export function Header() {
         </div>
       </a>
       <div className="topbar-right">
+        <DownloadsIndicator />
         <button className="btn sm primary no-print" onClick={openOptimize} title="Free memory on this Mac">
           <Sparkles size={14} /> Optimize
         </button>
@@ -192,6 +198,9 @@ export function SubNav({ onNewProfile }: { onNewProfile: () => void }) {
       items: [
         { label: "Profiles", icon: <Boxes size={20} />, section: "profiles" },
         { label: "New Profile", icon: <Plus size={20} />, action: onNewProfile },
+        { label: "Add from Hugging Face", icon: <PackagePlus size={20} />, action: () => openHuggingFace() },
+        { label: "Downloads", icon: <Download size={20} />, section: "downloads" },
+        { label: "Downloaded Models", icon: <HardDrive size={20} />, section: "downloaded-models" },
         { label: "Remote Hosts", icon: <Network size={20} />, section: "remote-hosts" },
         { label: "Benchmarks", icon: <Gauge size={20} />, section: "benchmarks" },
       ],
@@ -227,6 +236,8 @@ export function SubNav({ onNewProfile }: { onNewProfile: () => void }) {
       items: [
         { label: "Appearance", icon: <Palette size={20} />, section: "appearance" },
         { label: "Usage & Relay", icon: <Radio size={20} />, section: "relay" },
+        { label: "Hugging Face", icon: <Database size={20} />, section: "huggingface" },
+        { label: "Engines", icon: <Wrench size={20} />, section: "engines" },
         { label: "Capture Mode", icon: <ShieldCheck size={20} />, section: "capture" },
         { label: "Controller", icon: <Laptop size={20} />, section: "controller" },
         { label: "Doctor", icon: <Stethoscope size={20} />, section: "doctor" },

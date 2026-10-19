@@ -6,6 +6,7 @@ extension RemoteAgentDeployer {
         [
             ("push agent core", "agent_core.py", try Data(contentsOf: coreSourceURL)),
             ("push discovery", "discovery.py", try Data(contentsOf: discoverySourceURL)),
+            ("push Hugging Face module", "hf_agent.py", try Data(contentsOf: huggingFaceSourceURL)),
             ("push agent", "modelmatrix_agent.py", try Data(contentsOf: agentSourceURL)),
         ]
     }

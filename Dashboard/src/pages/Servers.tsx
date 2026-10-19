@@ -16,6 +16,7 @@ import {
   Trash2,
   UploadCloud,
   Zap,
+  PackagePlus,
 } from "lucide-react";
 import { api, post, remote } from "../lib/api";
 import { compact, num, seconds } from "../lib/format";
@@ -23,6 +24,8 @@ import { useApp, usePoll } from "../lib/state";
 import type { BenchmarkStatus, Gateway, ProfileStatus, StatusPayload } from "../lib/types";
 import { ProfileEditor } from "../components/ProfileEditor";
 import { Confirm, CopyButton, Empty, Modal, Notice, SectionCard, StatusPill, Switch } from "../components/ui";
+import { DeleteModelDialog, DownloadedModelsSection, DownloadsSection, useHFData } from "../components/Downloads";
+import { openHuggingFace } from "../components/HuggingFace";
 
 /* ---------------- Profile card ---------------- */
 
@@ -456,6 +459,8 @@ export function ServersPage({ editorRequest, clearEditorRequest }: { editorReque
   );
   const captureMap = new Map((capture.data?.capture ?? []).map((c) => [c.profile, c]));
   const showCreate = creating || editorRequest;
+  const { models: hfModels } = useHFData();
+  const hfModel = deleting ? hfModels.find((m) => m.profile === deleting && !m.host) : undefined;
 
   return (
     <>
@@ -473,6 +478,9 @@ export function ServersPage({ editorRequest, clearEditorRequest }: { editorReque
           </button>
           <button className="btn danger" onClick={() => globalAction("stop-all")} disabled={!!pending.__all || !statuses.some((s) => s.running)}>
             {pending.__all ? <Loader2 size={14} className="spin" /> : <Power size={14} />} Stop all
+          </button>
+          <button className="btn" onClick={() => openHuggingFace()}>
+            <PackagePlus size={14} /> Add from Hugging Face
           </button>
           <button className="btn primary" onClick={() => setCreating(true)}>
             <Plus size={14} /> New profile
@@ -531,12 +539,20 @@ export function ServersPage({ editorRequest, clearEditorRequest }: { editorReque
           <Empty title={statuses.length ? "No profiles match" : "No model profiles yet"}>
             {statuses.length ? "Try a different search or runtime filter." : (
               <>
-                Create one with <b style={{ display: "inline" }}>New profile</b>: Ollama, llama.cpp, MLX, vLLM, LM Studio or any OpenAI-compatible server.
+                Create one with <b style={{ display: "inline" }}>New profile</b>: Ollama, llama.cpp, MLX, vLLM, LM Studio or any OpenAI-compatible server. Or use{" "}
+                <b style={{ display: "inline" }}>Add from Hugging Face</b> to check a model, download the version that fits and get a ready profile.
               </>
             )}
           </Empty>
         )}
       </section>
+
+      <div style={{ marginTop: 28 }}>
+        <DownloadsSection />
+      </div>
+      <div style={{ marginTop: 28 }}>
+        <DownloadedModelsSection />
+      </div>
 
       <section id="remote-hosts" className="section" style={{ marginTop: 28 }}>
         <div className="toolbar">
@@ -603,7 +619,10 @@ export function ServersPage({ editorRequest, clearEditorRequest }: { editorReque
           </div>
         </Modal>
       )}
-      {deleting && (
+      {deleting && hfModel && (
+        <DeleteModelDialog model={hfModel} onClose={() => setDeleting(null)} onDeleted={() => setSelected((s) => s.filter((p) => p !== deleting))} />
+      )}
+      {deleting && !hfModel && (
         <Confirm
           title={`Delete ${deleting}?`}
           message="The profile file is removed from your profiles folder. Model weights are not touched."

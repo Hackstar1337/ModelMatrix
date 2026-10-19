@@ -150,9 +150,10 @@ enum UsageFormat {
     static func compact(_ value: Double?) -> String {
         guard let value else { return "-" }
         let magnitude = abs(value)
-        if magnitude >= 1_000_000_000 { return String(format: "%.1fB", value / 1_000_000_000) }
-        if magnitude >= 1_000_000 { return String(format: "%.1fM", value / 1_000_000) }
-        if magnitude >= 1_000 { return String(format: "%.1fk", value / 1_000) }
+        // Switch unit just below each boundary so 999.96M reads "1.0B", not "1000.0M".
+        if magnitude >= 999_950_000 { return String(format: "%.1fB", value / 1_000_000_000) }
+        if magnitude >= 999_950 { return String(format: "%.1fM", value / 1_000_000) }
+        if magnitude >= 999.95 { return String(format: "%.1fk", value / 1_000) }
         if value == value.rounded() { return String(Int(value)) }
         return String(format: "%.1f", value)
     }

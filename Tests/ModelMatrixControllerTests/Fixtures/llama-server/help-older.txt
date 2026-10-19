@@ -1,0 +1,29 @@
+----- common params -----
+
+-h,    --help, --usage                  print usage and exit
+--version                               show version and build info
+-t,    --threads N                      number of threads to use during generation (default: -1)
+-tb,   --threads-batch N                number of threads to use during batch and prompt processing (default:
+                                        same as --threads)
+-c,    --ctx-size N                     size of the prompt context (default: 4096, 0 = loaded from model)
+-b,    --batch-size N                   logical maximum batch size (default: 2048)
+-ub,   --ubatch-size N                  physical maximum batch size (default: 512)
+-fa,   --flash-attn                     enable Flash Attention (default: disabled)
+--mlock                                 force system to keep model in RAM rather than swapping or compressing
+--no-mmap                               do not memory-map model (slower load but may reduce pageouts if not
+                                        using mlock)
+-ngl,  --gpu-layers, --n-gpu-layers N   number of layers to store in VRAM
+-ctk,  --cache-type-k TYPE              KV cache data type for K (default: f16)
+-ctv,  --cache-type-v TYPE              KV cache data type for V (default: f16)
+-m,    --model FNAME                    model path (default: `models/$filename` with filename from `--hf-file`
+                                        or `--model-url` if set, otherwise models/7B/ggml-model-f16.gguf)
+
+----- example-specific params -----
+
+-np,   --parallel N                     number of parallel sequences to decode (default: 1)
+-cb,   --cont-batching                  enable continuous batching (a.k.a dynamic batching) (default: enabled)
+-a,    --alias STRING                   set alias for model name (to be used by REST API)
+--host HOST                             ip address to listen (default: 127.0.0.1)
+--port PORT                             port to listen (default: 8080)
+--metrics                               enable prometheus compatible metrics endpoint (default: disabled)
+--chat-template-kwargs STRING           sets additional params for the json template parser

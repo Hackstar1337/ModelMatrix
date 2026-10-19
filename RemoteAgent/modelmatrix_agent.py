@@ -109,8 +109,9 @@ from discovery import (  # noqa: E402
     scan_port_claim_directories,
     status_dict_from_discovery,
 )
+from hf_agent import HFHost  # noqa: E402
 
-AGENT_VERSION = "2.0.0"
+AGENT_VERSION = "2.1.0"
 
 MINIMUM_TOKEN_BYTES = 16
 
@@ -1501,6 +1502,8 @@ class AgentService:
         self._supervised: set[str] = set()
         self._benchmark_lock = threading.Lock()
         self._benchmark_running = False
+        # Hugging Face downloads, engine installs and profiles (created by serve).
+        self.hf: HFHost | None = None
 
     def _port_from_profile_name(self, name: str) -> int | None:
         if not name.startswith("port-"):
@@ -3326,6 +3329,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
             ("POST", "/api/benchmark/start"): self._benchmark_start_action(service),
         }
         routes.update(self._usage_routes())
+        hf = getattr(service, "hf", None)
+        if hf is not None:
+            routes.update(hf.routes())
         return routes.get((method, path))
 
     def _usage_routes(self) -> dict[tuple[str, str], Callable[[dict[str, Any]], dict[str, Any]]]:
@@ -4416,6 +4422,7 @@ def _cmd_serve(args: argparse.Namespace, configuration: AgentConfiguration, serv
     server = make_server(service, verbose=args.verbose)
     service.start_watchdog()
     service.usage = start_usage_relay(service)
+    service.hf = HFHost(service)
     if configuration.tailscale_bind and configuration.auth_token is None:
         sys.stderr.write(
             "warning: serving on the tailnet without a bearer token "

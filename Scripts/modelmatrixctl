@@ -63,6 +63,58 @@ Commands:
                         --context N    plan for N tokens of context (e.g. 16k)
                         --json         print the full report as JSON
                         --refresh      look for installed engines again
+                        --host NAME    check for a remote host instead
+  pull <model> [options]
+                        Download a Hugging Face model (checked first; only
+                        versions that run here are accepted). Resumable: it
+                        continues after network drops, sleep and restarts.
+                        If the engine it needs is missing, shows the install
+                        plan and asks before installing anything.
+                        --version LABEL  e.g. Q4_K_M (default: the recommended one)
+                        --engine NAME    auto, llama.cpp, mlx-lm or ollama
+                        --context N      plan for N tokens of context
+                        --no-start       don't start the model when it finishes
+                        --install-engine approve the engine install up front
+                        --no-install-engine  never offer the engine install
+                        --wait           follow progress until it finishes
+                        --host NAME      download onto a remote host (it
+                                         downloads straight from Hugging Face)
+                        --json           print JSON
+  download <model>      Same as pull. download pause|resume|cancel|watch|remove <id>
+                        works like downloads <action> <id>
+  downloads [action]    List downloads (--host NAME, --host all), or:
+                        pause|resume|watch <id>, cancel <id> [--delete-files],
+                        remove <id>
+  engines [--refresh] [--host NAME] [--json]
+                        Show llama.cpp, MLX and Ollama on this Mac (or a host):
+                        installed or not, version, location, who installed it
+  engine install|update|uninstall <engine> [options]
+                        Show the exact plan (command or official download with
+                        its SHA-256, location, size, how to remove it), ask,
+                        and only then run it with a live log. ModelMatrix only
+                        updates or removes engines it installed itself.
+                        --method homebrew|official  how to install
+                        --host NAME    on a remote Linux host (llama.cpp only)
+                        --yes          approve without asking
+                        --json         print JSON
+  engine status|cancel <job-id>
+  engine jobs           Recent engine install jobs
+  hf-settings [key=value ...]
+                        Show or change download settings: models-folder=PATH,
+                        endpoint=URL|default, connections=1-8, speed-limit=MB/s
+                        (0 = none), start-after-download=yes|no,
+                        keep-awake=yes|no, engine-llama.cpp=PATH|default,
+                        engine-mlx-lm=PATH|default, engine-ollama=PATH|default
+  hf-token set|remove|status
+                        Save a Hugging Face token (for gated models) in the
+                        macOS Keychain; 'set' reads it hidden from the terminal
+  models [--host NAME|all] [--json]
+                        Downloaded models, their disk usage and profiles
+  model start <id>      Create the model's profile if needed, start it and
+                        send it a test message (also: try again after a failure)
+  model delete <id> [--files] [--yes]
+                        Delete the model's profile; --files also deletes its
+                        downloaded files (asks first unless --yes)
   open-app              Launch ModelMatrix
   open-profiles         Open the profiles directory
   completions <shell>   Print shell completions
@@ -71,19 +123,14 @@ USAGE
 
 api() { curl -fsS "$@"; }
 
-# GET with URL-encoded parameters; prints the controller's own error
-# message (not curl's) when the request fails.
-hf_get() {
-  local endpoint="$1" output status body message
-  shift
-  if ! output="$(curl -sS --max-time 180 -G -w '\n%{http_code}' "$@" "$CONTROLLER_URL$endpoint" 2>&1)"; then
-    printf 'error: cannot reach ModelMatrix at %s. Is ModelMatrix running? (modelmatrixctl open-app)\n' "$CONTROLLER_URL" >&2
-    exit 3
-  fi
+# Prints a successful answer, or the controller's own error message (not
+# curl's) and exits 1. $1 is curl output ending with the HTTP status line.
+hf_finish() {
+  local output="$1" status body message
   status="${output##*$'\n'}"
   body="${output%$'\n'*}"
   if [ "$status" -ge 200 ] && [ "$status" -lt 300 ]; then
-    printf '%s\n' "${body%$'\n'}"
+    [ -n "$body" ] && printf '%s\n' "${body%$'\n'}"
     return 0
   fi
   case "$body" in
@@ -96,12 +143,489 @@ hf_get() {
   exit 1
 }
 
+hf_unreachable() {
+  printf 'error: cannot reach ModelMatrix at %s. Is ModelMatrix running? (modelmatrixctl open-app)\n' "$CONTROLLER_URL" >&2
+  exit 3
+}
+
+# GET with URL-encoded parameters.
+hf_get() {
+  local endpoint="$1" output
+  shift
+  output="$(curl -sS --max-time 180 -G -w '\n%{http_code}' "$@" "$CONTROLLER_URL$endpoint" 2>&1)" || hf_unreachable
+  hf_finish "$output"
+}
+
+# Sends the JSON on standard input (so secrets never appear in the
+# process list) with METHOD to ENDPOINT.
+hf_send() {
+  local method="$1" endpoint="$2" output
+  output="$(curl -sS --max-time 180 -X "$method" -H 'Content-Type: application/json' --data-binary @- \
+    -w '\n%{http_code}' "$CONTROLLER_URL$endpoint" 2>&1)" || hf_unreachable
+  hf_finish "$output"
+}
+
+usage_error() {
+  printf 'error: %s\n' "$1" >&2
+  exit 64
+}
+
+# A host name from the Hosts list in ModelMatrix's settings ("local" is this Mac).
+valid_host() {
+  local pattern='^[^[:cntrl:]"\\]{1,64}$'
+  [[ "${1:-}" =~ $pattern ]] || usage_error "give a host name from ModelMatrix's Hosts list, or local for this Mac"
+}
+
+# "16k" -> 16384; plain numbers stay as they are.
+context_tokens() {
+  local value="$1"
+  case "$value" in
+    *[kK]) value="${value%[kK]}"; [[ "$value" =~ ^[0-9]{1,4}$ ]] || return 1; printf '%s' "$((value * 1024))" ;;
+    *) [[ "$value" =~ ^[0-9]{1,7}$ ]] || return 1; printf '%s' "$value" ;;
+  esac
+}
+
+valid_download_id() {
+  [[ "${1:-}" =~ ^[A-Za-z0-9-]{1,40}$ ]] || usage_error "give a download id from 'modelmatrixctl downloads', for example dl-1a2b3c4d"
+}
+
+download_model() {
+  local name="" version="" engine="" context="" start="" format=text wait=0 payload id install_engine=ask host=""
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --json) format=json ;;
+      --wait) wait=1 ;;
+      --no-start) start=false ;;
+      --start) start=true ;;
+      --install-engine) install_engine=yes ;;
+      --no-install-engine) install_engine=no ;;
+      --version|--engine|--context|--host)
+        [ "$#" -ge 2 ] || usage_error "$1 needs a value"
+        case "$1" in --version) version="$2" ;; --engine) engine="$2" ;; --context) context="$2" ;; --host) host="$2" ;; esac
+        shift ;;
+      --host=*) host="${1#--host=}" ;;
+      --version=*) version="${1#--version=}" ;;
+      --engine=*) engine="${1#--engine=}" ;;
+      --context=*) context="${1#--context=}" ;;
+      -*) usage_error "unknown download option: $1" ;;
+      *) [ -z "$name" ] || usage_error "download takes one model name (owner/name or owner/name:LABEL)"; name="$1" ;;
+    esac
+    shift
+  done
+  [ -n "$name" ] || usage_error "download needs a Hugging Face model, for example:
+  modelmatrixctl download bartowski/Qwen2.5-7B-Instruct-GGUF"
+  case "$name$version$engine" in *[[:cntrl:]]*|*\"*|*\\*) usage_error "the model name contains characters that aren't allowed" ;; esac
+  payload="{\"name\":\"$name\""
+  [ -n "$version" ] && payload+=",\"version\":\"$version\""
+  [ -n "$engine" ] && payload+=",\"engine\":\"$engine\""
+  if [ -n "$host" ]; then valid_host "$host"; payload+=",\"host\":\"$host\""; fi
+  if [ -n "$context" ]; then
+    context="$(context_tokens "$context")" || usage_error "--context needs a number of tokens, for example 16k"
+    payload+=",\"context\":$context"
+  fi
+  [ -n "$start" ] && payload+=",\"start_after\":$start"
+  payload+="}"
+  local answer needed
+  answer="$(printf '%s' "$payload" | hf_send POST /api/hf/downloads)"
+  id="$(printf '%s' "$answer" | plutil -extract download.id raw -o - -- - 2>/dev/null || true)"
+  [ -n "$id" ] || { printf 'error: unexpected answer from ModelMatrix\n' >&2; exit 1; }
+  needed="$(printf '%s' "$answer" | plutil -extract download.engine raw -o - -- - 2>/dev/null || true)"
+  if [ "$format" = text ]; then
+    hf_get "/api/hf/downloads/$id" --data-urlencode format=text
+  else
+    printf '%s\n' "$answer"
+  fi
+  # The download runs in the background meanwhile.
+  offer_engine "$needed" "$install_engine" "$format" "$host"
+  if [ "$wait" = 0 ]; then
+    [ "$format" = text ] && printf 'Follow it with: modelmatrixctl downloads (or add --wait)\n'
+    return 0
+  fi
+  watch_download "$id" "$format"
+}
+
+# If the model's engine is missing, offer to install it (plan first, then ask).
+offer_engine() {
+  local engine="$1" mode="$2" format="$3" host="${4:-}" installed where="this Mac" host_args=() extra=()
+  case "$engine" in llama.cpp|mlx-lm) ;; *) return 0 ;; esac
+  case "$host" in ""|local|this-mac|mac) host="" ;; *) where="$host"; host_args=(--data-urlencode "host=$host"); extra=(--host "$host") ;; esac
+  installed="$(hf_get /api/hf/engines --data-urlencode "engine=$engine" --data-urlencode refresh=1 ${host_args[@]+"${host_args[@]}"} | plutil -extract engine.installed raw -o - -- - 2>/dev/null || true)"
+  [ "$installed" = false ] || return 0
+  if [ "$mode" = no ]; then
+    [ "$format" = text ] && printf '\n%s is needed to run this model and is not installed on %s. Install it later with: modelmatrixctl engine install %s%s\n' "$engine" "$where" "$engine" "${host:+ --host \"$host\"}"
+    return 0
+  fi
+  if [ "$format" = text ]; then
+    printf '\nThis model needs %s, which is not installed on %s yet.\n\n' "$engine" "$where"
+  fi
+  if [ "$mode" = yes ]; then
+    engine_change install "$engine" --yes ${extra[@]+"${extra[@]}"} $([ "$format" = json ] && printf -- '--json') || true
+  elif [ "$format" = json ]; then
+    return 0
+  else
+    engine_change install "$engine" ${extra[@]+"${extra[@]}"} || true
+  fi
+}
+
+# Shows progress until the download finishes. Ctrl-C stops watching; the
+# download itself carries on.
+watch_download() {
+  local id="$1" format="${2:-text}" state line last=""
+  while :; do
+    state="$(hf_get "/api/hf/downloads/$id" | plutil -extract download.state raw -o - -- - 2>/dev/null || true)"
+    case "$state" in
+      completed)
+        # Then the profile step: create, start and test the model.
+        watch_profile "$id" "$format"
+        return $? ;;
+      failed|cancelled|paused)
+        [ -t 1 ] && printf '\r\033[K'
+        if [ "$format" = json ]; then hf_get "/api/hf/downloads/$id"; else hf_get "/api/hf/downloads/$id" --data-urlencode format=text; fi
+        return 1 ;;
+      "") printf 'error: download %s not found\n' "$id" >&2; exit 1 ;;
+    esac
+    line="$(hf_get "/api/hf/downloads/$id" --data-urlencode format=text | head -1)"
+    if [ -t 1 ]; then
+      printf '\r\033[K%s' "${line:0:$(( $(tput cols 2>/dev/null || echo 100) - 1 ))}"
+    elif [ "$line" != "$last" ]; then
+      printf '%s\n' "$line"
+    fi
+    last="$line"
+    sleep 2
+  done
+}
+
+# Waits (up to 10 minutes) while a finished download's profile is created,
+# started and tested, then prints the result.
+watch_profile() {
+  local id="$1" format="${2:-text}" answer state message tries=0
+  while :; do
+    answer="$(hf_get "/api/hf/downloads/$id")"
+    state="$(printf '%s' "$answer" | plutil -extract download.profile_state raw -o - -- - 2>/dev/null || true)"
+    case "$state" in
+      ""|creating|starting)
+        tries=$((tries + 1))
+        [ "$tries" -le 300 ] || break
+        message="$(printf '%s' "$answer" | plutil -extract download.profile_message raw -o - -- - 2>/dev/null || true)"
+        if [ -t 1 ] && [ "$format" = text ]; then
+          printf '\r\033[KSetting up: %s' "${message:-preparing the profile}"
+        fi
+        sleep 2 ;;
+      *) break ;;
+    esac
+  done
+  [ -t 1 ] && [ "$format" = text ] && printf '\r\033[K'
+  if [ "$format" = json ]; then hf_get "/api/hf/downloads/$id"; else hf_get "/api/hf/downloads/$id" --data-urlencode format=text; fi
+  case "$state" in ready|created) return 0 ;; *) return 1 ;; esac
+}
+
+# Shared by models and downloads lists: [--host NAME|all] [--json].
+hf_list() {
+  local endpoint="$1" what="$2" text=1 args=()
+  shift 2
+  [ "${1:-}" = list ] && shift
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --json|json) text=0 ;;
+      --host)
+        [ "$#" -ge 2 ] || usage_error "--host needs a host name (or all)"
+        valid_host "$2"; args+=(--data-urlencode "host=$2"); shift ;;
+      --host=*) valid_host "${1#--host=}"; args+=(--data-urlencode "host=${1#--host=}") ;;
+      *) usage_error "unknown $what option: $1 (use --host NAME, --host all or --json)" ;;
+    esac
+    shift
+  done
+  [ "$text" = 1 ] && args+=(--data-urlencode format=text)
+  hf_get "$endpoint" ${args[@]+"${args[@]}"}
+}
+
+models_command() {
+  hf_list /api/hf/models models "$@"
+}
+
+model_command() {
+  local action="${1:-}"
+  [ "$#" -gt 0 ] && shift
+  case "$action" in
+    start)
+      local format=text id=""
+      while [ "$#" -gt 0 ]; do
+        case "$1" in --json) format=json ;; -*) usage_error "unknown model start option: $1" ;; *) id="$1" ;; esac
+        shift
+      done
+      valid_download_id "$id"
+      printf '{}' | hf_send POST "/api/hf/downloads/$id/start" >/dev/null
+      watch_profile "$id" "$format" ;;
+    delete)
+      local id="" files=false yes=0 answer profile size reply
+      while [ "$#" -gt 0 ]; do
+        case "$1" in
+          --files|--delete-files) files=true ;;
+          --yes|-y) yes=1 ;;
+          -*) usage_error "unknown model delete option: $1" ;;
+          *) [ -z "$id" ] || usage_error "model delete takes one id"; id="$1" ;;
+        esac
+        shift
+      done
+      valid_download_id "$id"
+      answer="$(hf_get "/api/hf/downloads/$id")"
+      profile="$(printf '%s' "$answer" | plutil -extract download.profile raw -o - -- - 2>/dev/null || true)"
+      size="$(printf '%s' "$answer" | plutil -extract download.bytes_total raw -o - -- - 2>/dev/null || echo 0)"
+      if [ "$yes" = 0 ]; then
+        [ -t 0 ] || usage_error "add --yes to delete without a question"
+        printf 'Delete %s' "${profile:+the profile $profile}"
+        [ -n "$profile" ] || printf 'the model %s from the list' "$id"
+        [ "$files" = true ] && printf ' and its downloaded files (about %s GB)' "$(awk -v b="$size" 'BEGIN { printf "%.1f", b / 1073741824 }')"
+        printf '? [y/N] '
+        read -r reply
+        case "$reply" in y|Y|yes|YES) ;; *) printf 'Nothing deleted.\n'; return 0 ;; esac
+      fi
+      answer="$(printf '{"id":"%s","delete_files":%s}' "$id" "$files" | hf_send POST /api/hf/models/delete)"
+      kept="$(printf '%s' "$answer" | plutil -extract kept_in_ollama raw -o - -- - 2>/dev/null || echo false)"
+      if [ "$files" = true ] && [ "$kept" = true ]; then
+        printf 'Deleted %s. The model stays in Ollama because Ollama already had it before this download.\n' "${profile:-$id}"
+      elif [ "$files" = true ]; then
+        printf 'Deleted %s and its files (%s GB freed).\n' "${profile:-$id}" \
+          "$(awk -v b="$(printf '%s' "$answer" | plutil -extract freed_bytes raw -o - -- - 2>/dev/null || echo 0)" 'BEGIN { printf "%.1f", b / 1073741824 }')"
+      else
+        printf 'Deleted %s. The downloaded files are kept.\n' "${profile:-$id}"
+      fi ;;
+    *) usage_error "use: modelmatrixctl model start <id> | model delete <id> [--files] [--yes]" ;;
+  esac
+}
+
+downloads_command() {
+  local action="${1:-list}"
+  case "$action" in
+    list|--json|json|--host|--host=*) hf_list /api/hf/downloads downloads "$@"; return ;;
+  esac
+  [ "$#" -gt 0 ] && shift
+  case "$action" in
+    pause|resume)
+      valid_download_id "${1:-}"
+      printf '{}' | hf_send POST "/api/hf/downloads/$1/$action?format=text" ;;
+    cancel)
+      valid_download_id "${1:-}"
+      local delete=false
+      [ "${2:-}" = "--delete-files" ] && delete=true
+      [ -z "${2:-}" ] || [ "$delete" = true ] || usage_error "unknown cancel option: $2"
+      printf '{"delete_files":%s}' "$delete" | hf_send POST "/api/hf/downloads/$1/cancel?format=text" ;;
+    remove)
+      valid_download_id "${1:-}"
+      printf '' | hf_send DELETE "/api/hf/downloads/$1" >/dev/null
+      printf 'Removed %s from the list (downloaded files are kept).\n' "$1" ;;
+    watch)
+      valid_download_id "${1:-}"
+      watch_download "$1" ;;
+    *) usage_error "unknown downloads action: $action (use list, pause, resume, cancel, remove or watch)" ;;
+  esac
+}
+
+json_bool() {
+  case "$1" in
+    yes|true|on|1) printf 'true' ;;
+    no|false|off|0) printf 'false' ;;
+    *) return 1 ;;
+  esac
+}
+
+hf_settings() {
+  if [ "$#" -eq 0 ] || [ "$1" = "--json" ]; then
+    hf_get /api/hf/settings
+    return 0
+  fi
+  local fields=() engines=() pair key value
+  for pair in "$@"; do
+    [[ "$pair" == *=* ]] || usage_error "settings are key=value, for example connections=4"
+    key="${pair%%=*}"
+    value="${pair#*=}"
+    case "$value" in *[[:cntrl:]]*|*\"*|*\\*) usage_error "$key contains characters that aren't allowed" ;; esac
+    case "$key" in
+      models-folder) fields+=("\"models_folder\":\"$value\"") ;;
+      endpoint)
+        if [ "$value" = default ] || [ -z "$value" ]; then fields+=('"endpoint":null'); else fields+=("\"endpoint\":\"$value\""); fi ;;
+      connections)
+        [[ "$value" =~ ^[0-9]{1,2}$ ]] || usage_error "connections must be a number from 1 to 8"
+        fields+=("\"connections_per_file\":$value") ;;
+      speed-limit)
+        [[ "$value" =~ ^[0-9]{1,6}(\.[0-9]{1,3})?$ ]] || usage_error "speed-limit is MB/s, for example 20 (0 = no limit)"
+        fields+=("\"speed_limit_mbps\":$value") ;;
+      start-after-download|keep-awake)
+        value="$(json_bool "$value")" || usage_error "$key must be yes or no"
+        fields+=("\"${key//-/_}\":$value") ;;
+      engine-llama.cpp|engine-mlx-lm|engine-ollama)
+        if [ "$value" = default ] || [ -z "$value" ]; then engines+=("\"${key#engine-}\":null"); else engines+=("\"${key#engine-}\":\"$value\""); fi ;;
+      *) usage_error "unknown setting: $key (see modelmatrixctl help)" ;;
+    esac
+  done
+  if [ "${#engines[@]}" -gt 0 ]; then
+    fields+=("\"engine_paths\":{$(IFS=,; printf '%s' "${engines[*]}")}")
+  fi
+  printf '{%s}' "$(IFS=,; printf '%s' "${fields[*]}")" | hf_send PUT /api/hf/settings
+}
+
+hf_token() {
+  case "${1:-status}" in
+    set)
+      local token=""
+      if [ -t 0 ]; then
+        printf 'Paste your Hugging Face token (create one at https://huggingface.co/settings/tokens; input is hidden): ' >&2
+        IFS= read -rs token
+        printf '\n' >&2
+      else
+        IFS= read -r token || true
+      fi
+      [[ "$token" =~ ^[A-Za-z0-9_.-]{8,512}$ ]] || usage_error "that doesn't look like a Hugging Face token (they start with hf_)"
+      printf '{"token":"%s"}' "$token" | hf_send POST /api/hf/token >/dev/null
+      unset token
+      printf 'Token checked with Hugging Face and saved in the macOS Keychain.\n' ;;
+    remove|delete)
+      printf '' | hf_send DELETE /api/hf/token >/dev/null
+      printf 'Token removed.\n' ;;
+    status)
+      local saved
+      saved="$(hf_get /api/hf/settings | plutil -extract settings.token_saved raw -o - -- - 2>/dev/null || true)"
+      if [ "$saved" = true ]; then printf 'A Hugging Face token is saved.\n'; else printf 'No Hugging Face token is saved.\n'; fi ;;
+    *) usage_error "use: modelmatrixctl hf-token set|remove|status" ;;
+  esac
+}
+
+engines_command() {
+  local text=1 args=()
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --json) text=0 ;;
+      --refresh) args+=(--data-urlencode refresh=1) ;;
+      --host)
+        [ "$#" -ge 2 ] || usage_error "--host needs a host name"
+        valid_host "$2"; args+=(--data-urlencode "host=$2"); shift ;;
+      --host=*) valid_host "${1#--host=}"; args+=(--data-urlencode "host=${1#--host=}") ;;
+      *) usage_error "unknown engines option: $1" ;;
+    esac
+    shift
+  done
+  [ "$text" = 1 ] && args+=(--data-urlencode format=text)
+  hf_get /api/hf/engines ${args[@]+"${args[@]}"}
+}
+
+valid_engine_job() {
+  [[ "${1:-}" =~ ^eng-[0-9a-f]{4,40}$ ]] || usage_error "give an engine job id, for example eng-1a2b3c4d5e6f (see: modelmatrixctl engine jobs)"
+}
+
+engine_command() {
+  local action="${1:-}"
+  [ "$#" -gt 0 ] && shift
+  case "$action" in
+    install|update|uninstall) engine_change "$action" "$@" ;;
+    jobs) hf_get /api/hf/engines/jobs ;;
+    status|log) valid_engine_job "${1:-}"; hf_get "/api/hf/engines/jobs/$1" --data-urlencode format=text ;;
+    cancel) valid_engine_job "${1:-}"; printf '{}' | hf_send POST "/api/hf/engines/jobs/$1/cancel" >/dev/null; printf 'Stopping %s.\n' "$1" ;;
+    *) usage_error "use: modelmatrixctl engine install|update|uninstall <llama.cpp|mlx-lm|ollama>, or engine status|cancel <job-id>, or engine jobs" ;;
+  esac
+}
+
+# Plan, ask, run, follow. Nothing is installed unless the user says yes
+# (or passed --yes).
+engine_change() {
+  local action="$1" engine="" method="" yes=0 format=text payload plan id answer job reply verb host=""
+  shift
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --yes|-y) yes=1 ;;
+      --json) format=json ;;
+      --method)
+        [ "$#" -ge 2 ] || usage_error "--method needs homebrew or official"
+        method="$2"; shift ;;
+      --method=*) method="${1#--method=}" ;;
+      --host)
+        [ "$#" -ge 2 ] || usage_error "--host needs a host name"
+        host="$2"; shift ;;
+      --host=*) host="${1#--host=}" ;;
+      -*) usage_error "unknown engine option: $1" ;;
+      *) [ -z "$engine" ] || usage_error "name one engine: llama.cpp, mlx-lm or ollama"; engine="$1" ;;
+    esac
+    shift
+  done
+  [[ "$engine" =~ ^[A-Za-z0-9._-]{1,20}$ ]] || usage_error "name the engine: llama.cpp, mlx-lm or ollama"
+  case "$method" in ""|auto|homebrew|official) ;; *) usage_error "--method must be homebrew or official" ;; esac
+  payload="{\"engine\":\"$engine\",\"action\":\"$action\""
+  [ -n "$method" ] && payload+=",\"method\":\"$method\""
+  if [ -n "$host" ]; then valid_host "$host"; payload+=",\"host\":\"$host\""; fi
+  payload+="}"
+  if [ "$format" = json ]; then
+    plan="$(printf '%s' "$payload" | hf_send POST /api/hf/engines/plan)"
+    printf '%s\n' "$plan"
+    id="$(printf '%s' "$plan" | plutil -extract plan.id raw -o - -- - 2>/dev/null || true)"
+  else
+    plan="$(printf '%s' "$payload" | hf_send POST '/api/hf/engines/plan?format=text')"
+    printf '%s\n' "$plan"
+    id="$(printf '%s\n' "$plan" | sed -n 's/^Plan ID: \(plan-[0-9a-f]*\).*/\1/p' | head -1)"
+  fi
+  [[ "$id" =~ ^plan-[0-9a-f]+$ ]] || { printf 'error: unexpected answer from ModelMatrix\n' >&2; exit 1; }
+  if [ "$yes" = 0 ]; then
+    case "$action" in install) verb="Install" ;; update) verb="Update" ;; *) verb="Uninstall" ;; esac
+    if [ "$format" = json ] || ! { true </dev/tty; } 2>/dev/null; then
+      printf 'Not approved: run again with --yes to %s %s with this plan.\n' "$action" "$engine" >&2
+      return 1
+    fi
+    printf '\n%s %s%s now? [y/N] ' "$verb" "$engine" "${host:+ on $host}" >/dev/tty
+    read -r reply </dev/tty || reply=""
+    case "$reply" in
+      y|Y|yes|Yes|YES) ;;
+      *) printf 'Nothing was changed.\n'; return 1 ;;
+    esac
+  fi
+  answer="$(printf '{"plan_id":"%s"}' "$id" | hf_send POST /api/hf/engines/run)"
+  job="$(printf '%s' "$answer" | plutil -extract job.id raw -o - -- - 2>/dev/null || true)"
+  [[ "$job" =~ ^eng-[0-9a-f]+$ ]] || { printf 'error: unexpected answer from ModelMatrix\n' >&2; exit 1; }
+  follow_engine_job "$job" "$format"
+}
+
+# Prints the job's log as it grows, until it finishes. Ctrl-C stops watching;
+# the job carries on (stop it with: modelmatrixctl engine cancel <id>).
+follow_engine_job() {
+  local id="$1" format="${2:-text}" since=0 output status rest meta body state next
+  trap 'printf "\nStopped watching. It carries on; stop it with: modelmatrixctl engine cancel %s\n" "$id" >&2; exit 130' INT
+  while :; do
+    output="$(curl -sS --max-time 30 -G \
+      -w '\n%header{x-modelmatrix-job-state} %header{x-modelmatrix-log-next}\n%{http_code}' \
+      --data-urlencode "since=$since" --data-urlencode format=text \
+      "$CONTROLLER_URL/api/hf/engines/jobs/$id" 2>&1)" || hf_unreachable
+    status="${output##*$'\n'}"
+    rest="${output%$'\n'*}"
+    meta="${rest##*$'\n'}"
+    body="${rest%$'\n'*}"
+    if [ "$status" != 200 ]; then hf_finish "$body"$'\n'"$status"; fi
+    if [ "$format" = text ] && [ -n "$body" ]; then printf '%s\n' "${body%$'\n'}"; fi
+    state="${meta%% *}"
+    next="${meta##* }"
+    [[ "$next" =~ ^[0-9]+$ ]] && since="$next"
+    case "$state" in
+      succeeded|failed|cancelled)
+        trap - INT
+        if [ "$format" = json ]; then
+          hf_get "/api/hf/engines/jobs/$id"
+        else
+          printf '\n'
+          hf_get "/api/hf/engines/jobs/$id" --data-urlencode format=text | sed '/^$/,$d'
+        fi
+        [ "$state" = succeeded ] && return 0
+        return 1 ;;
+    esac
+    sleep 1
+  done
+}
+
 check_model() {
-  local name="" context="" format=text refresh=0
+  local name="" context="" format=text refresh=0 host=""
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --json) format=json ;;
       --refresh) refresh=1 ;;
+      --host)
+        [ "$#" -ge 2 ] || usage_error "--host needs a host name"
+        host="$2"; shift ;;
+      --host=*) host="${1#--host=}" ;;
       --context)
         [ "$#" -ge 2 ] || { printf 'error: --context needs a number of tokens, for example --context 16k\n' >&2; exit 64; }
         context="$2"; shift ;;
@@ -117,6 +641,7 @@ check_model() {
     exit 64
   fi
   local args=(--data-urlencode "name=$name")
+  if [ -n "$host" ]; then valid_host "$host"; args+=(--data-urlencode "host=$host"); fi
   [ "$format" = text ] && args+=(--data-urlencode "format=text")
   [ -n "$context" ] && args+=(--data-urlencode "context=$context")
   [ "$refresh" = 1 ] && args+=(--data-urlencode "refresh=1")
@@ -150,7 +675,7 @@ extract_path() {
 }
 
 completions() {
-  local commands='status summary profiles-dir controller-root capabilities robot-docs triage doctor start stop restart switch bench bench-all stop-all dashboard usage optimize check open-app open-profiles'
+  local commands='status summary profiles-dir controller-root capabilities robot-docs triage doctor start stop restart switch bench bench-all stop-all dashboard usage optimize check pull download downloads models model engines engine hf-settings hf-token open-app open-profiles'
   case "${1:-}" in
     bash)
       cat <<EOF
@@ -174,7 +699,7 @@ print_capabilities() {
   "contract_version": "1.0",
   "default_probe": "modelmatrixctl triage",
   "native_controller": true,
-  "commands": ["status", "summary", "profiles-dir", "controller-root", "capabilities", "robot-docs", "triage", "doctor", "start", "stop", "restart", "switch", "bench", "bench-all", "stop-all", "dashboard", "usage", "optimize", "check", "open-app", "open-profiles"]
+  "commands": ["status", "summary", "profiles-dir", "controller-root", "capabilities", "robot-docs", "triage", "doctor", "start", "stop", "restart", "switch", "bench", "bench-all", "stop-all", "dashboard", "usage", "optimize", "check", "pull", "download", "downloads", "models", "model", "engines", "engine", "hf-settings", "hf-token", "open-app", "open-profiles"]
 }
 JSON
 }
@@ -193,6 +718,24 @@ ModelMatrix native controller
 - Lifecycle commands support `--dry-run` or `--plan` before mutation.
 - `modelmatrixctl check <owner/name> --json` checks a Hugging Face model
   (format, versions, memory fit, engine) without downloading or installing.
+- `modelmatrixctl download <owner/name>[:LABEL] --json` queues a resumable,
+  checksum-verified download of a version that runs here; follow it with
+  `modelmatrixctl downloads --json` or `modelmatrixctl downloads watch <id>`.
+- `modelmatrixctl engines --json` lists engines. Installing one is two steps:
+  `POST /api/hf/engines/plan {"engine"}` returns a plan with a one-time id
+  (valid 10 minutes), `POST /api/hf/engines/run {"plan_id"}` runs it. With the
+  CLI: `modelmatrixctl engine install <engine> --json` shows the plan and asks;
+  only pass `--yes` when the user approved that install.
+- After a download is verified, ModelMatrix creates a profile, starts it and
+  sends a test message (unless `--no-start`). `modelmatrixctl models --json`
+  lists downloaded models with `profile_state` (ready, created, needs_engine,
+  needs_memory, start_failed); `modelmatrixctl model start <id>` retries.
+- `modelmatrixctl model delete <id> --files --yes` deletes a model's profile
+  and files; only pass `--yes` when the user asked for that deletion.
+- Add `--host NAME` (a host from ModelMatrix's Hosts list) to check, download,
+  engines and engine install to work on a remote Linux host; the host
+  downloads directly. `downloads --host all` and `models --host all` list
+  every machine. Ids alone are enough for later actions on a host's download.
 DOCS
 }
 
@@ -282,6 +825,20 @@ case "$command" in
     fi
     ;;
   check) check_model "$@" ;;
+  pull) download_model "$@" ;;
+  download)
+    case "${1:-}" in
+      pause|resume|cancel|remove|watch|list) downloads_command "$@" ;;
+      *) download_model "$@" ;;
+    esac
+    ;;
+  engines) engines_command "$@" ;;
+  engine) engine_command "$@" ;;
+  downloads) downloads_command "$@" ;;
+  models) models_command "$@" ;;
+  model) model_command "$@" ;;
+  hf-settings) hf_settings "$@" ;;
+  hf-token) hf_token "$@" ;;
   open-app)
     open -a 'ModelMatrix'
     ;;

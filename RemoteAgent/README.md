@@ -1,7 +1,7 @@
 # ModelMatrix Remote Agent
 
 This stdlib-only Python 3.10+ agent (`modelmatrix_agent.py`,
-`agent_core.py`, and `discovery.py`) lets the Mac app control Linux/Unix model hosts. It uses the
+`agent_core.py`, `discovery.py`, and `hf_agent.py`) lets the Mac app control Linux/Unix model hosts. It uses the
 macOS controller's HTTP contract and `.env` / `.json` profiles.
 
 ## Install
@@ -146,6 +146,36 @@ The dashboard on the Mac reads these statistics through the agent API
 `/reset`), so they appear on the host's Fleet card. Set
 `MODELMATRIX_AGENT_RELAY_PORT` to choose another port; an invalid value or `0`
 turns the relay off.
+
+## Models from Hugging Face
+
+When you pick this host in the Mac's Hugging Face check (dashboard, menu bar,
+or `modelmatrixctl check <owner/repo> --host <name>`), the Mac reads the
+model's details from Hugging Face and the agent reports this host's facts:
+processor, memory, free disk in the models folder, NVIDIA (`nvidia-smi`),
+AMD (`/sys/class/drm`) or Vulkan GPUs, and the engines it can find
+(`llama-server` on `PATH` or in the engines folder, and Ollama). The fit and
+the recommended version are worked out for this host, not for the Mac.
+
+- **Downloads** go straight onto this host into `~/ModelMatrix/Models`, in
+  parallel pieces, resumable after a restart or a dropped connection, and
+  checked against Hugging Face's SHA-256 before they are used. Progress shows
+  in the Mac's Downloads list.
+- **Engines** are never installed on their own. If llama.cpp is missing, the
+  Mac shows a plan (official llama.cpp build for this host's processor and
+  GPU, its size, checksum and folder `~/ModelMatrix/Engines`) and installs it
+  only after you approve that plan. Ollama on Linux is shown as a command to
+  run yourself, because its installer needs administrator rights.
+- **Profiles** are created automatically in the profiles folder once a
+  download finishes and an engine is present, then started and sent one short
+  test message. Deleting a model from the Mac removes its profile and, if
+  you choose, its files (an Ollama model you already had is never removed).
+
+Endpoints (same auth as the rest of the agent; the Mac calls them for you):
+`GET /api/hf/host`, `GET|POST /api/hf/downloads`, `POST /api/hf/downloads/action`
+(pause, resume, cancel, start, delete), `GET /api/hf/engines`,
+`POST /api/hf/engines/install`, `POST /api/hf/engines/uninstall`,
+`GET /api/hf/engines/job`, `POST /api/hf/engines/cancel`.
 
 ## Contract
 

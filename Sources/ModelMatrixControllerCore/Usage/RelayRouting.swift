@@ -14,6 +14,9 @@ public struct RelayTarget: Sendable, Equatable {
     public var models: [String]
     /// Profile and display names that also select this server (lowercased).
     public var aliases: [String] = []
+    /// Model name sent to the server instead of the one the app used
+    /// (profile key UPSTREAM_MODEL; MLX servers only accept their own name).
+    public var upstreamModel: String?
     public var ready: Bool
     public var running: Bool
     public var active: Bool
@@ -69,6 +72,9 @@ public struct RelayTarget: Sendable, Equatable {
             active: status.profile == activeProfile
         )
         target.aliases = [status.profile.lowercased(), status.displayName.lowercased()]
+        if let upstream = profile?["UPSTREAM_MODEL"]?.trimmingCharacters(in: .whitespaces), !upstream.isEmpty {
+            target.upstreamModel = upstream
+        }
         return target
     }
 }

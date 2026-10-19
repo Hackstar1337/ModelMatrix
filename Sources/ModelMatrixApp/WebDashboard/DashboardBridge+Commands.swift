@@ -49,7 +49,7 @@ extension DashboardBridge {
             await store.refresh(includeDoctor: false)
             hub.refreshAll()
             return "Refreshed"
-        case "app.open_settings", "app.open_usage", "app.open_profiles", "app.open_optimize":
+        case "app.open_settings", "app.open_usage", "app.open_profiles", "app.open_optimize", "app.open_downloads":
             requestedInspector = String(type.dropFirst("app.open_".count))
             presentRequest += 1
             NSApp.activate(ignoringOtherApps: true)

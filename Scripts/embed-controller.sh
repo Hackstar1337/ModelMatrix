@@ -53,6 +53,7 @@ mkdir -p "$APP_BUNDLE/Contents/Resources/RemoteAgent"
 cp "$ROOT_DIR/RemoteAgent/modelmatrix_agent.py" \
   "$ROOT_DIR/RemoteAgent/agent_core.py" \
   "$ROOT_DIR/RemoteAgent/discovery.py" \
+  "$ROOT_DIR/RemoteAgent/hf_agent.py" \
   "$ROOT_DIR/RemoteAgent/install-remote-agent.sh" \
   "$APP_BUNDLE/Contents/Resources/RemoteAgent/"
 

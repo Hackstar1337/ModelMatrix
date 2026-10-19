@@ -66,6 +66,10 @@ enum HFVariantBuilder {
       let normalized = upper.hasPrefix("UD-") ? String(upper.dropFirst(3)) : upper
       var bits: Double?
       if let parameters, parameters > 0 { bits = Double(total) * 8 / Double(parameters) }
+      // In small models the embedding layers (kept at high precision) are a
+      // big share of the file, which inflates size-based bits: cap known
+      // types near their typical value so quality isn't overstated.
+      if let measured = bits, let typical = typicalBits[normalized] { bits = min(measured, typical + 0.4) }
       bits = bits ?? typicalBits[normalized]
       let full = ["F16", "BF16", "FP16", "F32", "FP32"].contains(normalized)
       var supported = true

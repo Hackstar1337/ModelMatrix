@@ -13,6 +13,7 @@ extension RemoteAgentDeployer {
         FileManager.default.isReadableFile(atPath: agentSourceURL.path)
             && FileManager.default.isReadableFile(atPath: coreSourceURL.path)
             && FileManager.default.isReadableFile(atPath: discoverySourceURL.path)
+            && FileManager.default.isReadableFile(atPath: huggingFaceSourceURL.path)
             && FileManager.default.isReadableFile(atPath: installerURL.path)
     }
 }

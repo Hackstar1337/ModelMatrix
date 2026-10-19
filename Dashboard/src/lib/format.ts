@@ -7,9 +7,10 @@ export function compact(value: number | null | undefined, digits = 1): string {
     const fixed = n.toFixed(n >= 100 ? 0 : digits);
     return `${fixed.replace(/\.0+$/, "")}${suffix}`;
   };
-  if (abs >= 1e9) return fmt(value / 1e9, "B");
-  if (abs >= 1e6) return fmt(value / 1e6, "M");
-  if (abs >= 1e3) return fmt(value / 1e3, "k");
+  // Switch unit just below each boundary so 999.9M reads "1B", not "1000M".
+  if (abs >= 999.5e6) return fmt(value / 1e9, "B");
+  if (abs >= 999.5e3) return fmt(value / 1e6, "M");
+  if (abs >= 999.5) return fmt(value / 1e3, "k");
   return Number.isInteger(value) ? String(value) : value.toFixed(digits);
 }
 

@@ -46,7 +46,7 @@ private struct FakeSSHFixture {
 }
 
 func makeSources() throws -> (
-    agent: URL, core: URL, discovery: URL, installer: URL, base: URL
+    agent: URL, core: URL, discovery: URL, huggingFace: URL, installer: URL, base: URL
 ) {
     let base = FileManager.default.temporaryDirectory
         .appendingPathComponent("mmx-deployer-src-\(UUID().uuidString)")
@@ -54,12 +54,14 @@ func makeSources() throws -> (
     let agent = base.appendingPathComponent("modelmatrix_agent.py")
     let core = base.appendingPathComponent("agent_core.py")
     let discovery = base.appendingPathComponent("discovery.py")
+    let huggingFace = base.appendingPathComponent("hf_agent.py")
     let installer = base.appendingPathComponent("install-remote-agent.sh")
     try "AGENT-PY-CONTENT".write(to: agent, atomically: true, encoding: .utf8)
     try "CORE-PY-CONTENT".write(to: core, atomically: true, encoding: .utf8)
     try "DISCOVERY-PY-CONTENT".write(to: discovery, atomically: true, encoding: .utf8)
+    try "HF-PY-CONTENT".write(to: huggingFace, atomically: true, encoding: .utf8)
     try "INSTALLER-SH-CONTENT".write(to: installer, atomically: true, encoding: .utf8)
-    return (agent, core, discovery, installer, base)
+    return (agent, core, discovery, huggingFace, installer, base)
 }
 
 @Test func deployPushesAgentThenRunsInstaller() async throws {
@@ -73,6 +75,7 @@ func makeSources() throws -> (
         agentSourceURL: sources.agent,
         coreSourceURL: sources.core,
         discoverySourceURL: sources.discovery,
+        huggingFaceSourceURL: sources.huggingFace,
         installerURL: sources.installer
     )
     let config = GatewayConfig.ssh(
@@ -95,15 +98,19 @@ func makeSources() throws -> (
     #expect(discoveryArguments.contains("cat > ~/.local/share/modelmatrix-agent/discovery.py.new"))
     #expect(try fixture.recordedStdin(1) == Data("DISCOVERY-PY-CONTENT".utf8))
 
-    let pushArguments = try fixture.recordedArguments(2)
+    let huggingFaceArguments = try fixture.recordedArguments(2)
+    #expect(huggingFaceArguments.contains("cat > ~/.local/share/modelmatrix-agent/hf_agent.py.new"))
+    #expect(try fixture.recordedStdin(2) == Data("HF-PY-CONTENT".utf8))
+
+    let pushArguments = try fixture.recordedArguments(3)
     #expect(pushArguments.contains("cat > ~/.local/share/modelmatrix-agent/modelmatrix_agent.py.new"))
     #expect(pushArguments.contains("/.ssh/spark_key"))
-    #expect(try fixture.recordedStdin(2) == Data("AGENT-PY-CONTENT".utf8))
+    #expect(try fixture.recordedStdin(3) == Data("AGENT-PY-CONTENT".utf8))
 
-    let installArguments = try fixture.recordedArguments(3)
+    let installArguments = try fixture.recordedArguments(4)
     #expect(installArguments.contains("bash -s -- --port 9001"))
     #expect(!installArguments.contains("--tailscale"))
-    #expect(try fixture.recordedStdin(3) == Data("INSTALLER-SH-CONTENT".utf8))
+    #expect(try fixture.recordedStdin(4) == Data("INSTALLER-SH-CONTENT".utf8))
 
     #expect(result.pairingLink == "modelmatrix-gateway://mluser@gpu-box.local?name=gpubox&agent_port=7700")
 }
@@ -119,13 +126,14 @@ func makeSources() throws -> (
         agentSourceURL: sources.agent,
         coreSourceURL: sources.core,
         discoverySourceURL: sources.discovery,
+        huggingFaceSourceURL: sources.huggingFace,
         installerURL: sources.installer
     )
     let config = GatewayConfig.ssh(name: "GPUBox", sshUser: "mluser", sshHost: "gpu-box.local")
 
     _ = try await deployer.deploy(to: try #require(config.ssh), useTailscale: true)
 
-    let installArguments = try fixture.recordedArguments(3)
+    let installArguments = try fixture.recordedArguments(4)
     #expect(installArguments.contains("bash -s -- --port 7700 --tailscale"))
 }
 
@@ -140,6 +148,7 @@ func makeSources() throws -> (
         agentSourceURL: sources.agent,
         coreSourceURL: sources.core,
         discoverySourceURL: sources.discovery,
+        huggingFaceSourceURL: sources.huggingFace,
         installerURL: sources.installer
     )
     let config = GatewayConfig.ssh(name: "GPUBox", sshUser: "mluser", sshHost: "gpu-box.local")
@@ -182,6 +191,7 @@ func makeSources() throws -> (
         agentSourceURL: sources.agent,
         coreSourceURL: sources.core,
         discoverySourceURL: sources.discovery,
+        huggingFaceSourceURL: sources.huggingFace,
         installerURL: sources.installer
     )
     let result = try await deployer.deploy(
@@ -216,6 +226,7 @@ func makeSources() throws -> (
         agentSourceURL: URL(fileURLWithPath: "/nonexistent/agent.py"),
         coreSourceURL: URL(fileURLWithPath: "/nonexistent/agent_core.py"),
         discoverySourceURL: URL(fileURLWithPath: "/nonexistent/discovery.py"),
+        huggingFaceSourceURL: URL(fileURLWithPath: "/nonexistent/hf_agent.py"),
         installerURL: URL(fileURLWithPath: "/nonexistent/install.sh")
     )
     #expect(deployer.resourcesAvailable == false)

@@ -16,12 +16,24 @@ public enum HFError: Error, Sendable, Equatable, CustomStringConvertible {
   case upstream(status: Int)
   /// Hugging Face sent something we could not read, or too much of it.
   case badResponse(String)
+  /// A setting has an invalid value.
+  case invalidSetting(String)
+  /// The request can't be carried out in the current state (409).
+  case conflict(String)
+  /// The download or install can't run on this machine (422).
+  case refused(String)
+  /// No download, plan or engine with that id (404).
+  case unknownItem(String)
+  /// Not enough free disk space (507).
+  case insufficientDisk(String)
+  /// Another service (such as GitHub for engine builds) failed (502).
+  case unavailable(String)
 
   public var description: String {
     switch self {
     case .invalidName(let message): return message
     case .notFound(let repo):
-      return "No public model named \(repo) was found on Hugging Face. Check the spelling; private models are not supported yet."
+      return "No public model named \(repo) was found on Hugging Face. Check the spelling. For a private model, add a Hugging Face token in Settings."
     case .loginRequired(let repo):
       return "\(repo) needs a Hugging Face login and accepting its license on huggingface.co before its files can be read."
     case .rateLimited(let seconds):
@@ -33,6 +45,9 @@ public enum HFError: Error, Sendable, Equatable, CustomStringConvertible {
       return "Hugging Face answered with an error (HTTP \(status)). Try again later."
     case .badResponse(let detail):
       return "Hugging Face sent an unexpected answer (\(detail))."
+    case .invalidSetting(let message), .conflict(let message), .refused(let message),
+      .unknownItem(let message), .insufficientDisk(let message), .unavailable(let message):
+      return message
     }
   }
 
@@ -46,17 +61,27 @@ public enum HFError: Error, Sendable, Equatable, CustomStringConvertible {
     case .unreachable: return "hf_unreachable"
     case .upstream: return "hf_error"
     case .badResponse: return "hf_bad_response"
+    case .invalidSetting: return "invalid_setting"
+    case .conflict: return "conflict"
+    case .refused: return "refused"
+    case .unknownItem: return "unknown_item"
+    case .insufficientDisk: return "insufficient_disk"
+    case .unavailable: return "unavailable"
     }
   }
 
   /// HTTP status the controller answers with.
   public var httpStatus: Int {
     switch self {
-    case .invalidName: return 400
+    case .invalidName, .invalidSetting: return 400
+    case .conflict: return 409
+    case .refused: return 422
+    case .unknownItem: return 404
+    case .insufficientDisk: return 507
     case .notFound: return 404
     case .loginRequired: return 403
     case .rateLimited: return 429
-    case .unreachable, .upstream, .badResponse: return 502
+    case .unreachable, .upstream, .badResponse, .unavailable: return 502
     }
   }
 }

@@ -184,3 +184,29 @@ func fixtureFiles(_ repo: String) throws -> [HFFile] {
   #expect(HFCheckService.modelStem("Qwen/Qwen2.5-7B-Instruct-AWQ") == "Qwen2.5-7B-Instruct")
   #expect(HFCheckService.modelStem("Qwen/Qwen2.5-7B-Instruct") == "Qwen2.5-7B-Instruct")
 }
+
+@Test func hfSmallModelBitsAreCappedNearTheTypeValue() {
+  // SmolLM2-135M: embeddings dominate the file, so size-based bits overstate quality.
+  let files = [
+    HFFile(path: "SmolLM2-135M-Instruct-Q2_K.gguf", size: 88_200_000),
+    HFFile(path: "SmolLM2-135M-Instruct-Q4_K_M.gguf", size: 105_500_000),
+    HFFile(path: "SmolLM2-135M-Instruct-Q8_0.gguf", size: 144_800_000),
+  ]
+  let variants = HFVariantBuilder.gguf(files: files, parameters: 134_515_008).variants
+  let byLabel = Dictionary(uniqueKeysWithValues: variants.map { ($0.label, $0) })
+  #expect(byLabel["Q2_K"]?.quality == "fair")
+  #expect((byLabel["Q2_K"]?.bitsPerWeight ?? 9) <= 3.36)
+  #expect((byLabel["Q2_K"]?.bitsPerWeight ?? 0) < HFMemoryPlanner.minimumRecommendedBits)
+  #expect(byLabel["Q8_0"]?.quality == "near original")
+  // Normal-sized models keep their measured value.
+  let big = HFVariantBuilder.gguf(
+    files: [HFFile(path: "Qwen2.5-7B-Instruct-Q4_K_M.gguf", size: 4_683_073_888)], parameters: 7_615_616_512
+  ).variants
+  #expect(abs((big.first?.bitsPerWeight ?? 0) - 4.92) < 0.02)
+}
+
+@Test func hfParameterCountNearOneBillionReadsAsBillions() {
+  #expect(HFCheckText.params(999_885_952) == "1.0B")
+  #expect(HFCheckText.params(494_032_768) == "494M")
+  #expect(HFCheckText.params(7_615_616_512) == "7.6B")
+}

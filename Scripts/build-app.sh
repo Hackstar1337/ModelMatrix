@@ -35,7 +35,21 @@ strip_macho_binaries "$TARGET_APP"
 xattr -dr com.apple.quarantine "$TARGET_APP" >/dev/null 2>&1 || true
 # Finder/File Provider attributes (e.g. when building inside ~/Documents)
 # make codesign fail with "resource fork, Finder information ... not allowed".
-xattr -cr "$TARGET_APP" 2>/dev/null || true
-codesign --force --deep --sign - "$TARGET_APP" >/dev/null 2>&1 || true
+# iCloud-synced folders can add them back right away, so strip, sign and
+# verify a few times.
+signed=0
+for attempt in 1 2 3; do
+  xattr -cr "$TARGET_APP" 2>/dev/null || true
+  if codesign --force --deep --sign - "$TARGET_APP" >/dev/null 2>&1 \
+    && codesign --verify --deep --strict "$TARGET_APP" >/dev/null 2>&1; then
+    signed=1
+    break
+  fi
+  sleep "$attempt"
+done
+if [[ "$signed" != "1" ]]; then
+  printf 'warning: could not sign %s; Finder or iCloud keeps adding file attributes.\n' "$TARGET_APP" >&2
+  printf 'warning: build from a folder that is not synced by iCloud (for example ~/Developer).\n' >&2
+fi
 
 printf 'app=%s\n' "$TARGET_APP"

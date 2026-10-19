@@ -97,6 +97,12 @@ extension ControllerRouter {
     if request.path.hasPrefix("/api/remote/") {
       return try remoteProxy(request)
     }
+    if let download = try huggingFaceDownloadPrefixRoute(request) {
+      return download
+    }
+    if let engineJob = try huggingFaceEnginePrefixRoute(request) {
+      return engineJob
+    }
     if request.method == "GET", request.path.hasPrefix("/api/bridge/commands/") {
       let id = String(request.path.dropFirst("/api/bridge/commands/".count))
       guard let command = bridge.command(id: id) else {

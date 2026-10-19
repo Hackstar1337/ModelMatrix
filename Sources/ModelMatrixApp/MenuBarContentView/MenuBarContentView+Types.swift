@@ -9,6 +9,7 @@ extension MenuBarContentView {
         case usage
         case profiles
         case optimize
+        case downloads
 
         var id: String { rawValue }
 
@@ -21,6 +22,7 @@ extension MenuBarContentView {
             case .usage: "Usage"
             case .profiles: "Profiles"
             case .optimize: "Optimize"
+            case .downloads: "Hugging Face Downloads"
             }
         }
     }

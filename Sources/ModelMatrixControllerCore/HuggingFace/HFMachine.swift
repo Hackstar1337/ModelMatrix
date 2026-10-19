@@ -4,7 +4,7 @@ import Metal
 
 /// The machine a model would run on, measured when the check runs.
 public struct HFMachine: Sendable, Encodable, Equatable {
-  /// "mac" (Linux hosts are added with remote downloads).
+  /// "mac" for this Mac, "linux" for a remote host.
   public var kind: String
   public var os: String
   /// "arm64" or "x86_64": decides which engine builds apply.
@@ -15,14 +15,33 @@ public struct HFMachine: Sendable, Encodable, Equatable {
   public var chip: String
   public var memoryBytes: Int64
   /// Memory a model may use: the GPU working-set limit on Apple Silicon,
-  /// 60% of memory on Intel (processor only).
+  /// 60% of memory on Intel (processor only); on a Linux host 90% of the
+  /// GPU memory, 75% of shared memory, or 60% of memory without a GPU.
   public var budgetBytes: Int64
-  /// "metal" (measured), "estimate" (from memory size) or "cpu".
+  /// "metal" (measured), "estimate" (from memory size), "cpu", and on
+  /// Linux hosts "gpu" (GPU memory) or "unified" (GPU shares the memory).
   public var budgetSource: String
-  /// "metal" or "cpu".
+  /// "metal", "cpu", and on Linux hosts "cuda" (NVIDIA) or "amd".
   public var accelerator: String
   public var modelsFolder: String
   public var freeDiskBytes: Int64?
+
+  // Remote hosts only (left out of the JSON for this Mac).
+  /// Host id and name, as set up in the menu bar's Remote Hosts.
+  public var host: String?
+  public var hostName: String?
+  /// GPU summary, e.g. "NVIDIA GeForce RTX 4090 (24 GB)".
+  public var gpu: String?
+  /// Highest CUDA version the NVIDIA driver supports, e.g. "12.8".
+  public var cudaVersion: String?
+  public var vulkan: Bool?
+  public var rocm: Bool?
+  /// C library version (official llama.cpp builds need a recent one).
+  public var glibc: String?
+  public var availableMemoryBytes: Int64?
+  public var enginesFolder: String?
+
+  public var isRemote: Bool { host != nil }
 
   public init(
     kind: String = "mac", os: String = "", architecture: String, appleSilicon: Bool, rosetta: Bool = false,

@@ -13,6 +13,7 @@ actor RemoteAgentDeployer {
     let agentSourceURL: URL
     let coreSourceURL: URL
     let discoverySourceURL: URL
+    let huggingFaceSourceURL: URL
     let installerURL: URL
     /// Hard cap per ssh invocation. ssh prompts that BatchMode cannot answer
     /// (Tailscale SSH re-auth, host-key confirm, password) otherwise hang the
@@ -24,6 +25,7 @@ actor RemoteAgentDeployer {
         agentSourceURL: URL? = nil,
         coreSourceURL: URL? = nil,
         discoverySourceURL: URL? = nil,
+        huggingFaceSourceURL: URL? = nil,
         installerURL: URL? = nil,
         sshDeadline: TimeInterval = 120
     ) {
@@ -31,6 +33,7 @@ actor RemoteAgentDeployer {
         self.agentSourceURL = agentSourceURL ?? Self.bundledResource("modelmatrix_agent.py")
         self.coreSourceURL = coreSourceURL ?? Self.bundledResource("agent_core.py")
         self.discoverySourceURL = discoverySourceURL ?? Self.bundledResource("discovery.py")
+        self.huggingFaceSourceURL = huggingFaceSourceURL ?? Self.bundledResource("hf_agent.py")
         self.installerURL = installerURL ?? Self.bundledResource("install-remote-agent.sh")
         self.sshDeadline = sshDeadline
     }

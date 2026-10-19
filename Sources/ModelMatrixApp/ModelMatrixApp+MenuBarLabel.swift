@@ -26,6 +26,8 @@ extension ModelMatrixApp {
         .task {
             statusItem?.button?.toolTip = hub.menuBarHelp
             DashboardBridge.shared.start(store: store, hub: hub)
+            // Runs from launch so download notifications arrive with the panel closed.
+            HFDownloadsMonitor.shared.start { [store] in WebDashboardClient.local(store) }
             await recoverLocalController()
         }
         .onChange(of: DashboardBridge.shared.presentRequest) { _, _ in

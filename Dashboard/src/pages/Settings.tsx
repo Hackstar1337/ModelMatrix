@@ -5,6 +5,7 @@ import { ago, compact } from "../lib/format";
 import { useApp, usePoll } from "../lib/state";
 import type { CaptureState, RelayStatus } from "../lib/types";
 import { Confirm, CopyButton, Empty, MatrixMark, Notice, SectionCard, Switch } from "../components/ui";
+import { EnginesSection, HuggingFaceSettingsSection } from "../components/HFSettings";
 
 interface DoctorReport {
   findings: { id: string; severity: string; subsystem: string; message: string; evidence?: string; remediation?: string }[];
@@ -170,6 +171,10 @@ export function SettingsPage() {
           </div>
         </div>
       </SectionCard>
+
+      <HuggingFaceSettingsSection />
+
+      <EnginesSection />
 
       <SectionCard id="capture" title="Capture mode" meta={`${capture.filter((c) => c.enabled).length} on`}>
         <Notice>
@@ -359,6 +364,9 @@ export function SettingsPage() {
               </button>
               <button className="btn" onClick={() => appAction("app.open_optimize", "Opened Optimize in the menu bar")}>
                 <AppWindow size={14} /> Optimize in menu bar
+              </button>
+              <button className="btn" onClick={() => appAction("app.open_downloads", "Opened Downloads in the menu bar")}>
+                <AppWindow size={14} /> Downloads in menu bar
               </button>
               <button className="btn" onClick={() => appAction("app.refresh", "Menu bar app refreshed")}>
                 <RefreshCw size={14} /> Refresh app

@@ -17,6 +17,7 @@ extension ModelMatrixControllerMain {
     let server = ControllerHTTPServer(configuration: configuration, router: router)
     try server.start()
     usage?.start()
+    router.hub.start()
     service.startWatchdog()
     print("controller=http://\(configuration.host):\(configuration.port)")
     print("dashboard=http://localhost:\(configuration.port)/")

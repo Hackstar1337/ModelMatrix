@@ -15,6 +15,12 @@ extension ControllerRouter {
     for (key, route) in huggingFaceRoutes {
       combined[key] = route
     }
+    for (key, route) in huggingFaceDownloadRoutes {
+      combined[key] = route
+    }
+    for (key, route) in huggingFaceEngineRoutes {
+      combined[key] = route
+    }
     return combined
   }
 }
