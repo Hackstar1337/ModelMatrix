@@ -1802,3 +1802,146 @@ a.btn {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
+
+/* ---------- Optimize (free memory) ---------- */
+.accent-text {
+  color: var(--accent);
+}
+.opt-memory {
+  margin-bottom: 16px;
+}
+.opt-memory-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.opt-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--track);
+}
+.opt-bar i {
+  display: block;
+  height: 100%;
+  transition: width 0.6s ease;
+}
+.opt-bar i.app,
+.opt-dot.app {
+  background: var(--accent);
+}
+.opt-bar i.wired,
+.opt-dot.wired {
+  background: #a78bfa;
+}
+.opt-bar i.compressed,
+.opt-dot.compressed {
+  background: var(--blue);
+}
+.opt-bar i.cached,
+.opt-dot.cached {
+  background: var(--pie-muted);
+}
+.opt-bar i.free,
+.opt-dot.free {
+  background: var(--track);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+.opt-legend {
+  justify-content: flex-start;
+  gap: 14px;
+  font-size: 12px;
+}
+.opt-legend b {
+  font-weight: 600;
+  color: var(--text);
+}
+.opt-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.opt-presets .seg {
+  align-self: flex-start;
+}
+.opt-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.opt-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-2);
+  cursor: default;
+}
+label.opt-item {
+  cursor: pointer;
+}
+.opt-item:last-child {
+  border-bottom: 0;
+}
+.opt-item.on {
+  background: var(--accent-soft);
+}
+.opt-main {
+  flex: 1;
+  min-width: 0;
+}
+.opt-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.opt-size {
+  font-size: 13px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.opt-icon {
+  display: inline-flex;
+  color: var(--muted);
+}
+.opt-icon.ok {
+  color: var(--green);
+}
+.opt-icon.bad {
+  color: var(--red);
+}
+.opt-h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 18px 0 8px;
+}
+.opt-estimate {
+  margin-right: auto;
+  font-size: 13px;
+}
+.opt-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.tile-value.sm {
+  font-size: 18px;
+}
+.host-opt {
+  padding: 2px 8px;
+  font-size: 11px;
+  gap: 4px;
+}

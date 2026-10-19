@@ -49,6 +49,11 @@ Commands:
   stop-all              Stop all managed profiles
   dashboard [--print]   Open the web dashboard (http://localhost:7700)
   usage [range]         Print usage statistics (1h, 24h, 7d, 30d, all)
+  optimize [options]    Free memory: unload idle models, stop idle servers,
+                        clear the file cache (asks for your password)
+                        --recommended  only idle models/servers, no password
+                        --no-purge     skip clearing the file cache
+                        --dry-run      print the plan without freeing anything
   open-app              Launch ModelMatrix
   open-profiles         Open the profiles directory
   completions <shell>   Print shell completions
@@ -84,7 +89,7 @@ extract_path() {
 }
 
 completions() {
-  local commands='status summary profiles-dir controller-root capabilities robot-docs triage doctor start stop restart switch bench bench-all stop-all dashboard usage open-app open-profiles'
+  local commands='status summary profiles-dir controller-root capabilities robot-docs triage doctor start stop restart switch bench bench-all stop-all dashboard usage optimize open-app open-profiles'
   case "${1:-}" in
     bash)
       cat <<EOF
@@ -108,7 +113,7 @@ print_capabilities() {
   "contract_version": "1.0",
   "default_probe": "modelmatrixctl triage",
   "native_controller": true,
-  "commands": ["status", "summary", "profiles-dir", "controller-root", "capabilities", "robot-docs", "triage", "doctor", "start", "stop", "restart", "switch", "bench", "bench-all", "stop-all", "dashboard", "usage", "open-app", "open-profiles"]
+  "commands": ["status", "summary", "profiles-dir", "controller-root", "capabilities", "robot-docs", "triage", "doctor", "start", "stop", "restart", "switch", "bench", "bench-all", "stop-all", "dashboard", "usage", "optimize", "open-app", "open-profiles"]
 }
 JSON
 }
@@ -194,6 +199,24 @@ case "$command" in
     range="${1:-24h}"
     case "$range" in 1h|24h|7d|30d|all) ;; *) printf 'error: range must be 1h, 24h, 7d, 30d or all\n' >&2; exit 64 ;; esac
     api "$CONTROLLER_URL/api/usage/summary?range=$range"; printf '\n'
+    ;;
+  optimize)
+    preset=maximum; purge=1; dry=0
+    for argument in "$@"; do
+      case "$argument" in
+        --recommended) preset=recommended; purge=0 ;;
+        --maximum) preset=maximum ;;
+        --no-purge) purge=0 ;;
+        --dry-run|--plan) dry=1 ;;
+        *) printf 'error: unknown optimize option: %s\n' "$argument" >&2; exit 64 ;;
+      esac
+    done
+    if [ "$dry" = 1 ]; then api "$CONTROLLER_URL/api/optimize/plan"; printf '\n'; exit 0; fi
+    json_action '/api/optimize/run' "{\"preset\":\"$preset\"}"
+    if [ "$purge" = 1 ]; then
+      printf 'Clearing the file cache: enter your password in the macOS dialog (Cancel skips this step)...\n' >&2
+      json_action '/api/optimize/purge' '{}'
+    fi
     ;;
   open-app)
     open -a 'ModelMatrix'

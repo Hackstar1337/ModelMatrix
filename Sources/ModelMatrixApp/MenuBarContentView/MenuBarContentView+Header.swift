@@ -8,6 +8,7 @@ extension MenuBarContentView {
                 headerCounts
                 Spacer()
                 HStack(spacing: 8) {
+                    headerOptimizeControl
                     headerDashboardControl
                     headerRefreshControl
                     if let release = updateStatus.available {

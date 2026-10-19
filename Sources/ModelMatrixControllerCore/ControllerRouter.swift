@@ -117,7 +117,7 @@ public final class ControllerRouter: @unchecked Sendable {
     if !path.hasPrefix("/api/") { return true }
     for prefix in [
       "/api/usage/", "/api/host/", "/api/bridge/", "/api/remote/", "/api/ollama/",
-      "/api/dashboard/",
+      "/api/dashboard/", "/api/optimize/purge",
     ] where path.hasPrefix(prefix) {
       return true
     }

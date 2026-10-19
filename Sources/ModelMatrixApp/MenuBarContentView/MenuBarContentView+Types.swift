@@ -8,6 +8,7 @@ extension MenuBarContentView {
         case remoteHosts
         case usage
         case profiles
+        case optimize
 
         var id: String { rawValue }
 
@@ -19,6 +20,7 @@ extension MenuBarContentView {
             case .remoteHosts: "Remote Hosts"
             case .usage: "Usage"
             case .profiles: "Profiles"
+            case .optimize: "Optimize"
             }
         }
     }

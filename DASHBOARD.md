@@ -25,7 +25,8 @@ If the page says the controller is unreachable, start ModelMatrix from Applicati
 | **Clients** | Every app seen by the relay with rename, requests, tokens, average speed, favourite model, first and last seen; top clients chart |
 | **Model Insights** | Model split, per-model requests, tokens, speed and TTFT; Ollama version, loaded models (with VRAM) and installed models; runtime catalog |
 | **Requests & Latency** | TTFT and throughput over time with p50 / p95; searchable, filterable request log; CSV export for the current filter or everything |
-| **Settings** | Theme and accent; relay URLs, retention, clear history; capture mode; controller details and doctor report; integrations; open the profiles or logs folder; open Settings, Usage or Profiles in the menu bar app; refresh the app |
+| **Settings** | Theme and accent; relay URLs, retention, clear history; capture mode; controller details and doctor report; integrations; open the profiles or logs folder; open Settings, Usage, Profiles or Optimize in the menu bar app; refresh the app |
+| **Optimize** (header button, or the This Mac card) | Memory breakdown, Maximum and Recommended presets, checklist of what to free, before and after results, other apps using memory with Quit. See [Optimize](#optimize) |
 
 **Standard / Advanced** (top right) toggles latency percentiles, CPU meters, raw identifiers (endpoint, client process), the 1h range and the full key list in the profile editor. The chosen mode and appearance are remembered in the browser.
 
@@ -65,10 +66,27 @@ Every dashboard feature is also in the menu bar app:
 | Remote hosts: pair, add, edit, pause, install and update agent, remove | **Remote Hosts** panel and **Settings → Remote Gateways** |
 | Fleet metrics | Host sparklines and remote host sections |
 | Theme, accent, doctor, integrations, folders | **Settings** |
+| Optimize: presets, checklist, file cache, results, quit other apps | **Optimize** panel (sparkles icon in the header) |
 
 Remote hosts live in the app (their SSH tunnels and Keychain tokens belong to it). The app reports them to the controller every few seconds, which lets the dashboard show and proxy them, and the dashboard queues host actions for the app to carry out. If the app is not running, the dashboard shows remote hosts as unavailable and everything on this Mac keeps working.
 
 The controller answers each of those reports with a status revision that moves whenever a request may have changed profile or host state: start, stop, restart, switch, profile edits, remote host actions and so on, from the dashboard, `modelmatrixctl` or any other client. When it moves, the app refreshes immediately, so the menu bar icon and counts follow changes made elsewhere within about three seconds, including the starting state while a model loads.
+
+## Optimize
+
+Optimize frees memory held by models and caches. Each scan reads memory the way Activity Monitor does (App, Wired, Compressed, Cached files and Free come from the kernel's VM statistics; swap and pressure from `sysctl`) and the physical footprint of every process.
+
+| Item | Size shown | Action |
+|---|---|---|
+| Each loaded Ollama model | Ollama's reported size (including VRAM) | Unload (`keep_alive: 0`); Ollama reloads it on the next request |
+| Each running model server started by a profile | Footprint of its whole process tree | Stop, through the same code path as **Stop**; Optimize then checks the process really exited |
+| File cache | Cached files | `/usr/sbin/purge` through the standard macOS administrator password dialog; Cancel skips it |
+
+An item is **In use** when the relay is streaming a request to it, or handled one in the last 60 seconds. In-use items are never part of a preset. **Recommended** selects unused Ollama models and model servers with no request (and no start) in the last 15 minutes. **Maximum** selects every item that is not in use, plus the file cache.
+
+"Freed" is the larger of the drop in Memory Used and the rise in free memory, measured a second after the last action. Unloading a model frees part of its memory at once; the rest moves into the file cache, which is why Maximum ends by clearing it.
+
+Optimize never quits apps on its own. It lists the biggest other apps (grouped by app bundle, with tools such as `node` shown by name) and offers **Quit** for regular apps. Quit is carried out by the menu bar app, which asks the app to close the way ⌘Q does. ModelMatrix itself, Finder, the Dock and other parts of macOS, background agents and command-line processes cannot be quit from here.
 
 ## Security
 
@@ -99,6 +117,9 @@ The dashboard uses the controller API documented in [SETUP.md](SETUP.md#controll
 | GET | `/api/profiles/document?profile=` | Profile values and raw text |
 | POST | `/api/profiles/save` | `{profile, values or text, original_profile?, create?}` |
 | POST | `/api/profiles/duplicate`, `/api/profiles/delete`, `/api/profiles/capture` | Profile management |
+| GET | `/api/optimize/plan` | Memory snapshot, items with sizes and in-use state, presets and estimates, other apps |
+| POST | `/api/optimize/run` | `{items: [ids]}` or `{preset: "maximum" or "recommended"}`; unloads and stops, returns results with memory before and after |
+| POST | `/api/optimize/purge` | Clears the file cache after the macOS password dialog; returns memory before and after |
 | GET | `/api/bridge/state` | Menu bar app status and remote hosts |
 | POST | `/api/bridge/commands` | Queue an app action; poll `GET /api/bridge/commands/{id}` |
 | GET / POST | `/api/remote/{host-id}/...` | Proxy to a remote host's agent, limited to status, metrics, doctor, usage, Ollama, start, stop, restart, switch, stop-all and benchmark routes |

@@ -18,7 +18,24 @@ extension MenuBarContentView {
         .help("Open the web dashboard in your browser")
     }
 
-    /// Shows the panel the web dashboard asked for (Settings, Usage, Profiles).
+    /// Opens the Optimize panel: frees memory held by idle models and caches.
+    var headerOptimizeControl: some View {
+        Button {
+            let nextPanel = inspectorCoordinator.toggle(.optimize)
+            synchronizeInspectorWindow(panel: nextPanel)
+        } label: {
+            Image(systemName: "sparkles")
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(inspectorCoordinator.openPanel == .optimize ? accent : theme.faint)
+                .frame(width: DashboardChromeMetrics.footerIconHitSize, height: DashboardChromeMetrics.footerIconHitSize)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(TactilePressStyle())
+        .accessibilityLabel("Optimize Memory")
+        .help("Free memory held by idle models and caches")
+    }
+
+    /// Shows the panel the web dashboard asked for (Settings, Usage, Profiles, Optimize).
     func applyDashboardRequests<Content: View>(_ content: Content) -> some View {
         content
             .onChange(of: dashboardBridge.presentRequest) { _, _ in
@@ -35,6 +52,7 @@ extension MenuBarContentView {
             case "settings": .settings
             case "usage": .usage
             case "profiles": .profiles
+            case "optimize": .optimize
             default: nil
             }
         if let panel { setInspectorPanel(panel) }

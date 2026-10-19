@@ -49,11 +49,14 @@ extension DashboardBridge {
             await store.refresh(includeDoctor: false)
             hub.refreshAll()
             return "Refreshed"
-        case "app.open_settings", "app.open_usage", "app.open_profiles":
+        case "app.open_settings", "app.open_usage", "app.open_profiles", "app.open_optimize":
             requestedInspector = String(type.dropFirst("app.open_".count))
             presentRequest += 1
             NSApp.activate(ignoringOtherApps: true)
             return "Opened"
+        case "app.quit_app":
+            let name = try AppQuitter.quit(path: payload.string("path"), name: payload.string("name"))
+            return "Asked \(name) to quit"
         case "app.open_profiles_folder":
             store.openProfilesDirectory()
             return "Opened the profiles folder"

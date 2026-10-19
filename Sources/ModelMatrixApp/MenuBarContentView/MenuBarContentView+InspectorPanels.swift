@@ -27,6 +27,8 @@ extension MenuBarContentView {
             UsagePanelView(monitor: usageMonitor, store: store, theme: theme, accent: accent)
         case .profiles:
             ProfilesPanelView(store: store, theme: theme, accent: accent)
+        case .optimize:
+            OptimizePanelView(monitor: optimizeMonitor, store: store, theme: theme, accent: accent)
         }
     }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Cpu, Server, Thermometer, Zap } from "lucide-react";
+import { Cpu, Server, Thermometer, Zap, Sparkles } from "lucide-react";
+import { openOptimize } from "./Optimize";
 import { api, remote } from "../lib/api";
 import { clock, compact, gb, hostLabel, num, pct, seconds } from "../lib/format";
 import { useApp, usePoll } from "../lib/state";
@@ -160,9 +161,10 @@ interface HostCardProps {
   stats?: { requests?: number; avg_tps?: number; avg_ttft_ms?: number };
   advanced: boolean;
   icon?: "local" | "remote";
+  onOptimize?: () => void;
 }
 
-export function HostCard({ name, health, healthLabel, metrics, models, stats, advanced }: HostCardProps) {
+export function HostCard({ name, health, healthLabel, metrics, models, stats, advanced, onOptimize }: HostCardProps) {
   const gpu = metrics?.gpus?.[0];
   const memory = metrics?.memory;
   const memPercent = memory?.percent ?? (memory?.used_mb && memory?.total_mb ? (memory.used_mb / memory.total_mb) * 100 : null);
@@ -191,6 +193,11 @@ export function HostCard({ name, health, healthLabel, metrics, models, stats, ad
             </span>
           )}
           {metrics?.chip && <span>{metrics.chip}</span>}
+          {onOptimize && (
+            <button className="btn sm ghost host-opt no-print" onClick={onOptimize} title="Free memory on this Mac">
+              <Sparkles size={12} /> Optimize
+            </button>
+          )}
         </div>
       </div>
       {advanced && <Meter label="CPU" percent={metrics?.cpu_percent ?? 0} value={pct(metrics?.cpu_percent ?? null)} />}
@@ -269,6 +276,7 @@ export function Fleet() {
         models={[...models]}
         stats={local}
         advanced={advanced}
+        onOptimize={openOptimize}
       />
       {(bridge?.gateways ?? [])
         .filter((g) => g.enabled !== false)

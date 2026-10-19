@@ -357,6 +357,9 @@ export function SettingsPage() {
               <button className="btn" onClick={() => appAction("app.open_profiles", "Opened Profiles in the menu bar")}>
                 <AppWindow size={14} /> Profiles in menu bar
               </button>
+              <button className="btn" onClick={() => appAction("app.open_optimize", "Opened Optimize in the menu bar")}>
+                <AppWindow size={14} /> Optimize in menu bar
+              </button>
               <button className="btn" onClick={() => appAction("app.refresh", "Menu bar app refreshed")}>
                 <RefreshCw size={14} /> Refresh app
               </button>

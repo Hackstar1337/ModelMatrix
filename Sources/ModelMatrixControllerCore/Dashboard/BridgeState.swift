@@ -51,6 +51,7 @@ public final class BridgeState: @unchecked Sendable {
         "gateway.add", "gateway.update", "gateway.remove", "gateway.pair", "gateway.install_agent",
         "gateway.update_agent", "gateway.refresh", "gateway.toggle", "app.open_settings", "app.refresh",
         "app.open_profiles_folder", "app.open_logs", "app.open_usage", "app.open_profiles",
+        "app.open_optimize", "app.quit_app",
     ]
 
     public init() {}

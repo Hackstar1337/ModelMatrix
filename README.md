@@ -62,6 +62,7 @@ Open it from the menu bar (the compass button in the header, or **Usage → Open
 | **Model Insights** | Model split, per-model speed and latency, Ollama installed and loaded models, runtime catalog |
 | **Requests & Latency** | TTFT and throughput charts with percentiles, searchable request log, CSV export |
 | **Settings** | Theme and accent, relay and retention, capture mode, controller doctor, integrations, profiles folder, menu bar shortcuts |
+| **Optimize** (sparkles button in the header, or **Optimize** on the This Mac card) | Frees memory: see [Free up memory](#free-up-memory-optimize) |
 
 <table>
 <tr>
@@ -91,6 +92,7 @@ The menu bar panel is the quick way in. It has everything the dashboard has:
 | **Main panel** | One-tap Activate / Stop per model, hero card for the live model, CPU / GPU / memory sparklines, Stop everything, reopen last model, remote host sections |
 | **Usage** (chart icon) | The dashboard's KPIs, live feed, model split, local vs cloud, clients with rename, relay URLs, retention and clear history, CSV export, capture mode switches, Ollama status |
 | **Profiles** (stack icon) | Create from a template, edit any key or the raw file, duplicate, delete |
+| **Optimize** (sparkles icon in the header) | The same memory breakdown, presets, checklist, results and app Quit as the dashboard's Optimize window |
 | **Benchmarks** | Latest run, prefill scaling (TTFT at 1k/4k/8k context), ranked decode speed, CSV export |
 | **Remote Hosts / Settings** | Pairing, SSH agent install and update, appearance, launch at login, controller connection, doctor, integrations |
 
@@ -112,6 +114,29 @@ The relay forwards each request to the running model named in its `model` field 
 Prefer not to change app settings? Turn on **capture mode** for a profile. ModelMatrix then starts that model on a private port and puts the relay on the model's usual port, so existing clients are measured without any change. Capture mode is off by default.
 
 History lives in `~/Library/Application Support/ModelMatrix/Controller/usage/usage.sqlite3`; retention defaults to 30 days and can be changed or cleared from either interface.
+
+---
+
+## Free up memory (Optimize)
+
+Models are the biggest memory users on a Mac that runs them locally. **Optimize** hands that memory back in one click, from the dashboard, the menu bar or the terminal.
+
+It shows memory the way Activity Monitor does (App, Wired, Compressed, Cached files, Free, swap and pressure), then lists what it can free with the size of each:
+
+| Item | What Optimize does |
+|---|---|
+| Loaded Ollama models | Unloads them. Ollama loads a model again on its next request. |
+| Running model servers (llama.cpp, MLX, vLLM and other profiles) | Stops them. Start them again any time. |
+| File cache | Runs macOS's `purge` to drop cached files, including the model files of servers it just stopped. macOS asks for your password. |
+
+Pick a preset or tick items yourself:
+
+- **Maximum** frees everything that is not answering a request right now, plus the file cache.
+- **Recommended** unloads unused Ollama models and stops model servers idle for 15 minutes or more. It needs no password.
+
+Anything that handled a request in the last minute, or is answering one now, is marked **In use** and left out of both presets. When it finishes, Optimize shows memory before and after and the result of each step. Optimize never quits your apps. It does list the other apps using the most memory, each with a **Quit** button that closes the app the way ⌘Q does, so it can still ask you to save.
+
+From the terminal: `modelmatrixctl optimize` (Maximum), `--recommended`, `--no-purge` to skip the password step, or `--dry-run` to see the plan without changing anything.
 
 ---
 
@@ -163,7 +188,7 @@ cd ModelMatrix
 ./Scripts/install.sh
 ```
 
-The installer builds the app (including the web dashboard), places it in `~/Applications/`, installs `modelmatrixctl` to `~/.local/bin` with bash/zsh/fish completions, and registers the app with Launch Services and Spotlight. Run `./Scripts/install.sh --help` for quiet mode, custom paths, `--verify` and `--skip-open`.
+The installer builds the app (including the web dashboard), places it in `~/Applications/`, installs `modelmatrixctl` (status, start, stop, switch, usage, optimize and more) to `~/.local/bin` with bash/zsh/fish completions, and registers the app with Launch Services and Spotlight. Run `./Scripts/install.sh --help` for quiet mode, custom paths, `--verify` and `--skip-open`.
 
 **Uninstall.** `./Scripts/uninstall.sh` removes the app, its controller, `modelmatrixctl` and the completions but keeps your profiles and usage history; add `--purge` to delete those too.
 

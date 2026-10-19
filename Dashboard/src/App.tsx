@@ -4,6 +4,7 @@ import { api, ApiError, post } from "./lib/api";
 import { AppProvider, useApp } from "./lib/state";
 import { Header, KpiStrip, Rail, SubNav } from "./components/Shell";
 import { MatrixMark, Notice, Toasts } from "./components/ui";
+import { OptimizeHost } from "./components/Optimize";
 import { OverviewPage } from "./pages/Overview";
 import { ServersPage } from "./pages/Servers";
 import { ClientsPage } from "./pages/Clients";
@@ -85,6 +86,7 @@ function Dashboard() {
           {page === "settings" && <SettingsPage />}
         </main>
       </div>
+      <OptimizeHost />
       <Toasts />
     </div>
   );

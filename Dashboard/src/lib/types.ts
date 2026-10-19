@@ -309,3 +309,73 @@ export interface ProfileTemplate {
   label: string;
   values: Record<string, string>;
 }
+
+/* ---------- Optimize (free memory) ---------- */
+
+export interface MemorySnapshot {
+  total_bytes: number;
+  used_bytes: number;
+  app_bytes: number;
+  wired_bytes: number;
+  compressed_bytes: number;
+  cached_bytes: number;
+  free_bytes: number;
+  swap_used_bytes: number;
+  swap_total_bytes: number;
+  pressure: "normal" | "warning" | "critical";
+}
+
+export interface OptimizeItem {
+  id: string;
+  kind: "ollama_model" | "model_server" | "file_cache";
+  title: string;
+  detail: string;
+  bytes: number;
+  in_use: boolean;
+  needs_password: boolean;
+  presets: ("recommended" | "maximum")[];
+  last_used_at?: number;
+}
+
+export interface AppMemory {
+  name: string;
+  path?: string;
+  bytes: number;
+  processes: number;
+  pid: number;
+  quittable: boolean;
+}
+
+export interface OptimizePlan {
+  memory?: MemorySnapshot;
+  items: OptimizeItem[];
+  apps: AppMemory[];
+  presets: { recommended: string[]; maximum: string[] };
+  estimates: { recommended: number; maximum: number };
+  thresholds: { in_use_seconds: number; idle_seconds: number };
+  generated_at: number;
+}
+
+export interface OptimizeStepResult {
+  id: string;
+  ok: boolean;
+  message: string;
+  bytes?: number;
+  skipped?: boolean;
+}
+
+export interface OptimizeRunResult {
+  results: OptimizeStepResult[];
+  before?: MemorySnapshot;
+  after?: MemorySnapshot;
+  freed_bytes?: number;
+}
+
+export interface OptimizePurgeResult {
+  ok: boolean;
+  canceled: boolean;
+  message: string;
+  before?: MemorySnapshot;
+  after?: MemorySnapshot;
+  freed_bytes?: number;
+}

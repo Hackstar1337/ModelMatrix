@@ -156,7 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [stored, setStored] = useLocal<Settings>("settings", defaultSettings);
   const settings = { ...defaultSettings, ...stored };
   const update = useCallback((patch: Partial<Settings>) => setStored((s) => ({ ...defaultSettings, ...s, ...patch })), [setStored]);
-  const [page, setPageState] = useState<Page>(() => (location.hash.replace("#/", "").split("/")[0] as Page) || "overview");
+  const [page, setPageState] = useState<Page>(() => (location.hash.replace("#/", "").split(/[/?]/)[0] as Page) || "overview");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [lastActiveLocal, setLastActiveLocal] = useLocal<string | undefined>("lastActive", undefined);
@@ -168,7 +168,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const onHash = () => {
-      const next = location.hash.replace("#/", "").split("/")[0] as Page;
+      const next = location.hash.replace("#/", "").split(/[/?]/)[0] as Page;
       if (next) setPageState(next);
     };
     window.addEventListener("hashchange", onHash);

@@ -9,6 +9,9 @@ extension ControllerRouter {
     for (key, route) in dashboardRoutes {
       combined[key] = route
     }
+    for (key, route) in optimizeRoutes {
+      combined[key] = route
+    }
     return combined
   }
 }

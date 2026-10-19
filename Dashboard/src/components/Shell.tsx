@@ -32,11 +32,13 @@ import {
   Info,
   Laptop,
   Network,
+  Sparkles,
 } from "lucide-react";
 import { compact, duration, num } from "../lib/format";
 import { useApp, type Page } from "../lib/state";
 import { api } from "../lib/api";
 import { MatrixMark } from "./ui";
+import { openOptimize } from "./Optimize";
 
 export function Header() {
   const { settings, update, online, info, bridge } = useApp();
@@ -50,6 +52,9 @@ export function Header() {
         </div>
       </a>
       <div className="topbar-right">
+        <button className="btn sm primary no-print" onClick={openOptimize} title="Free memory on this Mac">
+          <Sparkles size={14} /> Optimize
+        </button>
         <span className="conn no-print" title={info?.controller_url}>
           <span className={`dot ${online ? "on" : "off"}`} /> {online ? "Controller" : "Offline"}
         </span>
