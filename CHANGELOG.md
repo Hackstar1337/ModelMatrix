@@ -16,6 +16,7 @@ All notable changes to this project are documented in this file.
 
 - The menu bar now follows changes made from the web dashboard, `modelmatrixctl` or other clients within about three seconds. Before, a model started elsewhere while nothing was running could take up to ten minutes to appear.
 - `Scripts/uninstall.sh` clears the app's cached preferences as well as the file, so a reinstall no longer picks up old values.
+- Local installs are ad-hoc signed again. When the app was built in a synced folder such as `~/Documents`, Finder and File Provider attributes made signing fail silently and the app was left unsigned; the build and install scripts now clear them first.
 
 ## [1.0.0] - 2026-10-19
 

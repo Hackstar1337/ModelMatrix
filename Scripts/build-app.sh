@@ -33,6 +33,9 @@ mkdir -p "$DIST_DIR"
 cp -R "$SOURCE_APP" "$TARGET_APP"
 strip_macho_binaries "$TARGET_APP"
 xattr -dr com.apple.quarantine "$TARGET_APP" >/dev/null 2>&1 || true
+# Finder/File Provider attributes (e.g. when building inside ~/Documents)
+# make codesign fail with "resource fork, Finder information ... not allowed".
+xattr -cr "$TARGET_APP" 2>/dev/null || true
 codesign --force --deep --sign - "$TARGET_APP" >/dev/null 2>&1 || true
 
 printf 'app=%s\n' "$TARGET_APP"

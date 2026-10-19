@@ -352,6 +352,8 @@ install_app_bundle() {
   fi
   xattr -dr com.apple.quarantine "$DIST_APP" >/dev/null 2>&1 || true
   xattr -dr com.apple.quarantine "$INSTALL_APP" >/dev/null 2>&1 || true
+  # Strip Finder/File Provider attributes first; codesign rejects them.
+  xattr -cr "$DIST_APP" "$INSTALL_APP" 2>/dev/null || true
   codesign --force --deep --sign - "$DIST_APP" >/dev/null 2>&1 || true
   codesign --force --deep --sign - "$INSTALL_APP" >/dev/null 2>&1 || true
   "$ROOT_DIR/Scripts/verify-privacy.sh" "$INSTALL_APP" >/dev/null
