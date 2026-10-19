@@ -344,6 +344,17 @@ export interface AppMemory {
   processes: number;
   pid: number;
   quittable: boolean;
+  /** Why it cannot be quit: "command-line tool", "part of macOS" or "background app". */
+  reason?: string;
+}
+
+/** One app's outcome from the menu bar app's app.quit_apps command. */
+export interface QuitAppResult {
+  path: string;
+  name: string;
+  status: "quit" | "still_open" | "refused";
+  ok: boolean;
+  message: string;
 }
 
 export interface OptimizePlan {

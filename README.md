@@ -92,7 +92,7 @@ The menu bar panel is the quick way in. It has everything the dashboard has:
 | **Main panel** | One-tap Activate / Stop per model, hero card for the live model, CPU / GPU / memory sparklines, Stop everything, reopen last model, remote host sections |
 | **Usage** (chart icon) | The dashboard's KPIs, live feed, model split, local vs cloud, clients with rename, relay URLs, retention and clear history, CSV export, capture mode switches, Ollama status |
 | **Profiles** (stack icon) | Create from a template, edit any key or the raw file, duplicate, delete |
-| **Optimize** (sparkles icon in the header) | The same memory breakdown, presets, checklist, results and app Quit as the dashboard's Optimize window |
+| **Optimize** (sparkles icon in the header) | The same memory breakdown, presets, checklist, app selection (with Select all) and results as the dashboard's Optimize window |
 | **Benchmarks** | Latest run, prefill scaling (TTFT at 1k/4k/8k context), ranked decode speed, CSV export |
 | **Remote Hosts / Settings** | Pairing, SSH agent install and update, appearance, launch at login, controller connection, doctor, integrations |
 
@@ -134,7 +134,7 @@ Pick a preset or tick items yourself:
 - **Maximum** frees everything that is not answering a request right now, plus the file cache.
 - **Recommended** unloads unused Ollama models and stops model servers idle for 15 minutes or more. It needs no password.
 
-Anything that handled a request in the last minute, or is answering one now, is marked **In use** and left out of both presets. When it finishes, Optimize shows memory before and after and the result of each step. Optimize never quits your apps. It does list the other apps using the most memory, each with a **Quit** button that closes the app the way ⌘Q does, so it can still ask you to save.
+Anything that handled a request in the last minute, or is answering one now, is marked **In use** and left out of both presets. When it finishes, Optimize shows memory before and after and the result of each step. To free even more, tick apps under **Other apps using memory**, or use **Select all apps that can quit**, and they close as part of the same run. Optimize never picks apps for you: the presets leave them alone, and you confirm the list of names before anything closes. Each app closes the way it does with ⌘Q, so it can still ask you to save your work; one that is waiting on a save dialog is reported as **Still open**. Menu bar utilities can be selected too. Parts of macOS (Finder, the Dock), background-only agents, command-line tools such as `node`, and ModelMatrix itself are shown with the reason and cannot be selected. If the browser showing the dashboard is selected, it closes last, a few seconds after the results appear.
 
 From the terminal: `modelmatrixctl optimize` (Maximum), `--recommended`, `--no-purge` to skip the password step, or `--dry-run` to see the plan without changing anything.
 

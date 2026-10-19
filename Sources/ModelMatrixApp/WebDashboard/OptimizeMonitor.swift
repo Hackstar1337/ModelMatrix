@@ -3,12 +3,12 @@ import Foundation
 import Observation
 
 /// Menu bar twin of the web dashboard's Optimize window: measures memory, lists
-/// what can be freed (idle Ollama models, model servers, the file cache) and
-/// frees the selected items through the local controller.
+/// what can be freed (idle Ollama models, model servers, the file cache, other
+/// apps) and frees the selected items through the local controller.
 @MainActor
 @Observable
 final class OptimizeMonitor {
-    enum Phase: Equatable { case idle, running, purging, done }
+    enum Phase: Equatable { case idle, running, quitting, purging, done }
 
     struct Step: Identifiable {
         let id: String
@@ -32,6 +32,8 @@ final class OptimizeMonitor {
     var plan: JSONRow?
     var preset = "maximum" { didSet { if oldValue != preset { applyPreset() } } }
     var selected: Set<String> = []
+    /// Bundle paths of the other apps picked to quit. Presets never pick apps.
+    var selectedApps: Set<String> = []
     var phase: Phase = .idle
     var outcome: Outcome?
     var errorMessage: String?
@@ -43,9 +45,16 @@ final class OptimizeMonitor {
     var items: [JSONRow] { plan?.rows("items") ?? [] }
     var apps: [JSONRow] { plan?.rows("apps") ?? [] }
     var memory: JSONRow? { outcome?.after ?? plan?.row("memory") }
-    var isBusy: Bool { phase == .running || phase == .purging }
+    var isBusy: Bool { phase == .running || phase == .quitting || phase == .purging }
     var chosen: [JSONRow] { items.filter { selected.contains($0.string("id") ?? "") } }
-    var estimate: Double { chosen.reduce(0) { $0 + ($1.double("bytes") ?? 0) } }
+    var quittableApps: [JSONRow] { apps.filter { $0.bool("quittable") && $0.string("path") != nil } }
+    var chosenApps: [JSONRow] { quittableApps.filter { selectedApps.contains($0.string("path") ?? "") } }
+    var allAppsSelected: Bool { !quittableApps.isEmpty && chosenApps.count == quittableApps.count }
+    /// Models and caches plus the selected apps.
+    var estimate: Double {
+        (chosen + chosenApps).reduce(0) { $0 + ($1.double("bytes") ?? 0) }
+    }
+    var hasWork: Bool { !chosen.isEmpty || !chosenApps.isEmpty }
     var wantsPurge: Bool { chosen.contains { $0.string("kind") == "file_cache" } }
 
     func estimate(for preset: String) -> Double { plan?.row("estimates")?.double(preset) ?? 0 }
@@ -77,6 +86,7 @@ final class OptimizeMonitor {
                 // Keep the user's ticks, minus items that are gone.
                 let ids = Set(next.rows("items").compactMap { $0.string("id") })
                 selected = selected.intersection(ids)
+                selectedApps = selectedApps.intersection(quittableApps.compactMap { $0.string("path") })
             } else {
                 applyPreset()
                 hasSelection = true
@@ -94,6 +104,15 @@ final class OptimizeMonitor {
         if selected.contains(id) { selected.remove(id) } else { selected.insert(id) }
     }
 
+    func toggleApp(_ path: String) {
+        if selectedApps.contains(path) { selectedApps.remove(path) } else { selectedApps.insert(path) }
+    }
+
+    /// Selects every app that can be quit, or clears them when all are selected.
+    func toggleAllApps() {
+        selectedApps = allAppsSelected ? [] : Set(quittableApps.compactMap { $0.string("path") })
+    }
+
     func reset() {
         outcome = nil
         phase = .idle
@@ -101,15 +120,16 @@ final class OptimizeMonitor {
     }
 
     func run() async {
-        guard let client, !chosen.isEmpty, !isBusy else { return }
+        guard let client, hasWork, !isBusy else { return }
         let api = client()
         let chosenNow = chosen
+        let appsNow = chosenApps
         let purge = wantsPurge
         let titles = Dictionary(
             items.compactMap { row in row.string("id").map { ($0, row.string("title") ?? $0) } },
             uniquingKeysWith: { first, _ in first })
         var steps: [Step] = []
-        var before: JSONRow?
+        var before: JSONRow? = plan?.row("memory")
         var after: JSONRow?
         noticeMessage = nil
         errorMessage = nil
@@ -118,7 +138,7 @@ final class OptimizeMonitor {
             if !ids.isEmpty {
                 phase = .running
                 let result = try await api.post("/api/optimize/run", ["items": ids], timeout: 300)
-                before = result.row("before")
+                before = result.row("before") ?? before
                 after = result.row("after")
                 for row in result.rows("results") where !row.bool("skipped") {
                     let id = row.string("id") ?? ""
@@ -126,6 +146,10 @@ final class OptimizeMonitor {
                         id: id, title: titles[id] ?? id, ok: row.bool("ok"), skipped: false,
                         message: row.string("message") ?? "", bytes: row.double("bytes")))
                 }
+            }
+            if !appsNow.isEmpty {
+                phase = .quitting
+                steps += await quitApps(appsNow)
             }
             if purge {
                 phase = .purging
@@ -136,6 +160,11 @@ final class OptimizeMonitor {
                     id: Self.fileCacheID, title: titles[Self.fileCacheID] ?? "Clear file cache",
                     ok: result.bool("ok"), skipped: result.bool("canceled"),
                     message: result.string("message") ?? "", bytes: nil))
+            }
+            if !appsNow.isEmpty {
+                // Closed apps hand memory back over a second or two.
+                try? await Task.sleep(for: .seconds(1.5))
+                after = (try? await api.object("/api/optimize/plan", timeout: 20))?.row("memory") ?? after
             }
             outcome = Outcome(before: before, after: after, freed: Self.freed(before, after), steps: steps)
             phase = .done
@@ -154,64 +183,19 @@ final class OptimizeMonitor {
         return max(0, used, free)
     }
 
-    func quit(app row: JSONRow) {
-        do {
-            let name = try AppQuitter.quit(path: row.string("path"), name: row.string("name"))
-            noticeMessage = "Asked \(name) to quit."
-            Task {
-                try? await Task.sleep(for: .seconds(2.5))
-                await refresh()
-            }
-        } catch {
-            errorMessage = error.localizedDescription
+    /// Quits the picked apps together and turns each outcome into a result step.
+    func quitApps(_ rows: [JSONRow]) async -> [Step] {
+        let sizes = Dictionary(
+            rows.compactMap { row in row.string("path").map { ($0, row.double("bytes") ?? 0) } },
+            uniquingKeysWith: { first, _ in first })
+        let results = await AppQuitter.quitAll(rows.map { (path: $0.string("path"), name: $0.string("name")) })
+        selectedApps.subtract(results.filter { $0.status == .quit }.map(\.path))
+        return results.map { result in
+            Step(
+                id: "app:\(result.path)", title: "Quit \(result.name)", ok: result.status == .quit,
+                skipped: result.status == .stillOpen, message: result.message,
+                bytes: result.status == .quit ? sizes[result.path] : nil)
         }
     }
 }
 
-/// Quits a running app the way ⌘Q does, so it can still ask to save work.
-/// Shared by the Optimize panel and the web dashboard (through the bridge).
-@MainActor
-enum AppQuitter {
-    struct Failure: LocalizedError {
-        let message: String
-        var errorDescription: String? { message }
-    }
-
-    /// Parts of macOS that must never be quit from here.
-    static let protectedBundleIDs: Set<String> = [
-        "com.apple.finder", "com.apple.dock", "com.apple.loginwindow", "com.apple.systemuiserver",
-        "com.apple.controlcenter", "com.apple.WindowManager", "com.apple.notificationcenterui",
-    ]
-
-    @discardableResult
-    static func quit(path: String?, name: String?) throws -> String {
-        guard let path, path.hasSuffix(".app") else {
-            throw Failure(message: "Only regular apps can be quit from ModelMatrix.")
-        }
-        let target = URL(fileURLWithPath: path).standardizedFileURL.path
-        let matches = NSWorkspace.shared.runningApplications.filter {
-            $0.bundleURL?.standardizedFileURL.path == target
-        }
-        guard let app = matches.first else { throw Failure(message: "\(name ?? "That app") is not running.") }
-        let display = app.localizedName ?? name ?? "The app"
-        if let reason = refusal(
-            bundleID: app.bundleIdentifier, pid: app.processIdentifier, policy: app.activationPolicy)
-        {
-            throw Failure(message: "\(display) \(reason)")
-        }
-        matches.forEach { $0.terminate() }
-        return display
-    }
-
-    /// Why an app may not be quit, or nil when it may.
-    static func refusal(bundleID: String?, pid: pid_t, policy: NSApplication.ActivationPolicy) -> String? {
-        if pid == ProcessInfo.processInfo.processIdentifier
-            || (bundleID != nil && bundleID == Bundle.main.bundleIdentifier)
-        {
-            return "is ModelMatrix itself; use Quit in the menu bar instead."
-        }
-        if let bundleID, protectedBundleIDs.contains(bundleID) { return "is part of macOS and was left running." }
-        if policy != .regular { return "runs in the background and was left running." }
-        return nil
-    }
-}

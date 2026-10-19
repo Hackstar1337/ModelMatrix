@@ -1927,6 +1927,28 @@ label.opt-item {
   color: var(--muted);
   margin: 18px 0 8px;
 }
+.opt-h3-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.opt-all .opt-title {
+  color: var(--muted);
+  font-weight: 600;
+}
+.opt-locked .opt-title {
+  color: var(--muted);
+}
+.opt-item .check {
+  margin: 0;
+  flex: none;
+}
+.opt-locked .opt-icon {
+  width: 16px;
+  flex: none;
+  justify-content: center;
+}
 .opt-estimate {
   margin-right: auto;
   font-size: 13px;

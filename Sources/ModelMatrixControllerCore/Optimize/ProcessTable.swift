@@ -20,8 +20,10 @@ public struct AppMemoryGroup: Sendable, Equatable {
     public let bytes: UInt64
     public let processCount: Int
     public let mainPID: Int32
-    /// Regular apps outside /System can be asked to quit.
-    public let quittable: Bool
+    /// Regular apps (not parts of macOS, not command-line tools) can be asked to quit.
+    public var quittable: Bool
+    /// Why the app cannot be quit from ModelMatrix, when it cannot.
+    public var reason: String? = nil
 
     public var json: [String: Any] {
         var value: [String: Any] = [
@@ -29,6 +31,7 @@ public struct AppMemoryGroup: Sendable, Equatable {
             "quittable": quittable,
         ]
         if let bundlePath { value["path"] = bundlePath }
+        if let reason { value["reason"] = reason }
         return value
     }
 }
@@ -114,7 +117,7 @@ public struct ProcessTable: Sendable {
 
     /// Biggest memory users, grouped by app bundle (or executable name for
     /// tools), largest first.
-    public func appGroups(excluding excluded: Set<Int32>, limit: Int = 8, minimumBytes: UInt64 = 50 << 20)
+    public func appGroups(excluding excluded: Set<Int32>, limit: Int = 12, minimumBytes: UInt64 = 50 << 20)
         -> [AppMemoryGroup]
     {
         struct Accumulator { var name: String; var bundle: String?; var bytes: UInt64 = 0; var count = 0; var main: Int32; var mainStart: Double }
@@ -134,15 +137,47 @@ public struct ProcessTable: Sendable {
             .sorted { $0.bytes > $1.bytes }
             .prefix(limit)
             .map {
-                AppMemoryGroup(
+                let quittable = Self.isQuittable(bundle: $0.bundle)
+                return AppMemoryGroup(
                     name: $0.name, bundlePath: $0.bundle, bytes: $0.bytes, processCount: $0.count,
-                    mainPID: $0.main, quittable: Self.isQuittable(bundle: $0.bundle))
+                    mainPID: $0.main, quittable: quittable,
+                    reason: quittable ? nil : Self.lockedReason(bundle: $0.bundle, path: rows[$0.main]?.path ?? ""))
             }
     }
 
+    /// Why a group cannot be quit: system services (WebKit, Metal compiler,
+    /// daemons) are part of macOS; anything else without an app bundle is a
+    /// command-line tool.
+    static func lockedReason(bundle: String?, path: String) -> String {
+        if bundle != nil { return "part of macOS" }
+        let system = ["/System/", "/usr/libexec/", "/usr/sbin/", "/Library/Apple/"]
+        return system.contains(where: { path.hasPrefix($0) }) ? "part of macOS" : "command-line tool"
+    }
+
+    /// Apple's own apps in /System/Applications (Mail, Notes, Music...) are
+    /// ordinary apps; the rest of /System (Finder, Dock...) is macOS itself.
     static func isQuittable(bundle: String?) -> Bool {
         guard let bundle else { return false }
+        if bundle.hasPrefix("/System/Applications/") || bundle.contains("/Cryptexes/App/System/Applications/") {
+            return true
+        }
         return !bundle.hasPrefix("/System/") && !bundle.hasPrefix("/usr/")
             && !bundle.hasPrefix("/Library/Apple/")
+    }
+
+    /// Narrows `quittable` to the running apps the menu bar app reports it can
+    /// quit (background-only agents cannot be quit like ⌘Q). `allowedApps` is
+    /// nil when the menu bar app is not connected.
+    public static func refine(_ groups: [AppMemoryGroup], allowedApps: Set<String>?) -> [AppMemoryGroup] {
+        guard let allowedApps else { return groups }
+        let names = Set(allowedApps.map { ($0 as NSString).lastPathComponent })
+        return groups.map { group in
+            guard group.quittable, let path = group.bundlePath else { return group }
+            if allowedApps.contains(path) || names.contains((path as NSString).lastPathComponent) { return group }
+            var narrowed = group
+            narrowed.quittable = false
+            narrowed.reason = "background app"
+            return narrowed
+        }
     }
 }

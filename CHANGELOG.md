@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
-- **Optimize** frees as much memory as possible: it unloads idle Ollama models, stops idle model servers and clears the macOS file cache (after the standard password dialog), then shows memory before and after. Choose **Maximum** or **Recommended** or tick items yourself; anything answering a request is left alone. Available from the web dashboard (header and This Mac card), the menu bar (sparkles icon) and `modelmatrixctl optimize`. It also lists the other apps using the most memory, each with a Quit button that closes the app the way ⌘Q does.
+- **Optimize** frees as much memory as possible: it unloads idle Ollama models, stops idle model servers and clears the macOS file cache (after the standard password dialog), then shows memory before and after. Choose **Maximum** or **Recommended** or tick items yourself; anything answering a request is left alone. Available from the web dashboard (header and This Mac card), the menu bar (sparkles icon) and `modelmatrixctl optimize`. It also lists the other apps using the most memory: tick the ones to close (or **Select all apps that can quit**), confirm the list, and they close the way they do with ⌘Q as part of the same run, with each reported as closed, still open or not allowed.
 
 ### Changed
 

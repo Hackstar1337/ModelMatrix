@@ -114,6 +114,7 @@ final class DashboardBridge {
             "pid": ProcessInfo.processInfo.processIdentifier,
         ]
         app["last_active_profile"] = store.lastActiveProfiles.first
+        app["quittable_apps"] = AppQuitter.quittableAppPaths()
         return ["app": app, "gateways": gateways]
     }
 
@@ -133,9 +134,10 @@ final class DashboardBridge {
         let payload = command.row("payload") ?? JSONRow([:])
         var body: [String: Any] = ["id": id]
         do {
-            let message = try await execute(type: type, payload: payload)
+            let reply = try await executeWithResult(type: type, payload: payload)
             body["ok"] = true
-            body["message"] = message
+            body["message"] = reply.message
+            if let result = reply.result { body["result"] = result }
         } catch {
             body["ok"] = false
             body["message"] = error.localizedDescription

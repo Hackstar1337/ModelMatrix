@@ -79,7 +79,9 @@ extension ControllerRouter {
         let maximum = OptimizePlanner.preset("maximum", items)
         var plan: [String: Any] = [
             "items": items.map(\.json),
-            "apps": scan.table.appGroups(excluding: scan.excluded).map(\.json),
+            "apps": ProcessTable.refine(
+                scan.table.appGroups(excluding: scan.excluded), allowedApps: bridge.quittableAppPaths
+            ).map(\.json),
             "presets": ["recommended": recommended, "maximum": maximum],
             "estimates": [
                 "recommended": OptimizePlanner.estimate(recommended, items),

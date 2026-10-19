@@ -51,7 +51,7 @@ public final class BridgeState: @unchecked Sendable {
         "gateway.add", "gateway.update", "gateway.remove", "gateway.pair", "gateway.install_agent",
         "gateway.update_agent", "gateway.refresh", "gateway.toggle", "app.open_settings", "app.refresh",
         "app.open_profiles_folder", "app.open_logs", "app.open_usage", "app.open_profiles",
-        "app.open_optimize", "app.quit_app",
+        "app.open_optimize", "app.quit_app", "app.quit_apps",
     ]
 
     public init() {}
@@ -79,6 +79,17 @@ public final class BridgeState: @unchecked Sendable {
         guard method == "POST", path.hasPrefix("/api/") else { return false }
         let quiet = ["/api/bridge/", "/api/usage/", "/api/dashboard/"]
         return !quiet.contains { path.hasPrefix($0) }
+    }
+
+    /// Bundle paths of the running apps the menu bar app can quit, as of its
+    /// last heartbeat; nil when it is not connected.
+    public var quittableAppPaths: Set<String>? {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let lastHeartbeat, Date().timeIntervalSince(lastHeartbeat) < 15,
+            let list = appInfo["quittable_apps"] as? [String]
+        else { return nil }
+        return Set(list)
     }
 
     public var appConnected: Bool {

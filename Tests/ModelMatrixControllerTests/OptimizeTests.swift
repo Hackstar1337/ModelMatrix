@@ -158,3 +158,50 @@ private func server(_ profile: String, bytes: UInt64 = 1 << 30, startedAgo: Doub
     #expect(body?["memory"] is [String: Any])
   }
 }
+
+/// Apple's own apps are ordinary apps; the rest of /System is macOS itself.
+@Test func optimizeAppRulesExplainWhatCannotQuit() {
+  #expect(ProcessTable.isQuittable(bundle: "/System/Applications/Mail.app"))
+  #expect(ProcessTable.isQuittable(bundle: "/System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app"))
+  #expect(!ProcessTable.isQuittable(bundle: "/System/Library/CoreServices/Finder.app"))
+  #expect(!ProcessTable.isQuittable(bundle: nil))
+  let mb: UInt64 = 1 << 20
+  let table = ProcessTable(rows: [
+    ProcessMemoryRow(pid: 1, parent: 0, startedAt: 1, path: "/opt/homebrew/bin/node", name: "node", footprintBytes: 900 * mb),
+    ProcessMemoryRow(pid: 2, parent: 0, startedAt: 1, path: "/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder", name: "Finder", footprintBytes: 300 * mb),
+    ProcessMemoryRow(pid: 3, parent: 0, startedAt: 1, path: "/Applications/Editor.app/Contents/MacOS/Editor", name: "Editor", footprintBytes: 800 * mb),
+    ProcessMemoryRow(pid: 4, parent: 0, startedAt: 1, path: "/Applications/Clip.app/Contents/MacOS/Clip", name: "Clip", footprintBytes: 200 * mb),
+    ProcessMemoryRow(pid: 5, parent: 0, startedAt: 1, path: "/System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/MacOS/Safari", name: "Safari", footprintBytes: 400 * mb),
+  ])
+  let groups = table.appGroups(excluding: [])
+  #expect(groups.first { $0.name == "node" }?.reason == "command-line tool")
+  #expect(groups.first { $0.name == "Finder" }?.reason == "part of macOS")
+  #expect(groups.first { $0.name == "Editor" }?.reason == nil)
+  #expect(groups.first { $0.name == "Editor" }?.json.keys.contains("reason") == false)
+  // Without the menu bar app the rules above stand.
+  #expect(ProcessTable.refine(groups, allowedApps: nil) == groups)
+  // With it, only apps it sees as regular stay quittable; Safari matches by file name.
+  let refined = ProcessTable.refine(groups, allowedApps: ["/Applications/Editor.app", "/Applications/Safari.app"])
+  #expect(refined.first { $0.name == "Editor" }?.quittable == true)
+  #expect(refined.first { $0.name == "Safari" }?.quittable == true)
+  let clip = refined.first { $0.name == "Clip" }
+  #expect(clip?.quittable == false)
+  #expect(clip?.reason == "background app")
+  #expect(clip?.json["reason"] as? String == "background app")
+  #expect(refined.first { $0.name == "node" }?.reason == "command-line tool")
+  // System services without an app bundle are part of macOS, not tools.
+  #expect(ProcessTable.lockedReason(bundle: nil, path: "/System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent") == "part of macOS")
+  #expect(ProcessTable.lockedReason(bundle: nil, path: "/usr/libexec/trustd") == "part of macOS")
+  #expect(ProcessTable.lockedReason(bundle: nil, path: "/usr/bin/python3") == "command-line tool")
+  #expect(ProcessTable.lockedReason(bundle: nil, path: "") == "command-line tool")
+}
+
+@Test func bridgeReportsRegularAppsFromHeartbeat() {
+  let bridge = BridgeState()
+  #expect(bridge.quittableAppPaths == nil)
+  #expect(BridgeState.commandTypes.contains("app.quit_apps"))
+  _ = bridge.heartbeat(["app": ["version": "1.0.0", "quittable_apps": ["/Applications/Editor.app"]], "gateways": []])
+  #expect(bridge.quittableAppPaths == ["/Applications/Editor.app"])
+  _ = bridge.heartbeat(["app": ["version": "1.0.0"], "gateways": []])
+  #expect(bridge.quittableAppPaths == nil)
+}

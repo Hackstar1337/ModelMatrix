@@ -26,7 +26,7 @@ If the page says the controller is unreachable, start ModelMatrix from Applicati
 | **Model Insights** | Model split, per-model requests, tokens, speed and TTFT; Ollama version, loaded models (with VRAM) and installed models; runtime catalog |
 | **Requests & Latency** | TTFT and throughput over time with p50 / p95; searchable, filterable request log; CSV export for the current filter or everything |
 | **Settings** | Theme and accent; relay URLs, retention, clear history; capture mode; controller details and doctor report; integrations; open the profiles or logs folder; open Settings, Usage, Profiles or Optimize in the menu bar app; refresh the app |
-| **Optimize** (header button, or the This Mac card) | Memory breakdown, Maximum and Recommended presets, checklist of what to free, before and after results, other apps using memory with Quit. See [Optimize](#optimize) |
+| **Optimize** (header button, or the This Mac card) | Memory breakdown, Maximum and Recommended presets, checklist of what to free, before and after results, other apps using memory with checkboxes and Select all. See [Optimize](#optimize) |
 
 **Standard / Advanced** (top right) toggles latency percentiles, CPU meters, raw identifiers (endpoint, client process), the 1h range and the full key list in the profile editor. The chosen mode and appearance are remembered in the browser.
 
@@ -66,7 +66,7 @@ Every dashboard feature is also in the menu bar app:
 | Remote hosts: pair, add, edit, pause, install and update agent, remove | **Remote Hosts** panel and **Settings → Remote Gateways** |
 | Fleet metrics | Host sparklines and remote host sections |
 | Theme, accent, doctor, integrations, folders | **Settings** |
-| Optimize: presets, checklist, file cache, results, quit other apps | **Optimize** panel (sparkles icon in the header) |
+| Optimize: presets, checklist, file cache, results, select and close other apps | **Optimize** panel (sparkles icon in the header) |
 
 Remote hosts live in the app (their SSH tunnels and Keychain tokens belong to it). The app reports them to the controller every few seconds, which lets the dashboard show and proxy them, and the dashboard queues host actions for the app to carry out. If the app is not running, the dashboard shows remote hosts as unavailable and everything on this Mac keeps working.
 
@@ -86,7 +86,9 @@ An item is **In use** when the relay is streaming a request to it, or handled on
 
 "Freed" is the larger of the drop in Memory Used and the rise in free memory, measured a second after the last action. Unloading a model frees part of its memory at once; the rest moves into the file cache, which is why Maximum ends by clearing it.
 
-Optimize never quits apps on its own. It lists the biggest other apps (grouped by app bundle, with tools such as `node` shown by name) and offers **Quit** for regular apps. Quit is carried out by the menu bar app, which asks the app to close the way ⌘Q does. ModelMatrix itself, Finder, the Dock and other parts of macOS, background agents and command-line processes cannot be quit from here.
+Optimize never quits apps on its own. It lists up to 12 of the biggest other apps (grouped by app bundle, with tools such as `node` shown by name). Regular apps get a checkbox, and **Select all apps that can quit** ticks every one of them; the presets never tick apps. Selected apps count toward the estimate, and **Optimize now** first asks you to confirm the list of names. The run then frees the selected models and servers, closes the apps, clears the file cache if it is ticked, and measures memory again once the apps have exited.
+
+Closing apps is carried out by the menu bar app (`app.quit_apps` bridge command), which asks every selected app to close the way ⌘Q does and waits up to 10 seconds. Each app is reported as closed, **Still open** (usually waiting on a save dialog you can still answer), or not allowed. The menu bar app reports which running apps it can quit in its heartbeat, so the list only offers apps that will really quit. Dock apps and menu bar utilities can be selected. Rows that cannot be selected show why: *part of macOS* (Finder, the Dock), *background app* (background-only agents with no window or menu), or *command-line tool*; ModelMatrix itself is never listed. Apple's own apps in `/System/Applications` (Mail, Notes, Music...) can be selected. Without the menu bar app the rows are shown but cannot be selected. If the browser showing the dashboard is selected, it is closed last, a few seconds after the results are shown, so the run is not cut short.
 
 ## Security
 
