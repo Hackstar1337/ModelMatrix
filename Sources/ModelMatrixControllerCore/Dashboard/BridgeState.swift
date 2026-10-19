@@ -46,6 +46,7 @@ public final class BridgeState: @unchecked Sendable {
     var appInfo: [String: Any] = [:]
     var commands: [String: BridgeCommand] = [:]
     var commandOrder: [String] = []
+    var revision = 0
     public static let commandTypes: Set<String> = [
         "gateway.add", "gateway.update", "gateway.remove", "gateway.pair", "gateway.install_agent",
         "gateway.update_agent", "gateway.refresh", "gateway.toggle", "app.open_settings", "app.refresh",
@@ -53,6 +54,31 @@ public final class BridgeState: @unchecked Sendable {
     ]
 
     public init() {}
+
+    /// Changes whenever a request may have changed profile or host state
+    /// (start, stop, edits, remote actions...). The app reads it from every
+    /// heartbeat and refreshes at once when it moves, so actions taken from
+    /// the web dashboard, the CLI or other clients show up in the menu bar
+    /// within one heartbeat instead of waiting for the idle refresh cadence.
+    public var statusRevision: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return revision
+    }
+
+    public func bumpStatusRevision() {
+        lock.lock()
+        defer { lock.unlock() }
+        revision &+= 1
+    }
+
+    /// POST routes that cannot change what the menu bar shows: the bridge's
+    /// own traffic, dashboard sign-in, and usage statistics settings.
+    public static func changesStatus(method: String, path: String) -> Bool {
+        guard method == "POST", path.hasPrefix("/api/") else { return false }
+        let quiet = ["/api/bridge/", "/api/usage/", "/api/dashboard/"]
+        return !quiet.contains { path.hasPrefix($0) }
+    }
 
     public var appConnected: Bool {
         lock.lock()

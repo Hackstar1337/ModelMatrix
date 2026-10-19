@@ -247,7 +247,8 @@ extension ControllerRouter {
       // Bridge (menu bar app)
       RouteKey(method: "POST", path: "/api/bridge/heartbeat"): { [self] request in
         let payload = try requestObject(request)
-        return try json(["commands": bridge.heartbeat(payload)])
+        let commands = bridge.heartbeat(payload)
+        return try json(["commands": commands, "status_revision": bridge.statusRevision])
       },
       RouteKey(method: "GET", path: "/api/bridge/state"): { [self] _ in
         try json(bridge.publicState())

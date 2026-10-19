@@ -28,6 +28,8 @@ final class DashboardBridge {
     @ObservationIgnored weak var hub: GatewayHub?
     @ObservationIgnored var loop: Task<Void, Never>?
     @ObservationIgnored var running: Set<String> = []
+    /// Last controller status revision seen; nil until the first heartbeat.
+    @ObservationIgnored var lastStatusRevision: Int?
 
     func start(store: MatrixStore, hub: GatewayHub) {
         self.store = store
@@ -55,6 +57,7 @@ final class DashboardBridge {
         do {
             let response = try await client.post("/api/bridge/heartbeat", payload, timeout: 8)
             isConnected = true
+            syncStatusRevision(response.int("status_revision"))
             for command in response.rows("commands") {
                 guard let id = command.string("id"), !running.contains(id) else { continue }
                 running.insert(id)

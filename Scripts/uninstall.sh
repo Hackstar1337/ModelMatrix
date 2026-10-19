@@ -48,6 +48,10 @@ rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions/modelmat
 rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_modelmatrixctl"
 rm -f "${XDG_CONFIG_HOME:-$HOME/.config}/fish/completions/modelmatrixctl.fish"
 
+# cfprefsd caches preferences in memory; deleting only the plist would let a
+# reinstall read the old values back. `defaults delete` clears the cache too.
+defaults delete "$BUNDLE_ID" >/dev/null 2>&1 || true
+defaults delete "$BUNDLE_ID.widget" >/dev/null 2>&1 || true
 rm -f "$HOME/Library/Preferences/$BUNDLE_ID.plist"
 rm -f "$HOME/Library/Preferences/$BUNDLE_ID.widget.plist"
 rm -rf "$HOME/Library/Containers/$BUNDLE_ID.widget"

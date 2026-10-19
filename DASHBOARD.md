@@ -68,6 +68,8 @@ Every dashboard feature is also in the menu bar app:
 
 Remote hosts live in the app (their SSH tunnels and Keychain tokens belong to it). The app reports them to the controller every few seconds, which lets the dashboard show and proxy them, and the dashboard queues host actions for the app to carry out. If the app is not running, the dashboard shows remote hosts as unavailable and everything on this Mac keeps working.
 
+The controller answers each of those reports with a status revision that moves whenever a request may have changed profile or host state: start, stop, restart, switch, profile edits, remote host actions and so on, from the dashboard, `modelmatrixctl` or any other client. When it moves, the app refreshes immediately, so the menu bar icon and counts follow changes made elsewhere within about three seconds, including the starting state while a model loads.
+
 ## Security
 
 - The controller listens on `127.0.0.1` only.

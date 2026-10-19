@@ -175,6 +175,41 @@ private func errorCode(_ response: ControllerHTTPResponse) -> String? {
   ((try? JSONSerialization.jsonObject(with: response.body)) as? [String: Any])?["error"] as? String
 }
 
+/// The menu bar learns about changes made elsewhere (web dashboard, CLI)
+/// through a revision the controller returns with every app heartbeat.
+@Test func routerBumpsStatusRevisionOnlyForStateChanges() throws {
+  try withFixtureRoot { fixture in
+    let router = ControllerRouter(service: fixture.service, authToken: nil)
+    let initial = router.bridge.statusRevision
+    _ = router.handle(.init(method: "GET", target: "/api/status"))
+    _ = router.handle(jsonRequest(path: "/api/bridge/heartbeat", object: [:]))
+    _ = router.handle(jsonRequest(path: "/api/usage/reset", object: ["confirm": true]))
+    #expect(router.bridge.statusRevision == initial)
+
+    let stopped = router.handle(jsonRequest(path: "/api/stop-all", object: [:]))
+    #expect(stopped.status == 200)
+    // Once on arrival (shows "starting"), once on completion.
+    #expect(router.bridge.statusRevision == initial + 2)
+
+    let beat = router.handle(jsonRequest(path: "/api/bridge/heartbeat", object: [:]))
+    let payload = try JSONSerialization.jsonObject(with: beat.body) as? [String: Any]
+    #expect(payload?["status_revision"] as? Int == initial + 2)
+    #expect(payload?["commands"] is [Any])
+  }
+}
+
+@Test func statusRevisionSkipsQuietRoutes() {
+  #expect(BridgeState.changesStatus(method: "POST", path: "/api/start"))
+  #expect(BridgeState.changesStatus(method: "POST", path: "/api/profiles/save"))
+  #expect(BridgeState.changesStatus(method: "POST", path: "/api/remote/host-1/api/stop"))
+  #expect(!BridgeState.changesStatus(method: "GET", path: "/api/status"))
+  #expect(!BridgeState.changesStatus(method: "POST", path: "/api/bridge/heartbeat"))
+  #expect(!BridgeState.changesStatus(method: "POST", path: "/api/bridge/commands/result"))
+  #expect(!BridgeState.changesStatus(method: "POST", path: "/api/usage/settings"))
+  #expect(!BridgeState.changesStatus(method: "POST", path: "/api/dashboard/session"))
+  #expect(!BridgeState.changesStatus(method: "POST", path: "/index.html"))
+}
+
 @Test func routerSetsProfilesDirectory() throws {
   try withFixtureRoot { fixture in
     let router = ControllerRouter(service: fixture.service, authToken: nil)
@@ -191,4 +226,3 @@ private func errorCode(_ response: ControllerHTTPResponse) -> String? {
     #expect(missing.status == 400)
   }
 }
-

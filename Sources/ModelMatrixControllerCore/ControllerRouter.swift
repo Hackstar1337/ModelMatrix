@@ -41,6 +41,15 @@ public final class ControllerRouter: @unchecked Sendable {
     if let rejection = preflight(request) {
       return rejection
     }
+    // Bumped on arrival (so the menu bar can show "starting" while a long
+    // action runs) and again once it finishes (ready, stopped or failed).
+    let changesStatus = BridgeState.changesStatus(method: request.method, path: request.path)
+    if changesStatus { bridge.bumpStatusRevision() }
+    defer { if changesStatus { bridge.bumpStatusRevision() } }
+    return route(request)
+  }
+
+  private func route(_ request: ControllerHTTPRequest) -> ControllerHTTPResponse {
     do {
       guard request.path.hasPrefix("/api/") else {
         return try dashboardResponse(request)
