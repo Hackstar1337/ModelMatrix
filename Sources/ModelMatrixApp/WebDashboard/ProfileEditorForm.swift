@@ -13,6 +13,8 @@ struct ProfileDraft: Equatable {
     var rawMode = false
     var rawText = ""
     var format = "env"
+    /// ID a template filled in; picking another template replaces it, a typed ID is kept.
+    var autoID = ""
 
     static func new(template: JSONRow?) -> ProfileDraft {
         var draft = ProfileDraft(isNew: true, originalID: nil, profileID: "", values: [:], extraText: "")
@@ -37,7 +39,10 @@ struct ProfileDraft: Equatable {
         var values: [String: String] = [:]
         for (key, value) in raw { values[key] = "\(value)" }
         load(values)
-        if profileID.isEmpty, let id = template.string("id") { profileID = id == "blank" ? "" : id }
+        guard isNew, profileID.isEmpty || profileID == autoID, let id = template.string("id") else { return }
+        let suggested = id == "blank" ? "" : (id.hasSuffix("-profile") ? String(id.dropLast(8)) : id)
+        autoID = suggested
+        profileID = suggested
     }
 
     mutating func load(_ all: [String: String]) {
@@ -154,7 +159,7 @@ struct ProfileEditorForm: View {
         }
         field("Request model", text: draft.binding("REQUEST_MODEL", in: $draft), prompt: "qwen3:8b", hint: "Model name clients send in requests.")
         HStack(spacing: 8) {
-            field("Port", text: draft.binding("PORT", in: $draft), prompt: "8080")
+            field("Port", text: draft.binding("PORT", in: $draft), prompt: "From Base URL")
             field("Base URL", text: draft.binding("BASE_URL", in: $draft), prompt: "http://127.0.0.1:8080/v1")
         }
         field("Model path", text: draft.binding("MODEL_PATH", in: $draft), prompt: "~/models/qwen3-8b.gguf")
