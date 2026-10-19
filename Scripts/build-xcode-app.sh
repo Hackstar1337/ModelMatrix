@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+DERIVED_DATA_DIR="$ROOT_DIR/.xcodebuild"
+CONFIGURATION="${CONFIGURATION:-Debug}"
+PROJECT_FILE="$ROOT_DIR/ModelMatrix.xcodeproj"
+VERSION="$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")"
+BUILD_NUMBER="${BUILD_NUMBER:-$VERSION}"
+SCHEME_NAME="ModelMatrix"
+PRODUCT_NAME="ModelMatrix"
+
+cd "$ROOT_DIR"
+
+"$ROOT_DIR/Scripts/generate-app-icon.sh" >/dev/null
+
+# Regenerate the Xcode project so newly added source files are included.
+if [ "${SKIP_XCODEGEN:-0}" != "1" ]; then
+  "$ROOT_DIR/Scripts/generate-xcodeproj.sh"
+fi
+xcodebuild \
+  -project "$PROJECT_FILE" \
+  -scheme "$SCHEME_NAME" \
+  -configuration "$CONFIGURATION" \
+  -destination 'platform=macOS' \
+  -derivedDataPath "$DERIVED_DATA_DIR" \
+  MARKETING_VERSION="$VERSION" \
+  CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+
+APP_BUNDLE="$DERIVED_DATA_DIR/Build/Products/$CONFIGURATION/$PRODUCT_NAME.app"
+# Always embed the controller into Xcode products unless a parent packager
+# (build-app.sh) will do it after this step. UI-only bundles cannot register
+# the LaunchAgent and surface "Could not connect to the server."
+if [ "${SKIP_CONTROLLER_EMBED:-0}" != "1" ]; then
+  "$ROOT_DIR/Scripts/embed-controller.sh" "$APP_BUNDLE" >/dev/null
+fi
+printf 'app=%s\n' "$APP_BUNDLE"

@@ -1,0 +1,216 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/controller-endpoint-defaults.sh" ]; then
+  # shellcheck source=controller-endpoint-defaults.sh
+  source "$SCRIPT_DIR/controller-endpoint-defaults.sh"
+else
+  # Installed ctl may live alone in PATH; keep in sync with controller-endpoint-defaults.sh.
+  CONTROLLER_ENDPOINT_HOST="${CONTROLLER_ENDPOINT_HOST:-127.0.0.1}"
+  CONTROLLER_ENDPOINT_PORT="${CONTROLLER_ENDPOINT_PORT:-7700}"
+  CONTROLLER_ENDPOINT_BASE_URL="${CONTROLLER_ENDPOINT_BASE_URL:-http://${CONTROLLER_ENDPOINT_HOST}:${CONTROLLER_ENDPOINT_PORT}}"
+fi
+CONTROLLER_URL="${MODELMATRIX_URL:-$CONTROLLER_ENDPOINT_BASE_URL}"
+CONTROLLER_ROOT="${MODELMATRIX_CONTROLLER_ROOT:-$HOME/Library/Application Support/ModelMatrix/Controller}"
+CONTROLLER_BIN="${MODELMATRIX_CONTROLLER_BIN:-}"
+
+if [ -z "$CONTROLLER_BIN" ]; then
+  for candidate in \
+    "$SCRIPT_DIR/../Controller/bin/ModelMatrixController" \
+    "/Applications/ModelMatrix.app/Contents/Resources/ModelMatrixController" \
+    "$HOME/Applications/ModelMatrix.app/Contents/Resources/ModelMatrixController"
+  do
+    if [ -x "$candidate" ]; then CONTROLLER_BIN="$candidate"; break; fi
+  done
+fi
+if [ -z "$CONTROLLER_BIN" ] && command -v ModelMatrixController >/dev/null 2>&1; then
+  CONTROLLER_BIN="$(command -v ModelMatrixController)"
+fi
+
+usage() {
+  cat <<'USAGE'
+Usage: modelmatrixctl <command> [args]
+
+Commands:
+  status | summary      Print controller status JSON
+  profiles-dir         Print the active profiles directory
+  controller-root      Print the active controller root
+  capabilities         Print the native CLI contract
+  robot-docs [guide]   Print agent-oriented usage guidance
+  triage                Print native health and recommendations
+  doctor [args]         Run native controller diagnostics
+  start <profile>       Start a profile
+  stop <profile>        Stop a profile
+  restart <profile>     Restart a profile
+  switch <profile>      Activate a profile exclusively
+  bench <profile>       Start the quick benchmark suite
+  bench-all             Benchmark every profile
+  stop-all              Stop all managed profiles
+  dashboard [--print]   Open the web dashboard (http://localhost:7700)
+  usage [range]         Print usage statistics (1h, 24h, 7d, 30d, all)
+  open-app              Launch ModelMatrix
+  open-profiles         Open the profiles directory
+  completions <shell>   Print shell completions
+USAGE
+}
+
+api() { curl -fsS "$@"; }
+
+native() {
+  if [ -z "$CONTROLLER_BIN" ]; then
+    printf 'error: native ModelMatrixController executable not found\n' >&2
+    exit 3
+  fi
+  "$CONTROLLER_BIN" "$@" --root "$CONTROLLER_ROOT"
+}
+
+json_action() {
+  local endpoint="$1" payload="$2"
+  api -X POST -H 'Content-Type: application/json' --data-binary "$payload" "$CONTROLLER_URL$endpoint"
+  printf '\n'
+}
+
+json_string() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  printf '%s' "$value"
+}
+
+extract_path() {
+  local key="$1"
+  api "$CONTROLLER_URL/api/status" | plutil -extract "$key" raw -o - -- -
+}
+
+completions() {
+  local commands='status summary profiles-dir controller-root capabilities robot-docs triage doctor start stop restart switch bench bench-all stop-all dashboard usage open-app open-profiles'
+  case "${1:-}" in
+    bash)
+      cat <<EOF
+_modelmatrixctl_completion() {
+  COMPREPLY=( \$(compgen -W "$commands" -- "\${COMP_WORDS[COMP_CWORD]}") )
+}
+complete -F _modelmatrixctl_completion modelmatrixctl
+EOF
+      ;;
+    zsh) printf '#compdef modelmatrixctl\n_arguments "1:command:(%s)"\n' "$commands" ;;
+    fish) for command in $commands; do printf 'complete -c modelmatrixctl -f -a %s\n' "$command"; done ;;
+    *) printf 'error: completions requires bash, zsh, or fish\n' >&2; exit 1 ;;
+  esac
+}
+
+print_capabilities() {
+  cat <<'JSON'
+{
+  "schema_version": "1",
+  "tool": "modelmatrixctl",
+  "contract_version": "1.0",
+  "default_probe": "modelmatrixctl triage",
+  "native_controller": true,
+  "commands": ["status", "summary", "profiles-dir", "controller-root", "capabilities", "robot-docs", "triage", "doctor", "start", "stop", "restart", "switch", "bench", "bench-all", "stop-all", "dashboard", "usage", "open-app", "open-profiles"]
+}
+JSON
+}
+
+print_robot_docs() {
+  if [ "${1:-guide}" != "guide" ]; then
+    printf 'error: unknown robot-docs topic: %s\n' "$1" >&2
+    printf 'did you mean: modelmatrixctl robot-docs guide\n' >&2
+    exit 64
+  fi
+  cat <<'DOCS'
+ModelMatrix native controller
+
+- `modelmatrixctl status` is the default read-only probe.
+- `modelmatrixctl capabilities` describes available commands.
+- Lifecycle commands support `--dry-run` or `--plan` before mutation.
+DOCS
+}
+
+print_dry_run() {
+  local action="$1" endpoint="$2" payload="$3"
+  printf '{\n  "schema_version": "1",\n  "tool": "modelmatrixctl",\n  "command": "%s",\n  "dry_run": true,\n  "status": "planned",\n  "plan": [{"endpoint": "%s", "payload": %s}],\n  "results": []\n}\n' "$action" "$endpoint" "$payload"
+}
+
+is_dry_run() {
+  local argument
+  for argument in "$@"; do
+    [ "$argument" = "--dry-run" ] || [ "$argument" = "--plan" ] || continue
+    return 0
+  done
+  return 1
+}
+
+command="${1:-help}"
+shift || true
+case "$command" in
+  help|-h|--help) usage ;;
+  status|summary) api "$CONTROLLER_URL/api/status"; printf '\n' ;;
+  profiles-dir)
+    if dir="$(extract_path profiles_dir 2>/dev/null)" && [ -n "${dir:-}" ]; then
+      printf '%s\n' "$dir"
+    else
+      printf '%s\n' "$CONTROLLER_ROOT/model-profiles"
+    fi
+    ;;
+  controller-root)
+    if root="$(extract_path controller_root 2>/dev/null)" && [ -n "${root:-}" ]; then
+      printf '%s\n' "$root"
+    else
+      printf '%s\n' "$CONTROLLER_ROOT"
+    fi
+    ;;
+  capabilities) print_capabilities ;;
+  robot-docs) print_robot_docs "${1:-guide}" ;;
+  triage|doctor|diagnose|health) native "$command" "$@" ;;
+  start|stop|restart)
+    [ "$#" -ge 1 ] || { printf 'error: %s requires a profile\n' "$command" >&2; exit 64; }
+    profile="$(json_string "$1")"
+    payload="{\"profile\":\"$profile\"}"
+    if is_dry_run "$@"; then print_dry_run "$command" "/api/$command" "$payload"; else json_action "/api/$command" "$payload"; fi
+    ;;
+  switch|activate)
+    [ "$#" -ge 1 ] || { printf 'error: %s requires a profile\n' "$command" >&2; exit 64; }
+    profile="$(json_string "$1")"
+    payload="{\"profile\":\"$profile\"}"
+    if is_dry_run "$@"; then print_dry_run "$command" '/api/switch' "$payload"; else json_action '/api/switch' "$payload"; fi
+    ;;
+  stop-all)
+    if is_dry_run "$@"; then print_dry_run 'stop-all' '/api/stop-all' '{}'; else json_action '/api/stop-all' '{}'; fi
+    ;;
+  bench)
+    [ "$#" -ge 1 ] || { printf 'error: bench requires a profile\n' >&2; exit 64; }
+    profile="$(json_string "$1")"
+    json_action '/api/benchmark/start' "{\"profiles\":[\"$profile\"],\"suite\":\"quick\"}"
+    ;;
+  bench-all) json_action '/api/benchmark/start' '{"suite":"quick"}' ;;
+  dashboard)
+    url="${CONTROLLER_URL%/}/"
+    url="${url/127.0.0.1:/localhost:}"
+    if [ "${1:-}" = "--print" ]; then printf '%s\n' "$url"; else open "$url"; fi
+    ;;
+  usage)
+    range="${1:-24h}"
+    case "$range" in 1h|24h|7d|30d|all) ;; *) printf 'error: range must be 1h, 24h, 7d, 30d or all\n' >&2; exit 64 ;; esac
+    api "$CONTROLLER_URL/api/usage/summary?range=$range"; printf '\n'
+    ;;
+  open-app)
+    open -a 'ModelMatrix'
+    ;;
+  open-profiles)
+    dir="$(extract_path profiles_dir 2>/dev/null || true)"
+    if [ -z "${dir:-}" ]; then
+      dir="$CONTROLLER_ROOT/model-profiles"
+    fi
+    mkdir -p "$dir"
+    open "$dir"
+    ;;
+  completions) completions "${1:-}" ;;
+  *)
+    printf 'error: unknown command: %s\n' "$command" >&2
+    if [ "$command" = "stats" ]; then printf 'did you mean: modelmatrixctl status\n' >&2; fi
+    printf 'inspect available commands with: modelmatrixctl capabilities\n' >&2
+    exit 64
+    ;;
+esac

@@ -1,0 +1,14 @@
+import Foundation
+
+extension ControllerRouter {
+  var routes: [RouteKey: Route] {
+    var combined = getRoutes
+    for (key, route) in postRoutes {
+      combined[key] = route
+    }
+    for (key, route) in dashboardRoutes {
+      combined[key] = route
+    }
+    return combined
+  }
+}

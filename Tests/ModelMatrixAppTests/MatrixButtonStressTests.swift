@@ -1,0 +1,277 @@
+import Foundation
+import Testing
+import ModelMatrixCore
+import ModelMatrixTestSupport
+@testable import ModelMatrixApp
+
+@MainActor
+@Test func storeBackedButtonsSurviveRepeatedMockedClicks() async throws {
+    let iterations = StressTestConfig.iterations()
+    let defaults = UserDefaults.standard
+    let previousLastActiveProfiles = defaults.object(forKey: "modelmatrix.last-active-profiles")
+    let previousBenchmarkStartedAt = defaults.object(forKey: "modelmatrix.last-benchmark-started-at")
+    defer {
+        UserDefaultsTestHelpers.restore(previousLastActiveProfiles, forKey: "modelmatrix.last-active-profiles", in: defaults)
+        UserDefaultsTestHelpers.restore(previousBenchmarkStartedAt, forKey: "modelmatrix.last-benchmark-started-at", in: defaults)
+    }
+
+    let controller = StressController()
+    StressURLProtocol.controller = controller
+    defer { StressURLProtocol.controller = nil }
+
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.protocolClasses = [StressURLProtocol.self]
+    let session = URLSession(configuration: configuration)
+    defer { session.invalidateAndCancel() }
+
+    let store = MatrixStore(
+        controllerBaseURL: StressTestConfig.baseURL,
+        autoStartRefresh: false,
+        loopbackEndpointProbe: { _ in [] },
+        controllerClientFactory: { try ControllerClient(baseURLString: $0, authToken: $1, session: session) },
+        cachePayloadWriter: { _, _ in }
+    )
+
+    await store.refresh()
+    assertStoreClean(store, after: "initial refresh")
+
+    for _ in 0..<iterations {
+        await store.refresh()
+        assertStoreClean(store, after: "Refresh")
+    }
+
+    for _ in 0..<iterations {
+        store.controllerBaseURL = StressTestConfig.baseURL
+        await store.refresh()
+        assertStoreClean(store, after: "Reconnect")
+    }
+
+    for _ in 0..<iterations {
+        await store.refreshDoctorReport()
+        assertStoreClean(store, after: "Run Controller Doctor")
+    }
+
+    for _ in 0..<iterations {
+        await store.start(StressTestConfig.profile)
+        assertStoreClean(store, after: "Start")
+    }
+
+    for _ in 0..<iterations {
+        await store.stop(StressTestConfig.profile)
+        assertStoreClean(store, after: "Stop")
+    }
+
+    for _ in 0..<iterations {
+        await store.restart(StressTestConfig.profile)
+        assertStoreClean(store, after: "Restart")
+    }
+
+    for _ in 0..<iterations {
+        await store.activate(StressTestConfig.profile)
+        assertStoreClean(store, after: "Activate")
+    }
+
+    for _ in 0..<iterations {
+        await store.stopAll()
+        assertStoreClean(store, after: "Stop All")
+    }
+
+    let integration = StressController.integration
+    for _ in 0..<iterations {
+        await store.runIntegration(integration)
+        assertStoreClean(store, after: "Sync Droid")
+    }
+
+    for _ in 0..<iterations {
+        store.lastBenchmarkStartedAt = nil
+        store.benchmark = StressController.idleBenchmark
+        await store.quickBenchmark()
+        assertStoreClean(store, after: "Benchmark All")
+    }
+
+    for _ in 0..<iterations {
+        store.lastBenchmarkStartedAt = nil
+        store.benchmark = StressController.idleBenchmark
+        await store.quickBenchmark([StressTestConfig.profile])
+        assertStoreClean(store, after: "Benchmark Profile")
+    }
+
+    for _ in 0..<iterations {
+        store.statuses = [StressController.status(running: false, ready: false)]
+        store.lastActiveProfiles = [StressTestConfig.profile]
+        await store.reopenLastActive()
+        assertStoreClean(store, after: "Reopen Last")
+    }
+
+    let counts = controller.countsSnapshot()
+    #expect(counts["POST /api/start"] == iterations * 2)
+    #expect(counts["POST /api/stop"] == iterations)
+    #expect(counts["POST /api/restart"] == iterations)
+    #expect(counts["POST /api/switch"] == iterations)
+    #expect(counts["POST /api/stop-all"] == iterations)
+    #expect(counts["POST /api/integrations/run"] == iterations)
+    #expect(counts["POST /api/benchmark/start"] == iterations * 2)
+    #expect((counts["GET /api/status"] ?? 0) > iterations)
+    #expect(controller.unhandledRequestsSnapshot().isEmpty)
+}
+
+@Test func inspectorPanelButtonsSurviveRepeatedToggles() {
+    let iterations = StressTestConfig.iterations()
+    var coordinator = InspectorPanelCoordinator<StressPanel>()
+
+    for _ in 0..<iterations {
+        #expect(coordinator.toggle(.settings) == .settings)
+        #expect(coordinator.toggle(.settings) == nil)
+        #expect(coordinator.toggle(.help) == .help)
+        #expect(coordinator.toggle(.benchmarks) == .benchmarks)
+        coordinator.requestDeferredClose(of: .benchmarks)
+        #expect(coordinator.commitDeferredClose(of: .benchmarks) == nil)
+    }
+
+    #expect(coordinator.show(.settings) == .settings)
+    coordinator.reset()
+    #expect(coordinator.show(nil) == nil)
+}
+
+@MainActor
+@Test func profileActionTimeoutMentionsProfileDiagnostics() {
+    let message = MatrixStore.userFacingErrorDescription(
+        for: URLError(.timedOut),
+        actionName: "Start",
+        status: StressController.status(running: true, ready: false),
+        diagnostic: ProfileDiagnostic(
+            status: StressController.status(running: false, ready: false),
+            errors: ["llama-server not found in controller PATH; set SERVER_BIN to an absolute executable path"],
+            warnings: []
+        )
+    )
+
+    #expect(message == "Start timed out for Stress Profile. Profile issue: llama-server not found in controller PATH; set SERVER_BIN to an absolute executable path")
+}
+
+@MainActor
+@Test func appTransportSecurityErrorIsMappedToShortCopy() {
+    let error = NSError(
+        domain: NSURLErrorDomain,
+        code: -1022,
+        userInfo: [NSLocalizedDescriptionKey: "The resource could not be loaded because the App Transport Security policy requires the use of a secure connection."]
+    )
+    let message = MatrixStore.userFacingErrorDescription(for: error)
+    #expect(message.contains("App Transport Security") || message.contains("plain HTTP"))
+    #expect(!message.contains("could not be loaded because"))
+}
+
+@MainActor
+@Test func gatewayHostUnreachableIsMapped() {
+    let message = MatrixStore.userFacingErrorDescription(for: URLError(.cannotConnectToHost))
+    #expect(message.contains("refused") || message.contains("agent"))
+}
+
+@MainActor
+@Test func localConnectionRefusedDoesNotBlameTheRemoteAgent() {
+    let message = MatrixStore.userFacingErrorDescription(
+        for: URLError(.cannotConnectToHost),
+        isLocal: true
+    )
+    #expect(message.contains("Local controller"))
+    #expect(!message.localizedCaseInsensitiveContains("agent"))
+}
+
+@MainActor
+@Test func magicDNSHostLookupFailureMentionsTailscale() {
+    let message = MatrixStore.userFacingErrorDescription(for: URLError(.cannotFindHost))
+    #expect(message.localizedCaseInsensitiveContains("Tailscale"))
+    #expect(MatrixStore.isTransientReachabilityFailure(URLError(.cannotFindHost)))
+    #expect(MatrixStore.isTransientReachabilityFailure(URLError(.cannotConnectToHost)))
+    #expect(!MatrixStore.isTransientReachabilityFailure(URLError(.userAuthenticationRequired)))
+    #expect(
+        MatrixStore.isTransientReachabilityFailure(
+            DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "bad json"))
+        )
+    )
+    #expect(MatrixStore.isTransientReachabilityFailure(ControllerClientError.invalidResponse))
+}
+
+@MainActor
+@Test func localHostLookupFailureDoesNotMentionTailscale() {
+    let message = MatrixStore.userFacingErrorDescription(
+        for: URLError(.cannotFindHost),
+        isLocal: true
+    )
+    #expect(message.localizedCaseInsensitiveContains("Local controller"))
+    #expect(!message.localizedCaseInsensitiveContains("Tailscale"))
+}
+
+@MainActor
+@Test func httpInternalErrorDoesNotDumpJSON() {
+    let message = MatrixStore.userFacingErrorDescription(
+        for: ControllerClientError.httpError(
+            status: 500,
+            body: #"{"error": "internal_error", "message": "internal server error"}"#
+        )
+    )
+    #expect(!message.contains("{"))
+    #expect(message.localizedCaseInsensitiveContains("internal error"))
+    #expect(message.localizedCaseInsensitiveContains("Remote agent"))
+}
+
+@MainActor
+@Test func localHttpInternalErrorDoesNotBlameRemoteAgent() {
+    let message = MatrixStore.userFacingErrorDescription(
+        for: ControllerClientError.httpError(
+            status: 500,
+            body: #"{"error":"internal_error"}"#
+        ),
+        isLocal: true
+    )
+    #expect(!message.contains("{"))
+    #expect(message.localizedCaseInsensitiveContains("Local controller"))
+    #expect(!message.localizedCaseInsensitiveContains("Remote agent"))
+}
+
+@MainActor
+@Test func jsonServerErrorDoesNotDumpJSON() {
+    let message = MatrixStore.userFacingErrorDescription(
+        for: ControllerClientError.serverError(#"{"error":"internal_error"}"#)
+    )
+    #expect(!message.contains("{"))
+}
+
+@MainActor
+@Test func failedBenchmarkStartDoesNotArmCooldown() async {
+    let defaults = UserDefaults.standard
+    let previousBenchmarkStartedAt = defaults.object(forKey: "modelmatrix.last-benchmark-started-at")
+    defer {
+        UserDefaultsTestHelpers.restore(previousBenchmarkStartedAt, forKey: "modelmatrix.last-benchmark-started-at", in: defaults)
+    }
+    defaults.removeObject(forKey: "modelmatrix.last-benchmark-started-at")
+
+    let store = MatrixStore(
+        controllerBaseURL: StressTestConfig.baseURL,
+        autoStartRefresh: false,
+        controllerClientFactory: { _, _ in throw URLError(.cannotConnectToHost) },
+        cachePayloadWriter: { _, _ in }
+    )
+
+    await store.quickBenchmark([StressTestConfig.profile])
+
+    #expect(store.lastBenchmarkStartedAt == nil)
+    #expect(store.benchmarkCooldownRemaining == 0)
+    #expect(store.activeBenchmarkProfiles.isEmpty)
+}
+
+private enum StressPanel {
+    case settings
+    case help
+    case benchmarks
+}
+
+@MainActor
+private func assertStoreClean(_ store: MatrixStore, after button: String) {
+    #expect(store.lastError == nil, "Unexpected error after \(button): \(store.lastError ?? "")")
+    #expect(store.pendingProfileActions.isEmpty, "Leaked profile action after \(button)")
+    #expect(store.pendingGlobalActions.isEmpty, "Leaked global action after \(button)")
+    #expect(store.pendingIntegrationActions.isEmpty, "Leaked integration action after \(button)")
+    #expect(!store.isRefreshing, "Refresh flag leaked after \(button)")
+    #expect(!store.isRunningControllerDoctor, "Doctor flag leaked after \(button)")
+}

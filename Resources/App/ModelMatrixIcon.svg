@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1F1F22"/>
+      <stop offset="100%" stop-color="#09090A"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3A3A3F"/>
+      <stop offset="100%" stop-color="#141416"/>
+    </linearGradient>
+    <linearGradient id="on" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9A3C"/>
+      <stop offset="100%" stop-color="#F2620F"/>
+    </linearGradient>
+    <linearGradient id="off" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2A2A2E"/>
+      <stop offset="100%" stop-color="#1D1D20"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.52" r="0.5">
+      <stop offset="0%" stop-color="#FF6B1A" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#FF6B1A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- macOS icon body -->
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#rim)"/>
+  <rect x="106" y="106" width="812" height="812" rx="181" fill="url(#bg)"/>
+  <circle cx="512" cy="520" r="400" fill="url(#glow)"/>
+  <!-- 5x5 matrix; lit cells spell "M" -->
+  <g>
+    <!-- row 1 -->
+    <rect x="228" y="228" width="96" height="96" rx="20" fill="url(#on)"/>
+    <rect x="346" y="228" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="464" y="228" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="582" y="228" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="700" y="228" width="96" height="96" rx="20" fill="url(#on)"/>
+    <!-- row 2 -->
+    <rect x="228" y="346" width="96" height="96" rx="20" fill="url(#on)"/>
+    <rect x="346" y="346" width="96" height="96" rx="20" fill="url(#on)"/>
+    <rect x="464" y="346" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="582" y="346" width="96" height="96" rx="20" fill="url(#on)"/>
+    <rect x="700" y="346" width="96" height="96" rx="20" fill="url(#on)"/>
+    <!-- row 3 -->
+    <rect x="228" y="464" width="96" height="96" rx="20" fill="url(#on)"/>
+    <rect x="346" y="464" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="464" y="464" width="96" height="96" rx="20" fill="url(#on)"/>
+    <rect x="582" y="464" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="700" y="464" width="96" height="96" rx="20" fill="url(#on)"/>
+    <!-- row 4 -->
+    <rect x="228" y="582" width="96" height="96" rx="20" fill="url(#on)"/>
+    <rect x="346" y="582" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="464" y="582" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="582" y="582" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="700" y="582" width="96" height="96" rx="20" fill="url(#on)"/>
+    <!-- row 5 -->
+    <rect x="228" y="700" width="96" height="96" rx="20" fill="url(#on)"/>
+    <rect x="346" y="700" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="464" y="700" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="582" y="700" width="96" height="96" rx="20" fill="url(#off)"/>
+    <rect x="700" y="700" width="96" height="96" rx="20" fill="url(#on)"/>
+  </g>
+  <!-- subtle top highlight -->
+  <rect x="106" y="106" width="812" height="406" rx="181" fill="#FFFFFF" fill-opacity="0.025"/>
+</svg>

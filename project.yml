@@ -1,0 +1,97 @@
+name: ModelMatrix
+options:
+  minimumXcodeGenVersion: 2.45.3
+  bundleIdPrefix: io.github.hackstar1337.modelmatrix
+  deploymentTarget:
+    macOS: "14.0"
+  projectFormat: xcode16_2
+  createIntermediateGroups: true
+packages:
+  MenuBarExtraAccess:
+    path: Vendor/MenuBarExtraAccess
+  ModelMatrixPackage:
+    path: .
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    MARKETING_VERSION: 1.0.0
+    CURRENT_PROJECT_VERSION: 1.0.0
+    MACOSX_DEPLOYMENT_TARGET: 14.0
+targets:
+  ModelMatrix:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/ModelMatrixApp
+      - path: Resources/App/ModelMatrix.icns
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.hackstar1337.modelmatrix.app
+        PRODUCT_NAME: ModelMatrix
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Resources/App/Info.plist
+        MMX_DISPLAY_NAME: ModelMatrix
+        MMX_URL_NAME: io.github.hackstar1337.modelmatrix.app
+        MMX_URL_SCHEME: modelmatrix
+        CODE_SIGN_ENTITLEMENTS: Resources/App/ModelMatrix.entitlements
+    dependencies:
+      - package: ModelMatrixPackage
+        product: ModelMatrixCore
+      - package: MenuBarExtraAccess
+        product: MenuBarExtraAccess
+      - target: ModelMatrixWidget
+        embed: true
+        codeSign: true
+        copy:
+          destination: plugins
+    scheme:
+      testTargets:
+        - ModelMatrixTests
+
+  ModelMatrixWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - Sources/ModelMatrixWidget
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.hackstar1337.modelmatrix.app.widget
+        PRODUCT_NAME: ModelMatrixWidget
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Resources/Widget/Info.plist
+        APPLICATION_EXTENSION_API_ONLY: YES
+        MMX_WIDGET_DISPLAY_NAME: ModelMatrix Widget
+        CODE_SIGN_ENTITLEMENTS: Resources/Widget/ModelMatrixWidget.entitlements
+    dependencies:
+      - package: ModelMatrixPackage
+        product: ModelMatrixCore
+
+  ModelMatrixTestSupport:
+    type: framework
+    platform: macOS
+    sources:
+      - Tests/ModelMatrixTestSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.hackstar1337.modelmatrix.app.testsupport
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - package: ModelMatrixPackage
+        product: ModelMatrixCore
+
+  ModelMatrixTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/ModelMatrixCoreTests
+      - Tests/ModelMatrixAppTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.hackstar1337.modelmatrix.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - package: ModelMatrixPackage
+        product: ModelMatrixCore
+      - target: ModelMatrix
+      - target: ModelMatrixTestSupport

@@ -1,0 +1,47 @@
+import Foundation
+import Testing
+import ModelMatrixCore
+
+/// Screen-share privacy masking: host-identifying strings hide; ports, paths,
+/// names, and metrics survive. All call sites take `hidden:` explicitly so the
+/// tests do not depend on (or mutate) global UserDefaults state.
+@Test func displayPrivacyMasksHosts() {
+    #expect(DisplayPrivacy.host("gpu.example.ts.net", hidden: true) == "••••")
+    #expect(DisplayPrivacy.host("100.64.1.2", hidden: true) == "••••")
+    #expect(DisplayPrivacy.host("user@gpu.local", hidden: true) == "••••")
+    #expect(DisplayPrivacy.host("gpubox", hidden: false) == "gpubox")
+    #expect(DisplayPrivacy.host(nil, hidden: true) == "")
+    #expect(DisplayPrivacy.host("", hidden: true) == "")
+}
+
+@Test func displayPrivacyKeepsPortsAndURLShapes() {
+    #expect(DisplayPrivacy.hostPort("127.0.0.1", port: "8050", hidden: true) == "••••:8050")
+    #expect(DisplayPrivacy.hostPort("127.0.0.1", port: "8050", hidden: false) == "127.0.0.1:8050")
+
+    #expect(
+        DisplayPrivacy.url("http://gpu.example.ts.net:8050/v1", hidden: true)
+            == "http://••••:8050/v1"
+    )
+    #expect(
+        DisplayPrivacy.url("http://100.64.1.2:7700", hidden: false)
+            == "http://100.64.1.2:7700"
+    )
+    // Unparseable junk masks whole rather than leaking.
+    #expect(DisplayPrivacy.url("not a url at all", hidden: true) == "••••")
+}
+
+@Test func displayPrivacyConnectionSummary() {
+    #expect(
+        DisplayPrivacy.connectionSummary("ssh user@gpu.local → 127.0.0.1:7700", hidden: true)
+            == "•••• → 127.0.0.1:7700"
+    )
+    #expect(
+        DisplayPrivacy.connectionSummary("ssh user@gpu.local → 127.0.0.1:7700", hidden: false)
+            == "ssh user@gpu.local → 127.0.0.1:7700"
+    )
+    #expect(
+        DisplayPrivacy.connectionSummary("http://host.example.ts.net:7700", hidden: true)
+            == "http://••••:7700"
+    )
+    #expect(DisplayPrivacy.connectionSummary("weird plain host", hidden: true) == "••••")
+}

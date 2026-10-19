@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+VERSION="$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")"
+DEFAULT_APP_PATH="$ROOT_DIR/dist/ModelMatrix.app"
+DEFAULT_DMG_PATH="$ROOT_DIR/dist/ModelMatrix-$VERSION.dmg"
+APP_PATH="${1:-$DEFAULT_APP_PATH}"
+DMG_PATH="${2:-$DEFAULT_DMG_PATH}"
+
+"$ROOT_DIR/Scripts/verify-embedded-controller.sh" "$APP_PATH"
+CONTROLLER_BIN="$APP_PATH/Contents/Resources/ModelMatrixController"
+CONTROLLER_PLIST="$APP_PATH/Contents/Library/LaunchAgents/io.github.hackstar1337.modelmatrix.controller.plist"
+plutil -lint "$CONTROLLER_PLIST" >/dev/null
+CONTROLLER_CAPABILITIES="$("$CONTROLLER_BIN" capabilities)"
+grep -q '"native" : true' <<<"$CONTROLLER_CAPABILITIES"
+# RemoteAgent ships bundled *.py under Contents/Resources/RemoteAgent/; nowhere else.
+find "$APP_PATH" -type f -name '*.py' -print | while IFS= read -r py_file; do
+  case "$py_file" in
+    "$APP_PATH/Contents/Resources/RemoteAgent/"*)
+      ;;
+    *)
+      echo "Python runtime file found outside allowed RemoteAgent path: $py_file" >&2
+      exit 1
+      ;;
+  esac
+done
+
+codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+"$ROOT_DIR/Scripts/verify-privacy.sh" "$APP_PATH"
+
+SIGNATURE_INFO="$(codesign -dv --verbose=4 "$APP_PATH" 2>&1 || true)"
+if grep -q "Authority=Developer ID Application" <<<"$SIGNATURE_INFO"; then
+  spctl -a -vv --type exec "$APP_PATH"
+else
+  echo "note: skipping Gatekeeper exec assessment for local ad hoc build"
+fi
+
+if [ -f "$DMG_PATH" ]; then
+  if grep -q "Authority=Developer ID Application" <<<"$SIGNATURE_INFO"; then
+    xcrun stapler validate "$DMG_PATH"
+    DMG_ASSESSMENT="$(spctl -a -vv --type open "$DMG_PATH" 2>&1 || true)"
+    if grep -q "source=Insufficient Context" <<<"$DMG_ASSESSMENT"; then
+      echo "note: Gatekeeper DMG assessment returned Insufficient Context; stapler validation succeeded"
+    else
+      echo "$DMG_ASSESSMENT"
+      if ! grep -q ": accepted" <<<"$DMG_ASSESSMENT"; then
+        echo "DMG Gatekeeper assessment failed" >&2
+        exit 1
+      fi
+    fi
+  else
+    echo "note: skipping Gatekeeper DMG assessment for local ad hoc build"
+  fi
+fi
+
+printf 'verified_app=%s\n' "$APP_PATH"
+if [ -f "$DMG_PATH" ]; then
+  printf 'verified_dmg=%s\n' "$DMG_PATH"
+fi

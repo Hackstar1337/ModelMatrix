@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 220" width="1000" height="220">
+  <g transform="translate(40 40)">
+    <g>
+      <rect x="0" y="0" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="25" y="0" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="50" y="0" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="75" y="0" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="100" y="0" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="0" y="25" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="25" y="25" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="50" y="25" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="75" y="25" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="100" y="25" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="0" y="50" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="25" y="50" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="50" y="50" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="75" y="50" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="100" y="50" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="0" y="75" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="25" y="75" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="50" y="75" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="75" y="75" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="100" y="75" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="0" y="100" width="20" height="20" rx="4" fill="#E85D04"/>
+      <rect x="25" y="100" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="50" y="100" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="75" y="100" width="20" height="20" rx="4" fill="#D9D9DE"/>
+      <rect x="100" y="100" width="20" height="20" rx="4" fill="#E85D04"/>
+    </g>
+    <text x="150" y="98" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="92" font-weight="800" textLength="770" lengthAdjust="spacingAndGlyphs" fill="#E85D04">MODELMATRIX</text>
+    <text x="153" y="138" font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace" font-size="22" textLength="440" lengthAdjust="spacing" fill="#6E6E73">LOCAL LLM CONTROL CENTER</text>
+  </g>
+</svg>

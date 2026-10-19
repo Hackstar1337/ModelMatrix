@@ -1,0 +1,354 @@
+import Foundation
+import Testing
+import ModelMatrixCore
+import ModelMatrixTestSupport
+@testable import ModelMatrixApp
+
+@MainActor
+private func makeStore(
+    loopbackEndpointProbe: MatrixStore.LoopbackEndpointProbe? = nil
+) -> MatrixStore {
+    MatrixStore(
+        controllerBaseURL: "http://127.0.0.1:7700",
+        autoStartRefresh: false,
+        loopbackEndpointProbe: loopbackEndpointProbe
+    )
+}
+
+@MainActor
+@Test func bootstrapDiagnosticSurvivesFailedRefresh() async {
+    let store = MatrixStore(
+        controllerBaseURL: ControllerEndpointDefaults.baseURLString,
+        autoStartRefresh: false,
+        controllerClientFactory: { _, _ in
+            struct Boom: Error {}
+            throw Boom()
+        }
+    )
+
+    store.applyBootstrapDiagnostic("missing the embedded controller")
+    await store.refresh()
+
+    #expect(store.refreshState == .blocked(message: "missing the embedded controller"))
+    #expect(store.lastError == "missing the embedded controller")
+    #expect(store.isRecoveringFromTransportFailure)
+    #expect(store.autoRefreshPolicy.mode == .recovering)
+}
+
+@MainActor
+@Test func unreachableRefreshUsesRecoveringCadenceInsteadOfIdle() async {
+    let store = MatrixStore(
+        controllerBaseURL: ControllerEndpointDefaults.baseURLString,
+        autoStartRefresh: false,
+        controllerClientFactory: { _, _ in
+            throw URLError(.cannotFindHost)
+        },
+        cachedStateLoader: { nil }
+    )
+
+    await store.refresh()
+
+    #expect(store.isRecoveringFromTransportFailure)
+    #expect(store.autoRefreshPolicy.mode == .recovering)
+    #expect(store.autoRefreshPolicy.interval == AutoRefreshPolicy.recoveringInterval)
+    #expect(store.lastError?.localizedCaseInsensitiveContains("Local controller") == true)
+    #expect(store.lastError?.localizedCaseInsensitiveContains("Tailscale") != true)
+}
+
+@MainActor
+@Test func retryingRefreshKeepsFailureAndReadyCountsOnScreen() {
+    let store = makeStore()
+    let now = Date(timeIntervalSince1970: 200)
+    store.statuses = [ModelFixtures.profileStatus()]
+    store.lastUpdated = now
+    store.refreshState = .failed(message: "Gateway refused the connection. Is the agent running?")
+
+    let next = store.refreshState.beginningRefresh()
+    #expect(next.isInFlight)
+    #expect(next.message == "Gateway refused the connection. Is the agent running?")
+    store.refreshState = next
+
+    #expect(store.lastError == "Gateway refused the connection. Is the agent running?")
+    #expect(store.isRefreshing)
+    #expect(store.statusFreshness(relativeTo: now) == .stale)
+    #expect(store.displayedReadyProfiles(relativeTo: now) == 1)
+    #expect(store.displayedRunningProfiles(relativeTo: now) == 1)
+}
+
+@MainActor
+@Test func timeoutRefreshKeepsRecentCountsAndSkipsRecoveringCadence() async {
+    let store = MatrixStore(
+        controllerBaseURL: "http://gpubox.tail.ts.net:7700",
+        gateway: GatewayContext(id: "gpubox", name: "GPUBox"),
+        autoStartRefresh: false,
+        controllerClientFactory: { _, _ in
+            throw URLError(.timedOut)
+        },
+        cachedStateLoader: { nil }
+    )
+    let now = Date()
+    store.statuses = [ModelFixtures.profileStatus()]
+    store.lastUpdated = now
+    store.refreshState = .refreshed
+
+    await store.refresh()
+
+    #expect(store.lastError == "Gateway status timed out. Last known models are still shown.")
+    #expect(!store.isRecoveringFromTransportFailure)
+    #expect(store.autoRefreshPolicy.mode != .recovering)
+    #expect(store.displayedReadyProfiles(relativeTo: now) == 1)
+}
+
+@MainActor
+@Test func unreachableRemoteRefreshMentionsTailscale() async {
+    let store = MatrixStore(
+        controllerBaseURL: "http://gpubox.tail.ts.net:7700",
+        gateway: GatewayContext(id: "gpubox", name: "GPUBox"),
+        autoStartRefresh: false,
+        controllerClientFactory: { _, _ in
+            throw URLError(.cannotFindHost)
+        },
+        cachedStateLoader: { nil }
+    )
+
+    await store.refresh()
+
+    #expect(store.isRecoveringFromTransportFailure)
+    #expect(store.autoRefreshPolicy.mode == .recovering)
+    #expect(store.lastError?.localizedCaseInsensitiveContains("Tailscale") == true)
+}
+
+@MainActor
+@Test func staleRunningStateIsHiddenFromLiveCounts() {
+    let store = makeStore()
+    let now = Date(timeIntervalSince1970: 200)
+    let staleDate = now.addingTimeInterval(-901)
+    let status = ModelFixtures.profileStatus()
+
+    store.statuses = [status]
+    store.lastUpdated = staleDate
+
+    #expect(store.statusFreshness(relativeTo: now) == .stale)
+    #expect(store.displayedRunningProfiles(relativeTo: now) == 0)
+    #expect(store.displayedReadyProfiles(relativeTo: now) == 0)
+    #expect(store.profileBadgeState(for: status, relativeTo: now) == .stale)
+    #expect(store.menuBarHelp(relativeTo: now).localizedCaseInsensitiveContains("stale"))
+}
+
+@MainActor
+@Test func cachedStateIsReportedDistinctly() {
+    let store = makeStore()
+    let now = Date(timeIntervalSince1970: 200)
+    let status = ModelFixtures.profileStatus()
+
+    store.statuses = [status]
+    store.lastUpdated = now
+    store.refreshState = .failedShowingCached(message: "Controller unavailable. Showing cached state.")
+
+    #expect(store.statusFreshness(relativeTo: now) == .cached)
+    #expect(store.profileBadgeState(for: status, relativeTo: now) == .stale)
+    #expect(store.menuBarHelp(relativeTo: now).localizedCaseInsensitiveContains("cached"))
+}
+
+@MainActor
+@Test func discoveryListenerDoesNotShowAsReadyOrHero() {
+    let store = makeStore()
+    let now = Date(timeIntervalSince1970: 200)
+    let discovered = ModelFixtures.profileStatus(
+        profile: "discovered-8000",
+        displayName: "Found Listener",
+        running: true,
+        ready: true,
+        origin: .discovery
+    )
+    store.statuses = [
+        ModelFixtures.profileStatus(profile: "a", running: false, ready: false),
+        ModelFixtures.profileStatus(profile: "b", running: false, ready: false),
+        discovered,
+    ]
+    store.lastUpdated = now
+    store.refreshState = .refreshed
+
+    #expect(store.summary.totalProfiles == 2)
+    #expect(store.displayedReadyProfiles(relativeTo: now) == 0)
+    #expect(Set(store.sortedStatuses.map(\.profile)) == ["a", "b"])
+    #expect(MenuBarContentView.isDisplayedRunning(discovered, in: store, relativeTo: now) == false)
+}
+
+@MainActor
+@Test func lastActiveAndReopenIgnoreHiddenDiscoveryListeners() {
+    let namespacedKey = "modelmatrix.last-active-profiles.last-active-test"
+    let defaults = UserDefaults.standard
+    defaults.removeObject(forKey: namespacedKey)
+    defer { defaults.removeObject(forKey: namespacedKey) }
+
+    let store = MatrixStore(
+        controllerBaseURL: "http://127.0.0.1:7700",
+        gateway: GatewayContext(id: "last-active-test", name: "GPUBox"),
+        autoStartRefresh: false
+    )
+    let discovered = ModelFixtures.profileStatus(
+        profile: "discovered-8000",
+        running: true,
+        ready: true,
+        origin: .discovery
+    )
+    store.statuses = [
+        ModelFixtures.profileStatus(profile: "a", running: false, ready: false),
+        discovered,
+    ]
+    store.rememberLastActiveProfiles(from: store.statuses)
+    #expect(store.lastActiveProfiles.isEmpty)
+    #expect(!store.canReopenLastActive)
+
+    store.statuses = [
+        ModelFixtures.profileStatus(profile: "a", running: false, ready: false),
+        ModelFixtures.profileStatus(
+            profile: "discovered-8000",
+            running: false,
+            ready: false,
+            origin: .discovery
+        ),
+    ]
+    store.lastActiveProfiles = ["discovered-8000"]
+    #expect(!store.canReopenLastActive)
+
+    store.statuses = [
+        ModelFixtures.profileStatus(profile: "a", running: false, ready: false),
+        discovered,
+    ]
+    store.lastActiveProfiles = ["a"]
+    #expect(store.canReopenLastActive)
+
+    store.lastActiveProfiles = ["a", "ghost", "discovered-8000"]
+    #expect(store.reopenableLastActiveProfiles == ["a"])
+    #expect(store.canReopenLastActive)
+}
+
+@MainActor
+@Test func autoBenchmarkSkipsHiddenDiscoveryListeners() {
+    let defaults = UserDefaults.standard
+    let key = "modelmatrix.auto-benchmarked-profiles.auto-bench-test"
+    defaults.removeObject(forKey: key)
+    defer { defaults.removeObject(forKey: key) }
+
+    let store = MatrixStore(
+        controllerBaseURL: "http://127.0.0.1:7700",
+        gateway: GatewayContext(id: "auto-bench-test", name: "GPUBox"),
+        autoStartRefresh: false
+    )
+    store.statuses = [
+        ModelFixtures.profileStatus(
+            profile: "discovered-8000",
+            running: true,
+            ready: true,
+            origin: .discovery
+        ),
+        ModelFixtures.profileStatus(profile: "a", running: false, ready: false),
+    ]
+    store.considerAutoBenchmarks()
+    #expect(!store.autoBenchmarkedProfiles.contains("discovered-8000"))
+    #expect(store.loopbackEndpointProbeCandidates.isEmpty)
+    #expect(!store.statuses.contains { $0.running && $0.isBoardVisible })
+}
+
+@MainActor
+@Test func freshStateKeepsLiveCountsAndRunningBadge() {
+    let store = makeStore()
+    let now = Date(timeIntervalSince1970: 200)
+    let status = ModelFixtures.profileStatus()
+
+    store.statuses = [status]
+    store.lastUpdated = now
+    store.refreshState = .refreshed
+
+    #expect(store.statusFreshness(relativeTo: now) == .fresh)
+    #expect(store.displayedRunningProfiles(relativeTo: now) == 1)
+    #expect(store.displayedReadyProfiles(relativeTo: now) == 1)
+    #expect(store.profileBadgeState(for: status, relativeTo: now) == .running)
+    #expect(store.menuBarHelp(relativeTo: now) == "Running: Qwen")
+}
+
+@MainActor
+@Test func loopbackProbeClearsDeadReadyProfilesImmediately() async throws {
+    let store = makeStore { _ in
+        ["qwen"]
+    }
+    let now = Date(timeIntervalSince1970: 200)
+
+    store.statuses = [ModelFixtures.profileStatus()]
+    store.lastUpdated = now
+
+    await store.probeLoopbackEndpointsIfNeeded()
+
+    let status = try #require(store.statuses.first)
+    #expect(status.running == false)
+    #expect(status.ready == false)
+    #expect(status.pid == nil)
+    #expect(status.serverIDs.isEmpty)
+    #expect(status.rssMB == nil)
+    #expect(store.displayedRunningProfiles(relativeTo: now) == 0)
+    #expect(store.displayedReadyProfiles(relativeTo: now) == 0)
+    #expect(store.menuBarHelp(relativeTo: now) == "No local models running")
+}
+
+@MainActor
+@Test func loopbackProbeSkipsPendingAndRemoteProfiles() async {
+    let recorder = ProbeRecorder()
+    let store = makeStore { profiles in
+        _ = await recorder.record(profiles)
+        return []
+    }
+
+    store.statuses = [
+        ModelFixtures.profileStatus(profile: "pending"),
+        ModelFixtures.profileStatus(
+            profile: "remote",
+            displayName: "Remote",
+            host: "10.0.0.8",
+            port: "8081",
+            baseURL: "http://10.0.0.8:8081/v1"
+        ),
+    ]
+    store.pendingProfileActions["pending"] = .starting
+
+    await store.probeLoopbackEndpointsIfNeeded()
+
+    #expect(await recorder.calls == 0)
+    #expect(store.statuses.filter(\.running).count == 2)
+    #expect(store.statuses.filter(\.ready).count == 2)
+}
+
+@MainActor
+@Test func loopbackProbeUsesFastThenSteadyCadence() {
+    let store = makeStore()
+    let now = Date(timeIntervalSince1970: 200)
+
+    store.statuses = [ModelFixtures.profileStatus()]
+    store.armLoopbackEndpointProbeFastWindow(relativeTo: now)
+
+    #expect(store.shouldProbeLoopbackEndpoints(relativeTo: now) == true)
+    #expect(store.nextLoopbackEndpointProbeInterval(relativeTo: now) == 2)
+    #expect(store.nextLoopbackEndpointProbeInterval(relativeTo: now.addingTimeInterval(31)) == 5)
+}
+
+@MainActor
+@Test func loopbackProbeSuppressionSkipsManagedWindow() async {
+    let recorder = ProbeRecorder()
+    let store = makeStore { profiles in
+        _ = await recorder.record(profiles)
+        return []
+    }
+    let now = Date(timeIntervalSince1970: 200)
+
+    store.statuses = [ModelFixtures.profileStatus()]
+    store.suppressLoopbackEndpointProbe(relativeTo: now)
+
+    #expect(store.shouldProbeLoopbackEndpoints(relativeTo: now) == false)
+    #expect(store.nextLoopbackEndpointProbeInterval(relativeTo: now) == 4)
+
+    await store.probeLoopbackEndpointsIfNeeded(relativeTo: now)
+
+    #expect(await recorder.calls == 0)
+    #expect(store.shouldProbeLoopbackEndpoints(relativeTo: now.addingTimeInterval(5)) == true)
+}

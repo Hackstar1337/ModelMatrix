@@ -1,0 +1,507 @@
+# ModelMatrix (Setup & Reference)
+
+Everything you need beyond the README's quickstart. The in-app **Help** panel is a short version of the first-launch path; this file is the full reference.
+
+## Table of contents
+
+- [First launch](#first-launch)
+- [The operating model](#the-operating-model)
+- [One central folder](#one-central-folder)
+- [Accepted profile formats](#accepted-profile-formats)
+- [Supported runtime styles](#supported-runtime-styles)
+- [How detection works](#how-detection-works)
+- [What is standard on a Mac](#what-is-standard-on-a-mac)
+- [Why JSON is the right next step](#why-json-is-the-right-next-step)
+- [Resource profile](#resource-profile)
+- [Controller API contract](#controller-api-contract)
+- [Remote gateways](#remote-gateways)
+- [Benchmark artifacts](#benchmark-artifacts)
+- [Build from source](#build-from-source)
+- [Release pipeline](#release-pipeline)
+- [Raycast and power users](#raycast-and-power-users)
+- [Troubleshooting](#troubleshooting)
+- [Known limitations](#known-limitations)
+
+---
+
+## First launch
+
+A GitHub Releases DMG (or `Scripts/install.sh`) already embeds the local controller. Do not clone this repo or run `Controller/install-modelmatrix-controller.sh` unless you are developing from source.
+
+1. Drag the app to Applications (or `~/Applications` from `install.sh`) and open the menu bar extra.
+2. First launch registers a LaunchAgent. If the board shows a connection error, enable ModelMatrix in **System Settings → General → Login Items & Extensions**, then Quit and reopen.
+3. Profiles live in `~/Library/Application Support/ModelMatrix/Controller/model-profiles`. The board is empty until you add `.env` / `.json` files there (not in the `examples/` subfolder).
+4. Copy a template from `examples/`, fill in paths that exist on this Mac, Refresh, then **Activate**.
+5. Optional remote GPU host: **Settings → Remote Gateways**. Paste a `modelmatrix-gateway://` code, or enter `user` + `host` and **Install Agent on Host**. Remote default profiles folder is `~/model-profiles` *on that host*, not the Mac Application Support path.
+
+Source checkouts that install only the controller (no app bundle) still use `<controller-root>/model-profiles`. See [Controller/README.md](Controller/README.md).
+
+## The operating model
+
+`ModelMatrix` is the control surface; model processes live in the runtimes.
+
+There are three layers:
+
+1. A native macOS UI layer
+   - menu bar app via `MenuBarExtra`
+   - desktop / Notification Center widget via `WidgetKit`
+2. A controller API
+   - profile discovery
+   - lifecycle actions
+   - optional integrations
+3. Runtime adapters
+   - `llama.cpp`
+   - `mlx_lm.server`
+   - `ollama`
+   - `vLLM`
+   - custom shell scripts
+   - anything else that can be launched and health-checked
+
+The app only needs a controller URL. The controller discovers profiles, launches runtimes, and reports health.
+
+This repo includes one generic reference implementation under `Controller/`. Use it directly, or replace it with your own backend that exposes the same HTTP contract.
+
+## One central folder
+
+Adapter layout:
+
+- Distributed app: `~/Library/Application Support/ModelMatrix/Controller/model-profiles`
+- Source controller checkout: `<adapter-root>/model-profiles`
+- Remote agent: `~/model-profiles` on the host (override with `--profiles-dir` / Settings)
+
+That folder is the source of truth. Add one manifest per model. Keep `examples/` as templates; the controller only loads `.env` / `.json` files in the folder itself.
+
+## Accepted profile formats
+
+The example adapter accepts both:
+
+- `*.env`
+- `*.json`
+
+Use `.env` for shell-style configuration. Use `.json` for structured, tool-agnostic config.
+
+Strict example manifests live under `Controller/model-profiles/examples/`.
+
+Every profile must resolve to a unique endpoint. If two profiles share the same `HOST:PORT` or `BASE_URL`, activation and status attribution become ambiguous. The controller doctor treats that as a profile error.
+
+## Supported runtime styles
+
+### `llama.cpp`
+Best default for quantized GGUF models on Apple Silicon.
+
+Typical fields:
+
+- `RUNTIME=llama.cpp`
+- `MODEL_PATH` or `MODEL_FILE` with `MODEL_ROOT`
+- `SERVER_BIN` or `LLAMA_SERVER_BIN` if `llama-server` is not already on `PATH`
+- `PORT`
+- `REQUEST_MODEL`
+- `SERVER_MODEL_ID`
+
+### `mlx`
+Best for MLX-native converted models on Apple Silicon.
+
+Typical fields:
+
+- `RUNTIME=mlx`
+- `MODEL_DIR` or `MODEL_REPO`
+- `SERVER_BIN` or `MLX_SERVER_BIN` if `mlx_lm.server` is not already on `PATH`
+- `PORT`
+- `REQUEST_MODEL`
+
+### `rvllm-mlx`
+Best when you want to launch an OpenAI-compatible MLX server from a dedicated binary.
+
+Typical fields:
+
+- `RUNTIME=rvllm-mlx`
+- `SERVER_BIN`
+- `MODEL_DIR`
+- `PORT`
+- `REQUEST_MODEL`
+- `SERVER_MODEL_ID`
+
+### `vllm-mlx`
+Best for high-throughput MLX model directories on Apple Silicon.
+
+Typical fields:
+
+- `RUNTIME=vllm-mlx`
+- `SERVER_BIN` or `VLLM_MLX_BIN` if `vllm-mlx` is not already on `PATH`
+- `MODEL_DIR` or `MODEL_REPO`
+- `PORT`
+- `REQUEST_MODEL`
+- `SERVER_MODEL_ID`
+- optional tuning fields: `MAX_TOKENS`, `MAX_REQUEST_TOKENS`, `GPU_MEMORY_UTILIZATION`, `CACHE_MEMORY_PERCENT`, `PREFILL_STEP_SIZE`, `ENABLE_TOOL_CALLS`, `TOOL_CALL_PARSER`
+
+### Universal launchers
+Best when the model is owned by another runtime, desktop app, daemon, or wrapper.
+
+ModelMatrix uses three launch modes:
+
+- `adapter`: known runtimes where the controller builds the command (`llama.cpp`, `mlx`, `rvllm-mlx`, `vllm-mlx`, `ollama`, `vllm`, `sglang`, `tgi`, `llama-cpp-python`).
+- `command`: profile-owned `START_COMMAND`, optional `STOP_COMMAND`, and readiness.
+- `external`: an already-running OpenAI-compatible endpoint such as LM Studio, Jan, LocalAI, or a manually launched server.
+
+Named command and generic-binary profiles can still use runtime ids such as `ddtree-mlx`, `turboquant`, `mlx-vlm`, `mlx-omni-server`, `mistral.rs`, `mlc-llm`, `lightllm`, `fastchat`, `openllm`, `nexa`, `exllamav2`, `aphrodite`, and `lmdeploy`. They retain their real runtime label instead of displaying as custom. Use `LAUNCH_MODE=external` when a named runtime is already running outside ModelMatrix. Every profile status includes `runtime_label`, `runtime_tags`, and `launch_mode`. Add custom tags with `RUNTIME_TAGS="coding q8 long-context"`.
+
+Profiles can be JSON or declarative `.env` files. `.env` files are parsed as key/value data, not shell scripts. Use quoted `START_COMMAND` or `STOP_COMMAND` values for commands that intentionally run through the launcher.
+
+Generic JSON example:
+
+```json
+{
+  "DISPLAY_NAME": "My Custom Server",
+  "RUNTIME": "command",
+  "START_COMMAND": "/absolute/path/to/start-my-server.sh",
+  "STOP_COMMAND": "curl -fsS -X POST http://127.0.0.1:8099/shutdown || true",
+  "BASE_URL": "http://127.0.0.1:8099/v1",
+  "HEALTHCHECK_MODE": "http-200",
+  "HEALTHCHECK_URL": "http://127.0.0.1:8099/health",
+  "REQUEST_MODEL": "my-local-model",
+  "SERVER_MODEL_ID": "my-local-model"
+}
+```
+
+Generic binary example for runtimes without a first-class adapter:
+
+```json
+{
+  "DISPLAY_NAME": "Any Local Server",
+  "RUNTIME": "tabbyapi",
+  "SERVER_BIN": "/absolute/path/to/server",
+  "SERVER_ARGS_JSON": ["--host", "127.0.0.1", "--port", "5000", "--model", "/models/model"],
+  "BASE_URL": "http://127.0.0.1:5000/v1",
+  "REQUEST_MODEL": "local-model",
+  "SERVER_MODEL_ID": "local-model"
+}
+```
+
+See [Controller/RUNTIME_SUPPORT.md](Controller/RUNTIME_SUPPORT.md) for the full runtime matrix and examples.
+
+Keep the schema stable. Path layout can vary by repo.
+
+The reference macOS launcher is intentionally strict:
+
+- it does not guess Homebrew paths, repo-local runtime builds, or personal directories
+- binaries come from the profile manifest or `PATH`
+- model locations come from the profile manifest
+
+## How detection works
+
+For each profile it does this:
+
+1. Read the managed PID file if present.
+2. If the PID is stale, clear it.
+3. If no managed PID exists, fall back to checking whether the configured port has a listener.
+4. Run the configured health check.
+
+Supported health-check modes:
+
+- `openai-models`
+  - default for `llama.cpp` and `mlx`
+  - probes `/v1/models`
+  - verifies the expected model ID is present
+- `http-200`
+  - generic HTTP readiness
+  - considers the profile ready when the configured URL returns success
+- `disabled`
+  - only use this when you cannot probe readiness
+  - process state may still be visible, but endpoint health is not verified
+
+The UI is launcher-agnostic as long as each profile defines startup and readiness checks.
+
+## What is standard on a Mac
+
+For Apple Silicon local inference, common stacks are:
+
+- `llama.cpp` with Metal
+- `MLX` / `mlx_lm.server`
+- `rvllm-mlx`
+
+Other tools fit into one of these buckets:
+
+- `Ollama`
+  - convenience packaging and model management around a local runtime
+- `LM Studio`
+  - GUI-first local model UX built around local backends
+- `Jan`, `Open WebUI`, `SoulForge`, `vLLM Studio`
+  - client UX, orchestration, or alternate serving layers
+- `vLLM`
+  - strong on CUDA/Linux; a secondary option on Apple Silicon laptops
+
+A high-performance macOS stack:
+
+- `llama.cpp` for GGUF
+- `MLX` for MLX-native models
+- OpenAI-compatible endpoints for tool interoperability
+
+## Why JSON is the right next step
+
+JSON is easier to operate than raw env files for shared setups.
+
+Reasons:
+
+- explicit structure
+- easier schema validation later
+- easier editor tooling
+- easier runtime-agnostic fields such as `START_COMMAND`, `BASE_URL`, and `HEALTHCHECK_MODE`
+- easier future migration to a full profile registry
+
+The current adapter keeps `.env` support for backward compatibility.
+
+## Resource profile
+
+`ModelMatrix` itself is intentionally light.
+
+- native SwiftUI app
+- native WidgetKit extension
+- no Electron
+- no embedded browser runtime
+- no bundled inference engine
+- no constant high-frequency polling
+
+Design choices that keep the app light:
+
+- the controller refresh loop uses an adaptive low-frequency cadence instead of aggressive constant polling
+- the visible footer clock only updates while the menu is open
+- the menu bar hover text is derived from the same lightweight controller snapshot the shell uses
+- the widget refreshes on a simple timeline instead of running its own always-on helper
+
+Most memory/thermal load stays in runtimes, not the operator UI.
+
+---
+
+## Controller API contract
+
+The app expects a controller base URL, defaulting to `http://127.0.0.1:7700`.
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/status` | Profile + readiness snapshot |
+| `GET` | `/api/integrations` | Optional integration manifest |
+| `GET` | `/api/benchmark/status` | Current benchmark run state |
+| `POST` | `/api/start` | Start a profile |
+| `POST` | `/api/stop` | Stop a profile |
+| `POST` | `/api/restart` | Restart a profile |
+| `POST` | `/api/switch` | Stop others, start target (the `Activate` path) |
+| `POST` | `/api/stop-all` | Stop every managed profile |
+| `POST` | `/api/integrations/run` | Trigger an optional integration |
+| `POST` | `/api/benchmark/start` | Run benchmark(s) |
+
+Any backend that returns the same profile-status JSON shape and supports these lifecycle actions is compatible. Exact contracts live in `Sources/ModelMatrixCore/Models/` and `Sources/ModelMatrixControllerCore/ControllerRouter.swift`.
+
+## Remote gateways
+
+Each remote gateway is a Linux/Unix stdlib-only Python agent speaking the
+[controller contract](#controller-api-contract). Full commands and routes:
+[RemoteAgent/README.md](RemoteAgent/README.md).
+
+| Step/mode | Facts |
+|---|---|
+| Install/update | **Install Agent on Host** pushes bundled files over SSH and creates a systemd user service under `~/.local/share/modelmatrix-agent/`; the host downloads nothing. Alternatives: documented `curl \| bash` or repo checkout. Re-run the same method to update. |
+| Profiles | Same `.env` / `.json` format; default `~/model-profiles/`. `link` scans `$HOME`, confirms/pastes and persists a folder, then prints pairing. Overrides: `--profiles-dir` / `MODELMATRIX_PROFILES_DIR`; Mac `--profiles-dir` persists in `config.json`. Templates: `vllm`, `llama.cpp` (`llama-server`), `sglang`, `tgi`; otherwise `START_COMMAND`. |
+| Pair | Paste the installer's or `link`'s `modelmatrix-gateway://…` code into **Settings → Remote Gateways** (the empty-state field, or **Add Remote Gateway**). It locally prefills editable user/host/port fields; no pairing service is involved. Click **Update** on that gateway anytime to push a newer bundled agent and refresh models. |
+| SSH (recommended) | Loopback-only agent; app maintains `ssh -N -L` via your config/keys/agent (`BatchMode=yes`; no passwords). Trust the host once in Terminal. ControlMaster forwards running models to the same local ports. Reconnect uses backoff; the panel reports missing keys, changed host keys, and unreachable hosts. SSH over Tailscale also works, including Tailscale SSH. |
+| Tailscale direct | `--tailscale` or `serve --tailscale --auth-token-file …` binds only the WireGuard tailnet address, not open LAN. Token is required/generated by default; paste it into the Mac form. `mode=direct` + MagicDNS uses no tunnel. Only on a personal tailnet, `--allow-unauthenticated` opts out (**any tailnet member can control models**). Reachable model profiles need `HOST=0.0.0.0` or the Tailscale IP because remote loopback is not forwarded. |
+| Trusted plain LAN | Direct `http://host:7700` requires `--unsafe-bind` **and** a ≥16-byte bearer token for non-loopback binds. Per-gateway token is stored in macOS Keychain. |
+
+Benchmarks/integrations and the desktop widget remain local-only. Menu-bar
+count and **Stop Everything** span all gateways. Remote state is excluded from
+the local cache, so tunnel failure cannot appear as local model state.
+
+## Benchmark artifacts
+
+The reference benchmark harness writes both machine-readable and human-readable outputs to:
+
+- `Controller/benchmark-results/`
+
+Each completed run produces:
+
+- `benchmark-YYYYMMDD-HHMMSS.json`
+- `benchmark-YYYYMMDD-HHMMSS.md`
+- `latest.json`
+- `latest.md`
+
+The Benchmarks panel reads `latest.json`. **Export CSV** writes a portable report from the current latest run.
+
+---
+
+## Build from source
+
+```bash
+# Run tests
+swift test
+
+# Iterative dev (launches a debug build)
+./Scripts/run-dev.sh
+
+# Release build (produces dist/ModelMatrix.app)
+./Scripts/build-app.sh
+
+# DMG (produces dist/ModelMatrix-<version>.dmg)
+./Scripts/build-dmg.sh
+
+# Verify an installed copy
+./Scripts/verify-installed-app.sh
+```
+
+Source installs use the hardened installer:
+
+```bash
+./Scripts/install.sh
+./Scripts/install.sh --skip-open
+./Scripts/install.sh --verify
+```
+
+Useful flags:
+
+| Flag | Use |
+|---|---|
+| `--install-dir PATH` | Install the app outside `~/Applications`. |
+| `--bin-dir PATH` | Install `modelmatrixctl` outside `~/.local/bin`. |
+| `--easy-mode` | Add the CLI bin directory to writable shell rc files. |
+| `--quiet` / `--no-gum` | Run in CI or plain ANSI mode. |
+| `--no-cli` / `--no-completions` | Skip CLI or shell completion installation. |
+
+Or via `make`:
+
+```bash
+make test       # swift test
+make app        # build-app.sh
+make dmg        # build-dmg.sh
+make install    # install.sh
+make uninstall  # uninstall.sh
+```
+
+The Xcode build path regenerates `ModelMatrix.xcodeproj` from `project.yml` via XcodeGen before building, so you never hand-edit the project file.
+
+## Release pipeline
+
+For GitHub distribution:
+
+1. a Developer ID-signed app
+2. a notarized `.dmg`
+3. a GitHub Release that points users to the DMG
+
+This repo builds DMGs locally; public releases should be signed and notarized.
+
+Included:
+
+- `Scripts/release-preflight.sh`
+- `Scripts/bump-version`
+- `Scripts/sign-and-notarize-dmg.sh`
+- `.github/workflows/release.yml`
+
+The release workflow signs, notarizes, verifies, and uploads the single unified-app DMG when either:
+
+- a `v*` tag is pushed
+- a commit on `main` changes `VERSION`
+
+Normal maintainer flow:
+
+```bash
+./Scripts/bump-version patch   # or minor / major / x.y.z
+git push origin main
+```
+
+GitHub Actions will create or update the matching `v<version>` release for that commit. Required repo secrets:
+
+- `APPLE_CERTIFICATE_P12_BASE64`
+- `APPLE_CERTIFICATE_PASSWORD`
+- `APPLE_DEVELOPER_IDENTITY`
+- `APPLE_NOTARY_API_KEY_P8_BASE64`
+- `APPLE_NOTARY_API_KEY_ID`
+- `APPLE_NOTARY_API_ISSUER_ID`
+
+Recommended local preflight before push/tag:
+
+```bash
+./Scripts/release-preflight.sh
+```
+
+Manual release checklist:
+
+- install the built app
+- toggle `Launch At Login` and confirm the app remains in macOS Login Items
+- run `./Scripts/verify-installed-app.sh`
+
+---
+
+## Raycast and power users
+
+Raycast users have two paths:
+
+1. The app appears as a normal macOS application after install.
+2. Keyboard-first operators can also call scriptable actions without opening the menu.
+
+This repo supports both:
+
+- `Scripts/install.sh` explicitly registers the app with Launch Services and forces a Spotlight import so Raycast can discover it faster.
+- `Scripts/modelmatrixctl` is a tiny controller CLI. Agents can start with `modelmatrixctl capabilities`, `modelmatrixctl robot-docs guide`, `modelmatrixctl triage`, or `modelmatrixctl doctor --json`. Mutating commands support `--dry-run`/`--plan` and structured `--json` envelopes.
+- `Integrations/Raycast/Script Commands/` has Script Commands for status, opening the profiles folder, stopping all models, and running quick benchmarks.
+
+If Finder shows `.app` extensions, that is the macOS `AppleShowAllExtensions` Finder preference, not a bundle naming issue.
+
+---
+
+## Troubleshooting
+
+**The app doesn't appear in Spotlight or Raycast.**
+Run `./Scripts/install.sh`. It registers the bundle with Launch Services and forces a Spotlight import. If the old `ModelMatrix.app` name is still cached, the installer removes it automatically.
+
+**A profile shows "Not Running" even though I can `curl` the endpoint.**
+The default health check for `llama.cpp` and `mlx` profiles probes `/v1/models` and verifies the expected model ID is present. If your server returns a different id, set `SERVER_MODEL_ID` in the profile to match. For a looser check, switch the profile to `HEALTHCHECK_MODE=http-200`.
+
+**`Activate` doesn't kill the previously running model.**
+Each runtime is tracked by a managed PID file. If you started the process outside ModelMatrix (e.g. a terminal `llama-server` invocation), the controller doesn't own that PID. Stop the outside process manually, then use `Activate`.
+
+**The widget doesn't show up in the widget gallery.**
+See [Known limitations](#known-limitations); the widget extension is bundled correctly but only registers reliably with a Developer-ID-signed build.
+
+**Benchmarks panel is empty or cooldown won't clear.**
+The Benchmarks panel reads `Controller/benchmark-results/latest.json`. Delete it to reset the panel, or run `Benchmark All` once to regenerate.
+
+**Controller port `7700` is already in use.**
+The default can be overridden when the controller starts. If you changed it, also update the controller URL in the app's `Settings` panel.
+
+**Installed-app verification fails in headless or restricted Apple Events environments.**
+Run `MMX_VERIFY_UI=0 ./Scripts/verify-installed-app.sh` to execute lifecycle/API checks without UI automation.
+
+---
+
+## Known limitations
+
+**Desktop / Notification Center widget requires a Developer-ID-signed build.**
+The widget target (`ModelMatrixWidget`) is real. It is embedded at `Contents/PlugIns/ModelMatrixWidget.appex` and wired through `project.yml`. Local installs from `./Scripts/install.sh` ad-hoc sign the bundle (`codesign --sign -`). Ad-hoc-signed widget extensions are not reliably registered by WidgetKit's gallery. The widget begins to register once the app is installed from a Developer ID-signed, notarized DMG (the GitHub Release build). To verify on a local build:
+
+```bash
+APP="${MMX_APP_PATH:-}"
+if [ -z "$APP" ]; then
+  for candidate in \
+    "/Applications/ModelMatrix.app" \
+    "$HOME/Applications/ModelMatrix.app"
+  do
+    [ -d "$candidate" ] && APP="$candidate" && break
+  done
+fi
+pluginkit -a "$APP/Contents/PlugIns/ModelMatrixWidget.appex"
+killall chronod cfprefsd 2>/dev/null || true
+open -a "$APP"
+```
+
+Then wait ~60 seconds and check the Widget gallery. Results vary across macOS versions.
+
+**Widget note.** WidgetKit distribution follows the host app: users install and launch the containing app once before the widget appears in the gallery, once registration succeeds.
+
+---
+
+## Open source posture
+
+To keep this reusable:
+
+- keep the app generic
+- document the controller contract
+- treat external tools like Droid as optional integrations, not required features
+- ship one backend adapter as an example
+- let other people plug in their own runtime stack
