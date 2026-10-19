@@ -80,7 +80,7 @@ extension DownloadsPanelView {
                 if supported, fit != nil {
                     HFBadge(
                         text: HFWords.fit(level),
-                        tone: level == "good" ? "good" : level == "tight" ? "warn" : level == "too_big" ? "bad" : "plain",
+                        tone: level == "good" ? "good" : level == "tight" || level == "too_big" ? "warn" : "plain",
                         theme: theme, accent: accent)
                 }
             }
@@ -136,7 +136,7 @@ extension DownloadsPanelView {
                 }
                 .disabled(!check.canDownload || check.confirmingTooBig)
             }
-            if check.confirmingTooBig, let variant { tooBigBox(variant) }
+            if check.confirmingTooBig, let variant { confirmationBox(variant) }
         }
     }
 
@@ -148,32 +148,47 @@ extension DownloadsPanelView {
         return "Saves\(folder) on \(check.place). \(start)"
     }
 
-    func tooBigBox(_ variant: JSONRow) -> some View {
+    func confirmationBox(_ variant: JSONRow) -> some View {
         let fit = variant.row("fit")
+        let reasons = HFCheckModel.confirmationReasons(for: variant)
+        let memoryWarning = reasons.contains(.memory)
+        let qualityWarning = reasons.contains(.quality)
         let need = HFWords.size(fit?.double("need_bytes"))
         let budget = HFWords.size(check.report?.row("machine")?.double("budget_bytes"))
         return VStack(alignment: .leading, spacing: 6) {
-            Text("This version is too big for \(check.place)")
+            Text("Suggestion before downloading")
                 .font(.system(size: 11.5, weight: .semibold))
                 .foregroundStyle(theme.label)
-            Text(
-                "\(variant.string("label") ?? "It") needs about \(need) at \(HFWords.context(fit?.int("context"))) context, "
-                    + "but \(check.place) can give a model about \(budget). It will probably fail to start or run very slowly."
-            )
-            .font(.system(size: 9.5))
-            .foregroundStyle(theme.sub)
-            .fixedSize(horizontal: false, vertical: true)
+            if memoryWarning {
+                Text(
+                    "Memory shortfall: \(variant.string("label") ?? "This version") needs about \(need) at "
+                        + "\(HFWords.context(fit?.int("context"))) context, but \(check.place) can give a model about \(budget). "
+                        + "It may fail to start or run very slowly."
+                )
+                .font(.system(size: 9.5))
+                .foregroundStyle(theme.sub)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+            if qualityWarning, let bits = variant.double("bits_per_weight") {
+                Text(
+                    String(format: "Quality trade-off: %.1f bits per weight is below 3.5, so this smaller quantization may lose answer quality.", bits)
+                )
+                .font(.system(size: 9.5))
+                .foregroundStyle(theme.sub)
+                .fixedSize(horizontal: false, vertical: true)
+            }
             HStack(spacing: 8) {
                 Spacer(minLength: 0)
-                SettingsLinkButton(title: "Choose another", theme: theme, accent: accent) { check.confirmingTooBig = false }
-                SettingsLinkButton(title: "Download anyway", emphasized: true, theme: theme, accent: .red) {
+                SettingsLinkButton(title: "Cancel", theme: theme, accent: accent) { check.confirmingTooBig = false }
+                SettingsLinkButton(title: "Download anyway", emphasized: true, theme: theme, accent: accent) {
                     check.confirmingTooBig = false
                     Task { await check.download(client) }
                 }
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.red.opacity(0.07)))
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color.orange.opacity(0.09)))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.orange.opacity(0.3), lineWidth: 0.5))
     }
 
     // MARK: Engine plan (nothing changes until Install is pressed)

@@ -45,7 +45,7 @@ extension DownloadsPanelView {
         return HStack(alignment: .top, spacing: 8) {
             Image(systemName: icon).font(.system(size: 15)).foregroundStyle(color)
             VStack(alignment: .leading, spacing: 3) {
-                Text(verdict?.string("title") ?? "Checked")
+                Text(HFWords.verdictTitle(verdict?.string("code"), verdict?.string("title") ?? "Checked"))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(theme.label)
                     .fixedSize(horizontal: false, vertical: true)
@@ -76,7 +76,7 @@ extension DownloadsPanelView {
                     HFFactRow(label: "Format", value: (format.string("name") ?? "Unknown") + summary, theme: theme)
                 }
                 if let task = report.row("task"), let text = task.string("description") {
-                    HFFactRow(label: "Kind", value: text + (task.bool("vision") ? " that can also read images" : ""), theme: theme)
+                    HFFactRow(label: "Kind", value: HFWords.kindDescription(text, vision: task.bool("vision")), theme: theme)
                 }
                 if let model, model.double("parameters") != nil || model.int("max_context") != nil {
                     let params = model.double("parameters").map { "\(UsageFormat.compact($0)) parameters" } ?? "Parameters unknown"

@@ -23,6 +23,8 @@ final class HFCheckModel {
     var phase: Phase = .idle
     var errorMessage: String?
     var noticeMessage: String?
+    /// Kept for API compatibility with the dashboard-era property name; this
+    /// now covers both memory-fit and quantization-quality confirmations.
     var confirmingTooBig = false
 
     // Engine install, update or removal: plan first, then the approved job.
@@ -45,6 +47,39 @@ final class HFCheckModel {
         return !loginNeeded && phase == .idle
     }
     var jobRunning: Bool { job?.string("state") == "running" }
+
+    enum DownloadConfirmationReason: Equatable {
+        case memory
+        case quality
+    }
+
+    var confirmationReasons: [DownloadConfirmationReason] {
+        guard let variant else { return [] }
+        return Self.confirmationReasons(for: variant)
+    }
+
+    /// Recommendation is preferred even when it is an advisory-only fit. If
+    /// it is absent or cannot be selected, choose a supported fitting version,
+    /// then fall back to any supported version so a large download is never
+    /// blocked merely because no version fits the memory estimate.
+    static func preferredVariantLabel(rows: [JSONRow], recommendation: String?) -> String? {
+        if let recommendation,
+           let row = rows.first(where: { $0.string("label") == recommendation && $0.bool("supported") })
+        {
+            return row.string("label")
+        }
+        return rows.first { $0.bool("supported") && $0.row("fit")?.string("level") != "too_big" }?.string("label")
+            ?? rows.first { $0.bool("supported") }?.string("label")
+    }
+
+    /// A download remains possible for these warnings, but asks the user to
+    /// acknowledge the separate memory and quality trade-offs first.
+    static func confirmationReasons(for variant: JSONRow) -> [DownloadConfirmationReason] {
+        var reasons: [DownloadConfirmationReason] = []
+        if variant.row("fit")?.string("level") == "too_big" { reasons.append(.memory) }
+        if let bits = variant.double("bits_per_weight"), bits < 3.5 { reasons.append(.quality) }
+        return reasons
+    }
 
     /// The engine the model needs, from the report's engine list.
     var neededEngine: JSONRow? {
@@ -83,9 +118,10 @@ final class HFCheckModel {
                 guard !Task.isCancelled else { return }
                 report = next
                 engineChoice = nil
+                confirmingTooBig = false
                 let rows = next.rows("variants")
-                selected = next.row("recommendation")?.string("label")
-                    ?? rows.first { $0.bool("supported") && $0.row("fit")?.string("level") != "too_big" }?.string("label")
+                selected = Self.preferredVariantLabel(
+                    rows: rows, recommendation: next.row("recommendation")?.string("label"))
             } catch {
                 guard !Task.isCancelled else { return }
                 report = nil
@@ -104,12 +140,13 @@ final class HFCheckModel {
     func select(_ row: JSONRow) {
         guard row.bool("supported"), let label = row.string("label") else { return }
         selected = label
+        confirmingTooBig = false
     }
 
     /// Download pressed. A version that won't fit asks first, like the dashboard.
     func requestDownload(_ client: WebDashboardClient) {
         guard canDownload else { return }
-        if variant?.row("fit")?.string("level") == "too_big" {
+        if !confirmationReasons.isEmpty {
             confirmingTooBig = true
         } else {
             Task { await download(client) }
@@ -240,6 +277,11 @@ enum HFWords {
         return tokens >= 1024 && tokens % 1024 == 0 ? "\(tokens / 1024)K" : "\(tokens)"
     }
 
+    static func kindDescription(_ description: String, vision: Bool) -> String {
+        guard vision, !description.localizedCaseInsensitiveContains("image") else { return description }
+        return description + " that can also read images"
+    }
+
     static func fit(_ level: String?) -> String {
         switch level {
         case "good": "FITS WELL"
@@ -287,8 +329,16 @@ enum HFWords {
     static func verdictTone(_ code: String?) -> String {
         switch code {
         case "ready": "good"
-        case "too_big", "not_supported", "not_found": "bad"
+        case "too_big", "low_quality": "warn"
+        case "not_supported", "not_found", "login_required", "unsafe_files", "disk_full", "wrong_architecture": "bad"
         default: "warn"
         }
+    }
+
+    static func verdictTitle(_ code: String?, _ title: String) -> String {
+        guard code == "too_big" || code == "low_quality",
+              !title.lowercased().hasPrefix("suggestion")
+        else { return title }
+        return "Suggestion: " + title
     }
 }

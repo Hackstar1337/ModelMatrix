@@ -352,7 +352,6 @@ func makeHub(
       return nil
     }
   }
-  #expect(refusal(.init(name: "bartowski/Qwen2.5-72B-Instruct-GGUF", version: "Q8_0"))?.code == "refused")  // too big
   #expect(refusal(.init(name: "bartowski/Qwen2.5-7B-Instruct-GGUF", version: "Q9_X"))?.description.contains("Versions:") == true)
   #expect(refusal(.init(name: "Qwen/Qwen2.5-7B-Instruct"))?.code == "refused")  // original weights
   #expect(refusal(.init(name: "openai/whisper-large-v3"))?.code == "refused")  // not a chat model

@@ -22,7 +22,8 @@ public struct HFCheckReport: Sendable, Encodable {
   public var alternatives: [HFAlternative] = []
   public var searchResults: [HFAlternative] = []
   public var notes: [String] = []
-  /// Downloading is a separate, later step; the check never downloads.
+  /// Supported versions may be downloaded despite quality or memory advice.
+  /// Access and disk constraints are checked separately; the check never downloads.
   public var downloadAvailable = false
   /// Where this repository's files will be saved once downloading arrives:
   /// ~/ModelMatrix/Models/<owner>/<name>.
@@ -53,14 +54,14 @@ public struct HFFormatSummary: Sendable, Encodable {
   public var summary: String
 }
 
-/// Overall result. Codes: `ready`, `needs_engine`, `too_big`,
+/// Overall result. Codes: `ready`, `needs_engine`, `too_big`, `low_quality`, `not_recommended`,
 /// `use_alternative`, `not_supported`, `login_required`, `choose_model`,
 /// `not_found`.
 public struct HFVerdict: Sendable, Encodable, Equatable {
   public var code: String
   public var title: String
   public var detail: String
-  /// Whether this repository has a version that can run on this machine.
+  /// Whether the check estimates a runnable version, not download permission.
   public var runnable: Bool
 }
 

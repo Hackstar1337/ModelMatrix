@@ -198,13 +198,14 @@ public final class HFHub: @unchecked Sendable {
     return (try downloads.add(job), false)
   }
 
-  /// Turns a check into a download job, refusing anything that can't run here.
+  /// Turns a check into a download job. Memory and quality are advice;
+  /// access, supported formats, file safety and disk space remain constraints.
   public func plan(_ report: HFCheckReport, request: DownloadRequest) throws -> HFDownloadJob {
     guard report.kind == "model", let repo = report.repo, let format = report.format else {
       if report.verdict.code == "not_found" { throw HFError.notFound(request.name) }
       throw HFError.refused("Pick one model first: \(report.verdict.detail)")
     }
-    if report.verdict.code == "login_required" { throw HFError.loginRequired(repo.id) }
+    if repo.loginRequired || report.verdict.code == "login_required" { throw HFError.loginRequired(repo.id) }
     guard format.id == .gguf || format.id == .mlx else {
       if !report.alternatives.isEmpty {
         let names = report.alternatives.prefix(3).map(\.repo).joined(separator: ", ")
@@ -218,7 +219,8 @@ public final class HFHub: @unchecked Sendable {
     }
     let wanted = request.version ?? report.recommendation?.label
     guard let label = wanted else {
-      throw HFError.refused("\(report.verdict.title). \(report.verdict.detail)")
+      throw HFError.refused(
+        "\(report.verdict.title). \(report.verdict.detail) Choose a supported version explicitly with modelmatrixctl download \(repo.id):LABEL.")
     }
     guard
       let variant = report.variants.first(where: { $0.label.caseInsensitiveCompare(label) == .orderedSame })
@@ -234,10 +236,8 @@ public final class HFHub: @unchecked Sendable {
     }
     let recommended = report.recommendation?.label == variant.label ? report.recommendation : nil
     let fitLevel = recommended?.level ?? variant.fit?.level
-    if fitLevel == "too_big" {
-      throw HFError.refused(
-        "\(variant.label) is too big for the \(HFCheckService.gb(report.machine.budgetBytes)) this machine can give a model. Choose a smaller version.")
-    }
+    // Selecting a supported version is deliberate even if it isn't advised.
+    // The UI confirms risky choices; the CLI can choose one by its label.
 
     // Engine.
     let engines = report.engine?.engines ?? []
@@ -310,6 +310,14 @@ public final class HFHub: @unchecked Sendable {
     }
     if fitLevel == "tight" {
       job.warnings.append("\(variant.label) fits this machine's memory only tightly; close other apps if it runs slowly.")
+    }
+    if fitLevel == "too_big" {
+      job.warnings.append(
+        "Suggestion: \(variant.label) exceeds the estimated \(HFCheckService.gb(report.machine.budgetBytes)) model-memory budget. Downloading is allowed, but it may fail to start or run very slowly. Try a shorter context, smaller version or another host.")
+    }
+    if let bits = variant.bitsPerWeight, bits < HFMemoryPlanner.minimumRecommendedBits {
+      job.warnings.append(
+        "Suggestion: \(variant.label) uses fewer than 3.5 bits per weight and may lose answer quality. You chose this version explicitly; it is not automatically recommended.")
     }
     if report.engine?.engines.first(where: { $0.id == engine })?.installed != true {
       job.warnings.append(HFProfileMaker.engineMissingWarning(engine.displayName))

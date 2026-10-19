@@ -51,6 +51,25 @@ export function HuggingFaceHost() {
 }
 
 const CONTEXTS = [4096, 8192, 16384, 32768, 65536, 131072];
+const LOW_QUALITY_BITS = 3.5;
+
+function defaultVariantLabel(report: HFCheckReport): string | undefined {
+  const recommendation = report.recommendation?.label;
+  if (recommendation && report.variants.some((v) => v.label === recommendation && v.supported)) return recommendation;
+  return (
+    report.variants.find((v) => v.supported && v.fit?.level !== "too_big")?.label ??
+    report.variants.find((v) => v.supported)?.label
+  );
+}
+
+function needsDownloadConfirmation(variant?: HFVariant): boolean {
+  return variant?.fit?.level === "too_big" || (variant?.bits_per_weight !== undefined && variant.bits_per_weight < LOW_QUALITY_BITS);
+}
+
+function kindDescription(task: NonNullable<HFCheckReport["task"]>): string {
+  const description = task.description.trim();
+  return task.vision && !/\b(?:image|images|vision)\b/i.test(description) ? `${description} that can also read images` : description;
+}
 
 function AddModelModal({ initial, onClose }: { initial: { name?: string; host?: string }; onClose: () => void }) {
   const { toast, setPage } = useApp();
@@ -64,7 +83,7 @@ function AddModelModal({ initial, onClose }: { initial: { name?: string; host?: 
   const [selected, setSelected] = useState<string>();
   const [engineChoice, setEngineChoice] = useState<string>();
   const [installing, setInstalling] = useState<{ engine: HFEngineId; name: string } | null>(null);
-  const [confirmBig, setConfirmBig] = useState(false);
+  const [confirmDownload, setConfirmDownload] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const abort = useRef<AbortController | null>(null);
 
@@ -79,7 +98,7 @@ function AddModelModal({ initial, onClose }: { initial: { name?: string; host?: 
     try {
       const result = await hf.check(text, target || undefined, ctx, controller.signal);
       setReport(result);
-      setSelected(result.recommendation?.label ?? result.variants.find((v) => v.supported && v.fit?.level !== "too_big")?.label);
+      setSelected(defaultVariantLabel(result));
       setEngineChoice(undefined);
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
@@ -107,6 +126,8 @@ function AddModelModal({ initial, onClose }: { initial: { name?: string; host?: 
   const variant = report?.variants.find((v) => v.label === selected);
   const loginNeeded = !!report?.repo?.login_required;
   const canDownload = !!report && report.kind === "model" && report.download_available && !!variant && variant.supported && !loginNeeded;
+  const memoryWarning = variant?.fit?.level === "too_big";
+  const qualityWarning = variant?.bits_per_weight !== undefined && variant.bits_per_weight < LOW_QUALITY_BITS;
   const where = host || "this Mac";
 
   const startDownload = async () => {
@@ -143,7 +164,7 @@ function AddModelModal({ initial, onClose }: { initial: { name?: string; host?: 
               className="btn primary"
               disabled={!canDownload || downloading || checking}
               title={!canDownload ? "Check a model and choose a version first" : undefined}
-              onClick={() => (variant?.fit?.level === "too_big" ? setConfirmBig(true) : startDownload())}
+              onClick={() => (needsDownloadConfirmation(variant) ? setConfirmDownload(true) : startDownload())}
             >
               {downloading ? <Loader2 size={14} className="spin" /> : <Download size={14} />}
               {variant && canDownload ? `Download ${variant.label} (${size(variant.download_bytes)})` : "Download"}
@@ -274,20 +295,20 @@ function AddModelModal({ initial, onClose }: { initial: { name?: string; host?: 
           onDone={() => recheck()}
         />
       )}
-      {confirmBig && variant?.fit && report && (
+      {confirmDownload && variant && report && (
         <Modal
           small
-          title="This version is too big"
-          onClose={() => setConfirmBig(false)}
+          title={memoryWarning ? "This version may not fit in memory" : "Review this version"}
+          onClose={() => setConfirmDownload(false)}
           footer={
             <>
-              <button className="btn ghost" onClick={() => setConfirmBig(false)}>
+              <button className="btn ghost" onClick={() => setConfirmDownload(false)}>
                 Choose another
               </button>
               <button
                 className="btn danger"
                 onClick={() => {
-                  setConfirmBig(false);
+                  setConfirmDownload(false);
                   startDownload();
                 }}
               >
@@ -297,8 +318,17 @@ function AddModelModal({ initial, onClose }: { initial: { name?: string; host?: 
           }
         >
           <div className="muted" style={{ fontSize: 14 }}>
-            {variant.label} needs about {size(variant.fit.need_bytes)} at {contextLabel(variant.fit.context)} context, but {where} can give a model about{" "}
-            {size(report.machine.budget_bytes)}. It will probably fail to start or run very slowly.
+            {qualityWarning && (
+              <p>
+                <b>Quality suggestion.</b> {variant.label} is about {variant.bits_per_weight?.toFixed(1)} bits per weight. Lower-bit versions use less memory, but can lose response quality and detail.
+              </p>
+            )}
+            {memoryWarning && variant.fit && (
+              <p>
+                <b>Memory suggestion.</b> This version needs about {size(variant.fit.need_bytes)} at {contextLabel(variant.fit.context)} context, while {where} can give a model about {size(report.machine.budget_bytes)}. It may fail to start or run very slowly.
+              </p>
+            )}
+            <p>Download anyway uses this selected version explicitly. Nothing is installed.</p>
           </div>
         </Modal>
       )}
@@ -308,7 +338,7 @@ function AddModelModal({ initial, onClose }: { initial: { name?: string; host?: 
 
 function verdictTone(code: string): "ok" | "warn" | "bad" {
   if (code === "ready") return "ok";
-  if (code === "too_big" || code === "not_supported" || code === "not_found") return "bad";
+  if (code === "not_supported" || code === "not_found") return "bad";
   return "warn";
 }
 
@@ -358,8 +388,7 @@ function Facts({ report }: { report: HFCheckReport }) {
         <>
           <dt>Kind</dt>
           <dd className="hf-plain">
-            {task.description}
-            {task.vision ? " that can also read images" : ""}
+            {kindDescription(task)}
           </dd>
         </>
       )}

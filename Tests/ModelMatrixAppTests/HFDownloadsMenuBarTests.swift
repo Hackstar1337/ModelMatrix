@@ -116,8 +116,12 @@ struct HFDownloadEventsTests {
         #expect(HFWords.tone(job(state: "completed", profile: "start_failed")) == "bad")
         #expect(HFWords.tone(job(state: "waiting")) == "warn")
         #expect(HFWords.verdictTone("ready") == "good")
-        #expect(HFWords.verdictTone("too_big") == "bad")
+        #expect(HFWords.verdictTone("too_big") == "warn")
+        #expect(HFWords.verdictTone("low_quality") == "warn")
+        #expect(HFWords.verdictTone("not_supported") == "bad")
         #expect(HFWords.verdictTone("needs_engine") == "warn")
+        #expect(HFWords.verdictTitle("low_quality", "This quantization is low quality") == "Suggestion: This quantization is low quality")
+        #expect(HFWords.verdictTitle("too_big", "Suggestion: this model may not fit in memory") == "Suggestion: this model may not fit in memory")
     }
 
     @Test func hfMenuBarSizesContextsAndTimes() {
@@ -159,6 +163,49 @@ struct HFCheckModelTests {
         model.select(JSONRow(["label": "Q4_K_M", "supported": true]))
         #expect(model.selected == "Q4_K_M")
         #expect(model.canDownload)
+    }
+
+    @Test func hfMenuBarSupportedOversizedVersionStillCanDownload() {
+        let model = HFCheckModel()
+        model.report = report([
+            ["label": "Q2_K", "supported": true, "bits_per_weight": 3.8, "fit": ["level": "too_big"]],
+        ])
+        model.selected = "Q2_K"
+        #expect(model.canDownload)
+        #expect(HFCheckModel.confirmationReasons(for: model.variant!).contains(.memory))
+    }
+
+    @Test func hfMenuBarVersionSelectionFallsBackToFitThenAnySupported() {
+        let rows = [
+            JSONRow(["label": "unsupported", "supported": false]),
+            JSONRow(["label": "large", "supported": true, "fit": ["level": "too_big"]]),
+            JSONRow(["label": "fit", "supported": true, "fit": ["level": "tight"]]),
+        ]
+        #expect(HFCheckModel.preferredVariantLabel(rows: rows, recommendation: nil) == "fit")
+        #expect(HFCheckModel.preferredVariantLabel(rows: rows, recommendation: "large") == "large")
+        #expect(HFCheckModel.preferredVariantLabel(rows: rows, recommendation: "unsupported") == "fit")
+        #expect(HFCheckModel.preferredVariantLabel(rows: [rows[0], rows[1]], recommendation: nil) == "large")
+    }
+
+    @Test func hfMenuBarQualityAndMemoryWarningsAreSeparate() {
+        let qualityOnly = JSONRow([
+            "label": "IQ2", "supported": true, "bits_per_weight": 3.4, "fit": ["level": "good"],
+        ])
+        let memoryOnly = JSONRow([
+            "label": "Q4", "supported": true, "bits_per_weight": 4.0, "fit": ["level": "too_big"],
+        ])
+        let both = JSONRow([
+            "label": "IQ2-large", "supported": true, "bits_per_weight": 3.4, "fit": ["level": "too_big"],
+        ])
+        #expect(HFCheckModel.confirmationReasons(for: qualityOnly) == [.quality])
+        #expect(HFCheckModel.confirmationReasons(for: memoryOnly) == [.memory])
+        #expect(HFCheckModel.confirmationReasons(for: both) == [.memory, .quality])
+    }
+
+    @Test func hfMenuBarVisionKindDoesNotRepeatImagePhrase() {
+        #expect(HFWords.kindDescription("a chat model that reads images", vision: true) == "a chat model that reads images")
+        #expect(HFWords.kindDescription("a chat model", vision: true) == "a chat model that can also read images")
+        #expect(HFWords.kindDescription("a chat model", vision: false) == "a chat model")
     }
 
     @Test func hfMenuBarLoginRequiredBlocksDownload() {

@@ -187,7 +187,8 @@ import Testing
     }
   }
   let small = try makeCheckService(machine: .sample(memoryGiB: 16)).check("unsloth/Qwen3-30B-A3B-GGUF")
-  #expect(small.verdict.code == "too_big" && small.verdict.detail.contains("under 3.5 bits"))
+  #expect(small.verdict.code == "low_quality" && small.verdict.detail.contains("under 3.5 bits"))
+  #expect(small.verdict.runnable && small.verdict.title.hasPrefix("Suggestion:"))
   // Still possible on purpose.
   let chosen = try makeCheckService(machine: .sample(memoryGiB: 16)).check("unsloth/Qwen3-30B-A3B-GGUF:UD-IQ1_M")
   #expect(chosen.recommendation?.label == "UD-IQ1_M" && chosen.verdict.runnable)

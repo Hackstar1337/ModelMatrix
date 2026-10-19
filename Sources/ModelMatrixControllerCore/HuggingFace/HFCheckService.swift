@@ -270,7 +270,11 @@ public final class HFCheckService: @unchecked Sendable {
       pick = HFMemoryPlanner.recommend(variants: variants, projector: extra, arch: layout, defaultContext: defaultContext, budget: budget, fixedContext: requested == nil ? nil : context)
     }
     if let pick {
-      report.variants[pick.index].recommended = true
+      // Explicit choices are permitted even when they do not meet the
+      // automatic recommendation's quality or memory criteria.
+      let chosen = variants[pick.index]
+      report.variants[pick.index].recommended = pick.fit.level != "too_big"
+        && !chosen.fullPrecision && (chosen.bitsPerWeight ?? 8) >= HFMemoryPlanner.minimumRecommendedBits
       if report.variants[pick.index].fitsOnDisk == false, let free = machine.freeDiskBytes {
         let need = report.variants[pick.index].downloadBytes + HFDownloadManager.minimumFreeBytes
         report.notes.append(
@@ -280,11 +284,18 @@ public final class HFCheckService: @unchecked Sendable {
         label: variants[pick.index].label, context: pick.fit.context, needBytes: pick.fit.needBytes,
         downloadBytes: variants[pick.index].totalBytes + extra, level: pick.fit.level, reason: pick.reason)
     }
-    let smallFits = pick == nil
-      && HFMemoryPlanner.anythingFits(variants: variants, projector: extra, arch: layout, budget: budget)
+    let lowQualityChoice = pick.map { (variants[$0.index].bitsPerWeight ?? 8) < HFMemoryPlanner.minimumRecommendedBits } ?? false
+    let smallFits = lowQualityChoice || (pick == nil && variants.contains {
+      $0.supported && ($0.bitsPerWeight ?? 8) < HFMemoryPlanner.minimumRecommendedBits
+        && HFMemoryPlanner.bestFit(
+          weights: $0.totalBytes, projector: extra, arch: layout, defaultContext: context,
+          budget: budget, fixedContext: requested == nil ? nil : context).level != "too_big"
+    })
     report.verdict = verdict(
       report: report, repoID: repoID, login: login, machine: machine, picked: pick?.fit, onlyLowQualityFits: smallFits)
-    if report.verdict.runnable {
+    // A recommendation is advice about running, not permission to download.
+    // Supported files stay selectable even if memory or quality is unsuitable.
+    if report.variants.contains(where: \.supported) {
       let base = machine.isRemote ? URL(fileURLWithPath: machine.modelsFolder, isDirectory: true) : modelsFolder()
       report.downloadFolder = base.appendingPathComponent(repoID, isDirectory: true).path
       report.downloadAvailable = downloadsEnabled
@@ -303,29 +314,40 @@ public final class HFCheckService: @unchecked Sendable {
     guard report.variants.contains(where: \.supported) else {
       return HFVerdict(code: "not_supported", title: "No usable version", detail: "None of the files in \(repoID) can be run by current engines.", runnable: false)
     }
+    if login {
+      return HFVerdict(
+        code: "login_required", title: "Hugging Face login required",
+        detail: "Accept the model's license on huggingface.co while logged in, then save a read token in ModelMatrix (modelmatrixctl hf-token set) and check again. Memory and quality advice do not bypass access requirements.",
+        runnable: picked.map { $0.level != "too_big" } ?? onlyLowQualityFits)
+    }
     guard let picked else {
       if onlyLowQualityFits {
         return HFVerdict(
-          code: "too_big", title: "Too big for \(place)",
-          detail: "Only versions under 3.5 bits would fit in the \(Self.mem(machine.budgetBytes)) \(place) can give a model, and they lose too much quality to recommend. Try a smaller model, or name a version to try it anyway (\(repoID):LABEL).",
-          runnable: false)
+          code: "low_quality", title: "Suggestion: choose a higher-quality version",
+          detail: "Only versions under 3.5 bits fit within the \(Self.mem(machine.budgetBytes)) \(place) can give a model. They may lose answer quality, so they are not automatically recommended. You can still select a supported version and download it, or choose a smaller model with higher quality.",
+          runnable: true)
+      }
+      if report.variants.contains(where: { $0.supported && $0.fit?.level != "too_big" }) {
+        return HFVerdict(
+          code: "not_recommended", title: "Suggestion: choose a version manually",
+          detail: "No version meets the automatic recommendation criteria. You can still select and download a supported version; review its quality and memory estimate first.",
+          runnable: true)
       }
       return HFVerdict(
-        code: "too_big", title: "Too big for \(place)",
-        detail: "Even the smallest version needs more than the \(Self.mem(machine.budgetBytes)) \(place) can give a model. Try a smaller model (fewer parameters).",
+        code: "too_big", title: "Suggestion: this model may not fit in memory",
+        detail: "The versions shown need more than the \(Self.mem(machine.budgetBytes)) \(place) can give a model at this context. You can still download a supported version, but it may fail to start or run very slowly. Consider a smaller version, shorter context, smaller model or another host.",
         runnable: false)
     }
     if picked.level == "too_big" {
       return HFVerdict(
-        code: "too_big", title: "That version is too big",
-        detail: "It needs about \(Self.mem(picked.needBytes)), more than the \(Self.mem(machine.budgetBytes)) available. Choose a smaller version.",
+        code: "too_big", title: "Suggestion: this version may not fit in memory",
+        detail: "It needs about \(Self.mem(picked.needBytes)), more than the \(Self.mem(machine.budgetBytes)) available. You can still download it, but it may fail to start or run very slowly. Consider a smaller version or shorter context.",
         runnable: false)
     }
-    if login {
+    if onlyLowQualityFits {
       return HFVerdict(
-        code: "login_required", title: "Runs \(here), but needs a Hugging Face login",
-        detail:
-          "Accept the model's license on huggingface.co while logged in, then save a read token in ModelMatrix (modelmatrixctl hf-token set) and check again.",
+        code: "low_quality", title: "Suggestion: this version may lose answer quality",
+        detail: "This version fits the estimated memory budget, but uses fewer than 3.5 bits per weight. You can download it; a higher-quality version or a smaller model may give better answers.",
         runnable: true)
     }
     if report.engine?.ready != true {

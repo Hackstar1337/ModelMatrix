@@ -170,6 +170,8 @@ You can type `owner/name`, `owner/name:VERSION`, a `huggingface.co` link (includ
 
 The check reads the model's details from Hugging Face and at most the first few megabytes of one GGUF file (its settings, not the model). Memory figures are estimates.
 
+**Suggestions do not block downloads.** A low-quality version that fits is labelled as a quality suggestion, not “too big”. You may select any supported version and confirm **Download anyway** when warned about quality loss or memory requirements. Downloading a version that exceeds the estimated memory budget does not guarantee that it will start or run quickly. Login/license access, unsupported files and insufficient disk space are still enforced. If there is no automatic recommendation, the CLI requires an explicit choice: `modelmatrixctl download owner/name:VERSION`.
+
 ### 2. Engines are installed only when you approve
 
 If the engine a model needs is missing, ModelMatrix says so and offers to install it. Before anything runs you see the exact plan: the command (for example `brew install llama.cpp`) or the official download with its SHA-256 checksum, where it goes, how much space it takes, and how to remove it. Nothing is installed until you press **Approve** (or answer `y` in the terminal). An approval is used once and expires after 10 minutes.

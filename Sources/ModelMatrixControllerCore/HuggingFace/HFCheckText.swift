@@ -36,16 +36,17 @@ public enum HFCheckText {
     lines.append("")
     lines.append(row("Result", "\(shout(report.verdict.title, keeping: report.machine.hostName)). \(report.verdict.detail)"))
     if let pick = report.recommendation {
-      let fitText = pick.level == "good" ? "fits well" : "fits tightly"
+      let fitText = ["good": "fits well", "tight": "fits tightly", "too_big": "may not fit in memory"][pick.level] ?? pick.level
+      let label = report.variants.contains { $0.label == pick.label && $0.recommended } ? "Recommended" : "Selected"
       lines.append(
-        row("Recommended", "\(pick.label): \(gb(pick.downloadBytes)) download, about \(mem(pick.needBytes)) in use at \(tokens(pick.context)) context, \(fitText)."))
+        row(label, "\(pick.label): \(gb(pick.downloadBytes)) download, about \(mem(pick.needBytes)) in use at \(tokens(pick.context)) context, \(fitText)."))
       lines.append(row("", pick.reason))
     }
     if let folder = report.downloadFolder {
       let shown = (folder as NSString).abbreviatingWithTildeInPath
       lines.append(row("Saves to", report.downloadAvailable ? shown : "\(shown) (downloading comes in the next update)"))
       if report.downloadAvailable, let repo = report.repo {
-        let label = report.recommendation.map { ":" + $0.label } ?? ""
+        let label = report.recommendation.map { ":" + $0.label } ?? ":LABEL"
         lines.append(row("Download", "modelmatrixctl download \(repo.id)\(label)\(hostFlag(report.machine))"))
       }
     }
