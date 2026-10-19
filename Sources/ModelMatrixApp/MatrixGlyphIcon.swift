@@ -1,14 +1,16 @@
 import AppKit
 import SwiftUI
 
-/// Menu bar glyph: a 3x3 matrix drawn as a template image so macOS tints it
-/// for light / dark menu bars. MenuBarExtra labels only render `Image` and
-/// `Text`, so the grid is rasterized into an `NSImage` rather than drawn with
-/// SwiftUI shapes.
+/// Menu bar glyph: the ModelMatrix dot-matrix "M" (the same 5x5 mark as the
+/// app icon), drawn as a template image so macOS tints it for light and dark
+/// menu bars. Template images keep their alpha channel, so unlit cells are
+/// drawn faintly to show the grid. MenuBarExtra labels only render `Image`
+/// and `Text`, so the grid is rasterized into an `NSImage` rather than drawn
+/// with SwiftUI shapes.
 ///
-/// - ready models: every cell filled
-/// - running but not yet ready: checkerboard (5 cells) filled
-/// - idle: outlined cells only
+/// - ready models: the whole M lit
+/// - running but not yet ready: the two outer columns lit, the middle dim
+/// - idle: the M dim
 struct MatrixGlyphIcon: View {
     let hasReadyModels: Bool
     let hasRunningModels: Bool
@@ -42,12 +44,29 @@ struct MatrixGlyphIcon: View {
         }
     }
 
-    /// Cells lit for each state, row-major over the 3x3 grid.
-    static func litCells(for state: State) -> Set<Int> {
+    /// The 5x5 "M", row-major from the top-left. `X` cells form the letter.
+    static let pattern = ["X...X", "XX.XX", "X.X.X", "X...X", "X...X"]
+    static let gridSize = 5
+
+    static func isLetterCell(row: Int, column: Int) -> Bool {
+        guard pattern.indices.contains(row) else { return false }
+        let line = Array(pattern[row])
+        guard line.indices.contains(column) else { return false }
+        return line[column] == "X"
+    }
+
+    /// Opacity of one cell for a state. Letter cells carry the status; the
+    /// rest stay faint so the matrix shows without crowding the M.
+    static func cellAlpha(for state: State, row: Int, column: Int) -> CGFloat {
+        let letter = isLetterCell(row: row, column: column)
         switch state {
-        case .ready: Set(0..<9)
-        case .running: [0, 2, 4, 6, 8]
-        case .idle: []
+        case .ready:
+            return letter ? 1 : 0.13
+        case .running:
+            guard letter else { return 0.1 }
+            return column == 0 || column == gridSize - 1 ? 1 : 0.3
+        case .idle:
+            return letter ? 0.42 : 0.08
         }
     }
 
@@ -57,31 +76,24 @@ struct MatrixGlyphIcon: View {
     static func image(for state: State, size: CGFloat) -> NSImage {
         let key = "\(state)-\(size)"
         if let cached = cache[key] { return cached }
-        let lit = litCells(for: state)
         let image = NSImage(size: NSSize(width: size, height: size), flipped: true) { rect in
-            let inset = rect.width * 0.08
-            let gap = rect.width * 0.09
-            let cell = (rect.width - inset * 2 - gap * 2) / 3
-            let radius = cell * 0.28
-            let lineWidth = max(1.0, rect.width * 0.065)
-            NSColor.black.setFill()
-            NSColor.black.setStroke()
-            for index in 0..<9 {
-                let row = CGFloat(index / 3)
-                let column = CGFloat(index % 3)
-                let cellRect = NSRect(
-                    x: inset + column * (cell + gap),
-                    y: inset + row * (cell + gap),
-                    width: cell,
-                    height: cell
-                )
-                if lit.contains(index) {
+            let unit = rect.width / 18
+            let inset = 1.0 * unit
+            let gap = 0.72 * unit
+            let count = CGFloat(gridSize)
+            let cell = (rect.width - inset * 2 - gap * (count - 1)) / count
+            let radius = cell * 0.24
+            for row in 0..<gridSize {
+                for column in 0..<gridSize {
+                    let cellRect = NSRect(
+                        x: inset + CGFloat(column) * (cell + gap),
+                        y: inset + CGFloat(row) * (cell + gap),
+                        width: cell,
+                        height: cell
+                    )
+                    let alpha = cellAlpha(for: state, row: row, column: column)
+                    NSColor.black.withAlphaComponent(alpha).setFill()
                     NSBezierPath(roundedRect: cellRect, xRadius: radius, yRadius: radius).fill()
-                } else {
-                    let stroked = cellRect.insetBy(dx: lineWidth / 2, dy: lineWidth / 2)
-                    let path = NSBezierPath(roundedRect: stroked, xRadius: radius, yRadius: radius)
-                    path.lineWidth = lineWidth
-                    path.stroke()
                 }
             }
             return true
