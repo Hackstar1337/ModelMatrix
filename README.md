@@ -251,6 +251,27 @@ See [RemoteAgent/README.md](RemoteAgent/README.md) and [SETUP.md](SETUP.md#remot
 
 **DMG.** Signed and notarized DMGs are published under **[Releases](https://github.com/Hackstar1337/ModelMatrix/releases/latest)** once release signing is configured (see `Scripts/build-dmg.sh` and `Scripts/sign-and-notarize-dmg.sh`). Until then, install from source.
 
+**Homebrew source formula.** The [formula](Formula/modelmatrix.rb) is inside this repository rather than a separate `homebrew-modelmatrix` tap. Use the explicit repository URL when adding the tap:
+
+```bash
+brew tap hackstar1337/modelmatrix https://github.com/Hackstar1337/ModelMatrix.git
+brew install hackstar1337/modelmatrix/modelmatrix
+open "$(brew --prefix hackstar1337/modelmatrix/modelmatrix)/ModelMatrix.app"
+```
+
+This builds the complete app on macOS 14+ using **full Xcode 16+**, not just Command Line Tools. Homebrew supplies XcodeGen and the CLI's Python dependency; it does not install Xcode itself. The formula reuses the checked-in dashboard and app icon, so Node.js is not required for this installation route. Both Apple Silicon and Intel use the host's native Xcode build. The current stable formula pins app code `214863a` (version `1.0.0`, including Hugging Face and app connections) with its SHA-256 checksum; it does not pretend that a DMG release already exists.
+
+Homebrew installs the app in its own prefix and provides `modelmatrixctl` plus bash/zsh/fish completions. It does not launch the app, register a controller, modify profiles, or install engines/models during package installation. Open the Homebrew-managed app to run ModelMatrix's normal first-launch setup. An existing copy in `~/Applications` is not replaced; quit it before opening the Homebrew copy to avoid competing app instances.
+
+For future published formula updates:
+
+```bash
+brew update
+brew upgrade hackstar1337/modelmatrix/modelmatrix
+```
+
+The optional `brew install --HEAD hackstar1337/modelmatrix/modelmatrix` builds the current `main` branch rather than the pinned stable snapshot. Ordinary `brew upgrade` does not turn the stable pin into an automatic latest-commit tracker; maintainers must update the formula's source/checksum and version or revision. Use `brew uninstall hackstar1337/modelmatrix/modelmatrix` to remove this package, not `Scripts/uninstall.sh`; user models/profiles/history are not removed by the formula.
+
 **From source.**
 
 ```bash
