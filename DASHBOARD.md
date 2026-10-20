@@ -28,6 +28,7 @@ If the page says the controller is unreachable, start ModelMatrix from Applicati
 | **Settings** | Theme and accent; relay URLs, retention, clear history; capture mode; controller details and doctor report; integrations; open the profiles or logs folder; open Settings, Usage, Profiles or Optimize in the menu bar app; refresh the app |
 | **Optimize** (header button, or the This Mac card) | Memory breakdown, Maximum and Recommended presets, checklist of what to free, before and after results, other apps using memory with checkboxes and Select all. See [Optimize](#optimize) |
 | **Add from Hugging Face** (Models & Servers) | Check a model before downloading (format, versions with memory fit, recommendation, engine), choose a version and machine, approve-first engine installs; **Downloads** and **Downloaded models** sections with pause, resume, cancel, start and delete; Hugging Face and Engines sections in Settings |
+| **Connect to an app** (Models & Servers and model cards) | Qualified Kilo/OpenCode client picker, JSONC configuration plan/approval, protected per-model endpoint details, Other app copies, endpoint test, independent configuration/client/readiness states, disconnect and undo |
 
 **Standard / Advanced** (top right) toggles latency percentiles, CPU meters, raw identifiers (endpoint, client process), the 1h range and the full key list in the profile editor. The chosen mode and appearance are remembered in the browser.
 
@@ -45,6 +46,10 @@ For each request the relay picks the running model named in the request's `model
 Clients are recognised by an `X-Client-Name` or `X-Title` header when present, otherwise by User-Agent and the connecting process. Rename them in either interface.
 
 Models with a `cloud` tag in their name (for example Ollama's `gpt-oss:120b-cloud`) are counted as cloud; everything else is local.
+
+### Protected app connections
+
+**Connect to an app** creates a separate `/connections/<id>/v1` base on the actual running model relay after approval. These routes require their specific private key and exact Model ID and **never use the legacy fallback above**. Gateway credentials are stripped from upstream model requests; remote connections use the existing authenticated agent rather than a newly exposed Linux port. Normal detail copies contain no key. Configuration, API-test results, observed client traffic, reload requirements and model readiness are separate. Automatic writers are limited to Kilo 7.8.12 and OpenCode 1.16.2 CLI/TUI; unsupported versions remain manual, never upgraded automatically. See [CONNECT_APPS.md](CONNECT_APPS.md) for the workflow and safe recovery.
 
 ### Capture mode
 
@@ -69,6 +74,7 @@ Every dashboard feature is also in the menu bar app:
 | Theme, accent, doctor, integrations, folders | **Settings** |
 | Optimize: presets, checklist, file cache, results, select and close other apps | **Optimize** panel (sparkles icon in the header) |
 | Hugging Face: check, download, engine install approval, downloads, downloaded models, settings, token, engine locations | **Hugging Face Downloads** panel (download arrow in the header), with a **Download settings** card at the bottom |
+| Connect to an app: client picker, plan/approval, manual details, test, secret handling, disconnect and undo | **Profiles** and **Hugging Face Downloads** model Connect actions, with the shared native Connect panel |
 
 Remote hosts live in the app (their SSH tunnels and Keychain tokens belong to it). The app reports them to the controller every few seconds, which lets the dashboard show and proxy them, and the dashboard queues host actions for the app to carry out. If the app is not running, the dashboard shows remote hosts as unavailable and everything on this Mac keeps working.
 
@@ -109,6 +115,12 @@ The dashboard uses the controller API documented in [SETUP.md](SETUP.md#controll
 |---|---|---|
 | GET | `/api/dashboard/info` | Version, controller URL, folders, whether a token is required |
 | GET / POST / DELETE | `/api/dashboard/session` | Session status, sign in with token, sign out |
+| GET | `/api/connect/profiles`, `/targets`, `/list`, `/details` | Read-only profile/qualified-client inventory, connection state and secret-free per-model endpoints |
+| GET / POST | `/api/connect/plan` | Read a reviewed plan by `plan_id`, or prepare a single-use profile/target configuration plan |
+| POST | `/api/connect/apply` | Apply `plan_id` only with `approved: true`, after file/version/source revalidation |
+| POST | `/api/connect/verify` | Test a connection's protected model API, without starting it |
+| POST | `/api/connect/disconnect`, `/undo` | Explicitly approved route revocation and ownership-aware client-file recovery |
+| POST | `/api/connect/key` | Explicit secret retrieval; isolated from normal detail/list payloads and not cached |
 | GET | `/api/host/metrics` | CPU, GPU, memory, storage for this Mac |
 | GET | `/api/usage/overview` | Summary, totals, recent, in-flight, models, clients, host stats, relay status |
 | GET | `/api/usage/summary`, `/timeseries`, `/models`, `/clients`, `/requests`, `/live` | Individual usage queries (`range`, `tier` and `host` filters) |

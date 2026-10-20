@@ -24,6 +24,9 @@ public final class ControllerRouter: @unchecked Sendable {
   public let huggingFace: HFCheckService
   /// Hugging Face downloads, settings and token (`/api/hf/*`).
   public let hub: HFHub
+  /// Reviewed client configuration and protected per-model API connections.
+  public let connections: ClientConnectionService
+  private let connectionHost: ControllerConnectHost
 
   public init(
     service: ControllerService,
@@ -32,7 +35,8 @@ public final class ControllerRouter: @unchecked Sendable {
     usage: UsageService? = nil,
     bridge: BridgeState = BridgeState(),
     huggingFace: HFCheckService? = nil,
-    hub: HFHub? = nil
+    hub: HFHub? = nil,
+    connections: ClientConnectionService? = nil
   ) {
     self.service = service
     self.authToken = authToken
@@ -59,6 +63,22 @@ public final class ControllerRouter: @unchecked Sendable {
     if hub.hostDirectory == nil { hub.hostDirectory = HFBridgeHostDirectory(bridge: bridge) }
     hub.downloads.onChange = { [bridge] in bridge.bumpStatusRevision() }
     hub.onEngineChange = { [bridge] _ in bridge.bumpStatusRevision() }
+    let host = ControllerConnectHost(service: service, hub: hub, bridge: bridge, usage: usage)
+    self.connectionHost = host
+    let connections = connections ?? ClientConnectionService(
+      directory: service.configuration.root.appendingPathComponent("connections", isDirectory: true),
+      profiles: { host.profiles() }, relay: { host.relayState() })
+    self.connections = connections
+    usage?.clientConnections = connections
+    usage?.connectionBridge = bridge
+    service.clientProfilesDidChange = { [weak connections, weak host] oldName, newName in
+      host?.invalidate()
+      if let oldName, let newName {
+        connections?.profileChanged(oldKey: "local:\(oldName)", newKey: "local:\(newName)")
+      } else if let oldName {
+        connections?.profileDeleted(key: "local:\(oldName)")
+      }
+    }
   }
 
   public func handle(_ request: ControllerHTTPRequest) -> ControllerHTTPResponse {
@@ -81,6 +101,7 @@ public final class ControllerRouter: @unchecked Sendable {
       if request.path == "/api/dashboard/session" {
         return try sessionRoute(request)
       }
+      if let answer = try connectionRoute(request) { return answer }
       if let route = routes[RouteKey(method: request.method, path: request.path)] {
         return try route(request)
       }
@@ -141,7 +162,7 @@ public final class ControllerRouter: @unchecked Sendable {
     if !path.hasPrefix("/api/") { return true }
     for prefix in [
       "/api/usage/", "/api/host/", "/api/bridge/", "/api/remote/", "/api/ollama/",
-      "/api/dashboard/", "/api/optimize/purge", "/api/hf/",
+      "/api/dashboard/", "/api/optimize/purge", "/api/hf/", "/api/connect/",
     ] where path.hasPrefix(prefix) {
       return true
     }

@@ -1,7 +1,7 @@
 # ModelMatrix Remote Agent
 
 This stdlib-only Python 3.10+ agent (`modelmatrix_agent.py`,
-`agent_core.py`, `discovery.py`, and `hf_agent.py`) lets the Mac app control Linux/Unix model hosts. It uses the
+`agent_core.py`, `discovery.py`, `hf_agent.py`, and `client_connections.py`) lets the Mac app control Linux/Unix model hosts. It uses the
 macOS controller's HTTP contract and `.env` / `.json` profiles.
 
 ## Install
@@ -176,6 +176,12 @@ Endpoints (same auth as the rest of the agent; the Mac calls them for you):
 (pause, resume, cancel, start, delete), `GET /api/hf/engines`,
 `POST /api/hf/engines/install`, `POST /api/hf/engines/uninstall`,
 `GET /api/hf/engines/job`, `POST /api/hf/engines/cancel`.
+
+## Connect a hosted model to a Mac app
+
+The Mac dashboard/menu bar's **Connect to an app** can create a private model-bound relay route for a hosted profile. The Mac uses `GET /api/connect/profiles` for read-only source identities/readiness and `POST /api/connect/inference` for the selected profile's chat/completion requests. Both are protected by the agent's existing `/api` authorization policy. The agent checks the exact source identity and Model ID, refuses stopped/replaced profiles, forwards only supported inference paths, streams the answer, and never forwards its gateway credential to the model server or follows redirects.
+
+No Kilo/OpenCode settings are written on the Linux host, no model is silently started and no new public listener is opened. The Mac remains the client endpoint. Update this agent before using the new feature; an older agent or unavailable Mac tunnel produces an unavailable-host state, not a local-model fallback. Client configuration approval, private key storage and safe undo are handled by the Mac controller; see [CONNECT_APPS.md](../CONNECT_APPS.md).
 
 ## Contract
 

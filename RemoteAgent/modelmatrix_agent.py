@@ -21,6 +21,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
+
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Callable
@@ -28,6 +29,8 @@ from typing import Any, Callable
 _AGENT_DIR = Path(__file__).resolve().parent
 if str(_AGENT_DIR) not in sys.path:
     sys.path.insert(0, str(_AGENT_DIR))
+
+from client_connections import connection_profiles, forward_connection
 
 from agent_core import (
     AgentError,
@@ -3296,6 +3299,9 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         self._dispatch_accepted(method, path)
 
     def _dispatch_routed(self, method: str, path: str, body: bytes) -> None:
+        if method == "POST" and path == "/api/connect/inference":
+            forward_connection(self, body)
+            return
         handler = self._route(method, path)
         if handler is None:
             self._send_json(*_error_body(404, "not_found", "not found"))
@@ -3310,6 +3316,7 @@ class AgentRequestHandler(BaseHTTPRequestHandler):
         service = self.service
         routes: dict[tuple[str, str], Callable[[dict[str, Any]], dict[str, Any]]] = {
             ("GET", "/api/status"): lambda _: service.status_payload(),
+            ("GET", "/api/connect/profiles"): lambda _: connection_profiles(service),
             ("GET", "/api/ports"): lambda _: service.ports_payload(),
             ("GET", "/api/doctor"): lambda _: service.doctor_report(),
             ("GET", "/api/benchmark/status"): lambda _: service.benchmark_status(),

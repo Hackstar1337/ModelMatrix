@@ -16,6 +16,7 @@ struct ProfilesPanelView: View {
     @State var deleting: String?
     @State var duplicating: String?
     @State var duplicateName = ""
+    @State var connectTarget: ConnectAppsTarget?
 
     var client: WebDashboardClient { WebDashboardClient.local(store) }
 
@@ -82,6 +83,14 @@ struct ProfilesPanelView: View {
                     row(status)
                 }
             }
+            if let connectTarget {
+                ConnectAppsPanelView(
+                    store: store,
+                    theme: theme,
+                    accent: accent,
+                    initialTarget: connectTarget
+                )
+            }
         }
     }
 
@@ -101,6 +110,14 @@ struct ProfilesPanelView: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 4)
+            iconButton("link", "Connect to an app") {
+                connectTarget = ConnectAppsTarget(
+                    profileKey: status.profile,
+                    host: status.host.isEmpty ? nil : status.host,
+                    modelID: status.serverModelID.isEmpty ? status.requestModel : status.serverModelID,
+                    label: status.displayName.isEmpty ? status.profile : status.displayName
+                )
+            }
             iconButton("pencil", "Edit") { Task { await edit(status.profile) } }
             iconButton("plus.square.on.square", "Duplicate") {
                 duplicateName = "\(status.profile)-copy"

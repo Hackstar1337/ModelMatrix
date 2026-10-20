@@ -16,6 +16,7 @@ REMOTE_AGENT_PY="$APP_PATH/Contents/Resources/RemoteAgent/modelmatrix_agent.py"
 REMOTE_AGENT_CORE="$APP_PATH/Contents/Resources/RemoteAgent/agent_core.py"
 REMOTE_AGENT_DISCOVERY="$APP_PATH/Contents/Resources/RemoteAgent/discovery.py"
 REMOTE_AGENT_HF="$APP_PATH/Contents/Resources/RemoteAgent/hf_agent.py"
+REMOTE_AGENT_CONNECTIONS="$APP_PATH/Contents/Resources/RemoteAgent/client_connections.py"
 REMOTE_AGENT_INSTALLER="$APP_PATH/Contents/Resources/RemoteAgent/install-remote-agent.sh"
 
 [ -x "$CONTROLLER_BIN" ] || {
@@ -44,6 +45,10 @@ REMOTE_AGENT_INSTALLER="$APP_PATH/Contents/Resources/RemoteAgent/install-remote-
 }
 [ -f "$REMOTE_AGENT_HF" ] || {
   echo "embedded remote agent Hugging Face module missing: $REMOTE_AGENT_HF" >&2
+  exit 1
+}
+[ -f "$REMOTE_AGENT_CONNECTIONS" ] || {
+  echo "embedded remote connection module missing: $REMOTE_AGENT_CONNECTIONS" >&2
   exit 1
 }
 [ -x "$REMOTE_AGENT_INSTALLER" ] || {

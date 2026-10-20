@@ -38,6 +38,7 @@ require_file "RemoteAgent/modelmatrix_agent.py"
 require_file "RemoteAgent/agent_core.py"
 require_file "RemoteAgent/discovery.py"
 require_file "RemoteAgent/hf_agent.py"
+require_file "RemoteAgent/client_connections.py"
 require_file "RemoteAgent/install-remote-agent.sh"
 pass "required release files"
 

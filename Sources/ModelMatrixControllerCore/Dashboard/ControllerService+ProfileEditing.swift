@@ -64,7 +64,7 @@ extension ControllerService {
         originalName: String? = nil,
         createOnly: Bool = false
     ) throws -> [String: Any] {
-        try withMutationLock {
+        let result: [String: Any] = try withMutationLock {
             guard Self.isValidProfileName(name) else {
                 throw ControllerError.usage(
                     "profile name must use letters, numbers, '.', '_' or '-' (max 64)")
@@ -129,6 +129,9 @@ extension ControllerService {
             }
             return ["profile": name, "values": resolvedValues, "saved": true]
         }
+        // Never acquire the connection registry lock while holding the profile lock.
+        clientProfilesDidChange?(originalName ?? name, name)
+        return result
     }
 
     func write(_ body: String, to target: URL, replacing other: URL?) throws {
@@ -196,6 +199,7 @@ extension ControllerService {
                 try? fileManager.removeItem(at: configuration.activeProfileFile)
             }
         }
+        clientProfilesDidChange?(name, nil)
     }
 
     @discardableResult

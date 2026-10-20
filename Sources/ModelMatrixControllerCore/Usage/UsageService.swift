@@ -8,6 +8,9 @@ public final class UsageService: @unchecked Sendable {
     public let relayPort: UInt16
     public private(set) var relay: MeteringRelay?
     weak var service: ControllerService?
+    /// New authenticated routes are opt-in; legacy /v1 routing is unchanged.
+    weak var clientConnections: ClientConnectionService?
+    weak var connectionBridge: BridgeState?
 
     let lock = NSLock()
     var inflight: [String: [String: Any]] = [:]

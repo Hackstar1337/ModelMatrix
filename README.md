@@ -27,6 +27,10 @@ ModelMatrix is a macOS control center for local language models. It starts, stop
 
 You can drive it two ways, and both offer the same features: a native **SwiftUI menu bar app**, and a **web dashboard** that the bundled controller serves on `http://localhost:7700`.
 
+## New: connect a model to an app
+
+Choose **Connect to an app** in Models & Servers, select a model and Kilo Code or OpenCode, review the plan, and let ModelMatrix set the client JSON/JSONC's base URL, exact Model ID and private key-file reference. Automatic writing is qualified for Kilo Code 7.8.12 and OpenCode 1.16.2 CLI/TUI; it never upgrades clients or replaces unrelated settings. **Other app** shows the correct manual endpoints and key requirement. Protected connections stay bound to one model, with separate configured/API-tested/client-use states, safe disconnect and undo. Also available in the menu bar and `modelmatrixctl connect`. See [Connect a model to an app](CONNECT_APPS.md).
+
 ## Latest feature: add models from Hugging Face
 
 Enter a Hugging Face model name and ModelMatrix checks its format, available versions, memory and disk requirements, login status and required engine **before downloading anything**. Choose a version, download it with resume and checksum verification, and get an automatically configured profile, startup and test chat. Missing engines are installed **only after you approve the install plan**. Available in the dashboard, menu bar and CLI, on Apple Silicon and Intel Macs and managed Linux hosts. See [the full update notes](CHANGELOG.md#unreleased).
@@ -61,7 +65,7 @@ Open it from the menu bar (the compass button in the header, or **Usage → Open
 | Page | What you get |
 |---|---|
 | **Overview** | Live feed of in-flight and recent requests, fleet cards per host (GPU, memory, loaded models, last-hour traffic), KPI strip (requests, tokens, average t/s, inference time, clients, local vs cloud), requests and token volume chart, local vs cloud split, PDF export |
-| **Models & Servers** | Every profile with Activate / Start / Stop / Restart / Benchmark, create, edit (form or raw file), duplicate, delete, capture mode, **Add from Hugging Face**, Downloads and Downloaded models, remote hosts (pair, add, edit, pause, install or update agent, remove), benchmark results |
+| **Models & Servers** | Every profile with Activate / Start / Stop / Restart / Benchmark, create, edit (form or raw file), duplicate, delete, capture mode, **Add from Hugging Face**, Downloads and Downloaded models, **Connect to an app**, remote hosts (pair, add, edit, pause, install or update agent, remove), benchmark results |
 | **Clients** | Every app that called a model, with friendly renames, request and token totals, favourite model, last seen |
 | **Model Insights** | Model split, per-model speed and latency, Ollama installed and loaded models, runtime catalog |
 | **Requests & Latency** | TTFT and throughput charts with percentiles, searchable request log, CSV export |
@@ -95,7 +99,7 @@ The menu bar panel is the quick way in. It has everything the dashboard has:
 |---|---|
 | **Main panel** | One-tap Activate / Stop per model, hero card for the live model, CPU / GPU / memory sparklines, Stop everything, reopen last model, remote host sections |
 | **Usage** (chart icon) | The dashboard's KPIs, live feed, model split, local vs cloud, clients with rename, relay URLs, retention and clear history, CSV export, capture mode switches, Ollama status |
-| **Profiles** (stack icon) | Create from a template, edit any key or the raw file, duplicate, delete |
+| **Profiles** (stack icon) | Create from a template, edit any key or the raw file, duplicate, delete, **Connect to an app** |
 | **Optimize** (sparkles icon in the header) | The same memory breakdown, presets, checklist, app selection (with Select all) and results as the dashboard's Optimize window |
 | **Hugging Face Downloads** (download arrow in the header, with a count while downloads run) | The same check, version choice, approve-first engine installs, Downloads list (pause, resume, cancel) and Downloaded models (start, delete) as the dashboard, for this Mac and remote hosts, plus a Download settings card (models folder, mirror, speed, token, engine locations) |
 | **Benchmarks** | Latest run, prefill scaling (TTFT at 1k/4k/8k context), ranked decode speed, CSV export |

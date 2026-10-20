@@ -115,6 +115,10 @@ Commands:
   model delete <id> [--files] [--yes]
                         Delete the model's profile; --files also deletes its
                         downloaded files (asks first unless --yes)
+  connect [action]      Configure Kilo/OpenCode or prepare Other app details.
+                        profiles|targets|list|details|plan|configure|apply|verify|
+                        disconnect|undo|key; see modelmatrixctl connect help.
+                        Plan first; applying requires explicit approval.
   open-app              Launch ModelMatrix
   open-profiles         Open the profiles directory
   completions <shell>   Print shell completions
@@ -675,7 +679,7 @@ extract_path() {
 }
 
 completions() {
-  local commands='status summary profiles-dir controller-root capabilities robot-docs triage doctor start stop restart switch bench bench-all stop-all dashboard usage optimize check pull download downloads models model engines engine hf-settings hf-token open-app open-profiles'
+  local commands='status summary profiles-dir controller-root capabilities robot-docs triage doctor start stop restart switch bench bench-all stop-all dashboard usage optimize check pull download downloads models model engines engine hf-settings hf-token connect open-app open-profiles'
   case "${1:-}" in
     bash)
       cat <<EOF
@@ -699,7 +703,7 @@ print_capabilities() {
   "contract_version": "1.0",
   "default_probe": "modelmatrixctl triage",
   "native_controller": true,
-  "commands": ["status", "summary", "profiles-dir", "controller-root", "capabilities", "robot-docs", "triage", "doctor", "start", "stop", "restart", "switch", "bench", "bench-all", "stop-all", "dashboard", "usage", "optimize", "check", "pull", "download", "downloads", "models", "model", "engines", "engine", "hf-settings", "hf-token", "open-app", "open-profiles"]
+  "commands": ["status", "summary", "profiles-dir", "controller-root", "capabilities", "robot-docs", "triage", "doctor", "start", "stop", "restart", "switch", "bench", "bench-all", "stop-all", "dashboard", "usage", "optimize", "check", "pull", "download", "downloads", "models", "model", "engines", "engine", "hf-settings", "hf-token", "connect", "open-app", "open-profiles"]
 }
 JSON
 }
@@ -751,6 +755,143 @@ is_dry_run() {
     return 0
   done
   return 1
+}
+
+# Reviewed client configuration API. Never accepts an arbitrary configuration path.
+valid_connect_id() {
+  [[ "${1:-}" =~ ^[A-Za-z0-9_.-]{1,128}$ ]] || usage_error "give a connection or plan ID returned by ModelMatrix"
+}
+connect_profile_key() {
+  local value="${1:-}"
+  case "$value" in local:*|remote:*) ;; *) value="local:$value" ;; esac
+  [[ "$value" =~ ^[A-Za-z0-9_.:-]{1,200}$ ]] || usage_error "give a profile name or key from 'modelmatrixctl connect profiles'"
+  printf '%s' "$value"
+}
+connect_show() {
+  # Normal responses contain metadata only; API keys have a separate explicit command.
+  printf '%s\n' "$1"
+}
+connect_approve() {
+  local yes="${1:-0}" message="$2" answer
+  [ "$yes" = 1 ] && return 0
+  [ -t 0 ] || usage_error "review the plan first, then pass --yes to approve it non-interactively"
+  printf '%s [y/N] ' "$message" >&2
+  read -r answer
+  case "$answer" in y|Y|yes|YES) return 0 ;; *) printf 'No changes applied.\n' >&2; return 1 ;; esac
+}
+connect_command() {
+  local action="${1:-list}"
+  [ "$#" -eq 0 ] || shift
+  local profile="" target=manual id="" yes=0 make_default=false remove_config=true output="" answer="" plan=""
+  case "$action" in
+    profiles|targets|list|operations)
+      [ "$#" -eq 0 ] || { [ "$#" -eq 1 ] && [ "$1" = --json ]; } || usage_error "unexpected connect $action options"
+      [ "$action" != operations ] || action=list
+      hf_get "/api/connect/$action"
+      ;;
+    details)
+      [ "$#" -ge 1 ] || usage_error "connect details needs a profile name or key"
+      profile="$(connect_profile_key "$1")"; shift
+      while [ "$#" -gt 0 ]; do
+        case "$1" in
+          --connection) [ "$#" -ge 2 ] || usage_error "--connection needs an ID"; id="$2"; valid_connect_id "$id"; shift ;;
+          --json) ;;
+          *) usage_error "unknown connect details option: $1" ;;
+        esac; shift
+      done
+      local arguments=(--data-urlencode "profile=$profile")
+      [ -z "$id" ] || arguments+=(--data-urlencode "connection=$id")
+      hf_get /api/connect/details "${arguments[@]}"
+      ;;
+    plan|configure)
+      [ "$#" -ge 1 ] || usage_error "connect $action needs a profile name or key"
+      profile="$(connect_profile_key "$1")"; shift
+      while [ "$#" -gt 0 ]; do
+        case "$1" in
+          --target) [ "$#" -ge 2 ] || usage_error "--target needs kilo, opencode or manual"; target="$2"; shift ;;
+          --make-default) make_default=true ;;
+          --yes) yes=1 ;;
+          --json) ;;
+          *) usage_error "unknown connect $action option: $1" ;;
+        esac; shift
+      done
+      case "$target" in kilo|opencode|manual) ;; *) usage_error "target must be kilo, opencode or manual" ;; esac
+      plan="$(printf '{"profile":"%s","target":"%s","make_default":%s}' "$profile" "$target" "$make_default" | hf_send POST /api/connect/plan)"
+      connect_show "$plan"
+      if [ "$action" = configure ]; then
+        id="$(printf '%s' "$plan" | plutil -extract plan.id raw -o - -- -)"
+        valid_connect_id "$id"
+        connect_approve "$yes" "Apply the exact plan above?" || return 0
+        printf '{"plan_id":"%s","approved":true}' "$id" | hf_send POST /api/connect/apply
+      fi
+      ;;
+    apply)
+      [ "$#" -ge 1 ] || usage_error "connect apply needs a reviewed plan ID"
+      id="$1"; valid_connect_id "$id"; shift
+      while [ "$#" -gt 0 ]; do
+        case "$1" in --yes) yes=1 ;; --json) ;; *) usage_error "unknown connect apply option: $1" ;; esac; shift
+      done
+      plan="$(hf_get /api/connect/plan --data-urlencode "plan_id=$id")"
+      connect_show "$plan"
+      connect_approve "$yes" "Apply the exact plan above?" || return 0
+      printf '{"plan_id":"%s","approved":true}' "$id" | hf_send POST /api/connect/apply
+      ;;
+    verify|disconnect|undo)
+      [ "$#" -ge 1 ] || usage_error "connect $action needs a connection ID"
+      id="$1"; valid_connect_id "$id"; shift
+      while [ "$#" -gt 0 ]; do
+        case "$1" in
+          --yes) yes=1 ;;
+          --keep-config) [ "$action" = disconnect ] || usage_error "--keep-config is for disconnect only"; remove_config=false ;;
+          --json) ;;
+          *) usage_error "unknown connect $action option: $1" ;;
+        esac; shift
+      done
+      if [ "$action" = verify ]; then
+        printf '{"id":"%s"}' "$id" | hf_send POST /api/connect/verify
+      else
+        hf_get /api/connect/list
+        connect_approve "$yes" "$action connection $id? Its key will be revoked; conflicting settings will not be overwritten." || return 0
+        printf '{"id":"%s","approved":true,"remove_config":%s}' "$id" "$remove_config" | hf_send POST "/api/connect/$action"
+      fi
+      ;;
+    key)
+      [ "$#" -ge 1 ] || usage_error "connect key needs a connection ID and --output PATH"
+      id="$1"; valid_connect_id "$id"; shift
+      while [ "$#" -gt 0 ]; do
+        case "$1" in
+          --output) [ "$#" -ge 2 ] || usage_error "--output needs a new private file path"; output="$2"; shift ;;
+          --yes) yes=1 ;;
+          *) usage_error "unknown connect key option: $1" ;;
+        esac; shift
+      done
+      [ -n "$output" ] || usage_error "use --output PATH; keys are never printed to ordinary stdout"
+      [ ! -e "$output" ] && [ ! -L "$output" ] || usage_error "output already exists; choose a new private file"
+      connect_approve "$yes" "Export this secret key to $output? Do not share it." || return 0
+      # Disable shell tracing while handling the response. Exclusive create prevents overwrites/symlink following.
+      set +x
+      answer="$(printf '{"id":"%s","approved":true}' "$id" | hf_send POST /api/connect/key)"
+      (
+        umask 077
+        set -C
+        { printf '%s' "$answer" | plutil -extract key raw -o - -- - >&3; } 3>"$output"
+      )
+      unset answer
+      printf 'Key saved to the private file: %s\n' "$output"
+      ;;
+    help|-h|--help)
+      printf '%s\n' 'modelmatrixctl connect profiles|targets|list' \
+        'modelmatrixctl connect details PROFILE [--connection ID]' \
+        'modelmatrixctl connect plan PROFILE --target kilo|opencode|manual [--make-default]' \
+        'modelmatrixctl connect configure PROFILE --target TARGET [--make-default] [--yes]' \
+        'modelmatrixctl connect apply PLAN_ID [--yes]' \
+        'modelmatrixctl connect verify CONNECTION_ID' \
+        'modelmatrixctl connect disconnect CONNECTION_ID [--keep-config] [--yes]' \
+        'modelmatrixctl connect undo CONNECTION_ID [--yes]' \
+        'modelmatrixctl connect key CONNECTION_ID --output NEW_PRIVATE_FILE [--yes]'
+      ;;
+    *) usage_error "unknown connect action: $action (see 'modelmatrixctl connect help')" ;;
+  esac
 }
 
 command="${1:-help}"
@@ -835,6 +976,7 @@ case "$command" in
   engines) engines_command "$@" ;;
   engine) engine_command "$@" ;;
   downloads) downloads_command "$@" ;;
+  connect) connect_command "$@" ;;
   models) models_command "$@" ;;
   model) model_command "$@" ;;
   hf-settings) hf_settings "$@" ;;

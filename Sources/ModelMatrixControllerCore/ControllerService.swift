@@ -10,6 +10,8 @@ public final class ControllerService: @unchecked Sendable {
   let statusCacheURL: URL
   public lazy var benchmarks = BenchmarkService(service: self)
   public lazy var doctor = DoctorService(service: self)
+  /// Trusted app edits can carry immutable client bindings across atomic saves/renames.
+  var clientProfilesDidChange: (@Sendable (String?, String?) -> Void)?
 
   let mutationLock = NSRecursiveLock()
   let fileManager: FileManager

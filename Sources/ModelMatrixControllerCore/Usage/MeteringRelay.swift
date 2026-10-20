@@ -101,6 +101,11 @@ final class RelayConnection: @unchecked Sendable {
     var sentContinue = false
     var upstreamSettled = false
     var idleTimer: DispatchWorkItem?
+    var scopedConnectionID: String?
+    var remoteSession: URLSession?
+    var remoteTask: URLSessionDataTask?
+    var pendingRemoteWrites = 0
+    var remoteCompleted = false
 
     init(client: NWConnection, relay: MeteringRelay, usage: UsageService) {
         self.client = client
@@ -120,6 +125,8 @@ final class RelayConnection: @unchecked Sendable {
             case .cancelled:
                 idleTimer?.cancel()
                 upstream?.cancel()
+                remoteTask?.cancel()
+                remoteSession?.invalidateAndCancel()
                 if !finished, metered {
                     record.error = record.error ?? "client closed the connection"
                     finish(status: 499)
@@ -226,6 +233,10 @@ final class RelayConnection: @unchecked Sendable {
         // rebound web page could bypass a model server's own Host checks.
         if Self.rejectsHost(request.headers["host"], relayHost: relay.host) {
             respond(status: 403, message: "Requests to the relay must be addressed to localhost.")
+            return
+        }
+        if ScopedModelRoute.isReserved(path) {
+            dispatchScoped(request)
             return
         }
         record = UsageRecord(startedAt: Date().timeIntervalSince1970, endpoint: path)
@@ -486,6 +497,10 @@ final class RelayConnection: @unchecked Sendable {
             guard let colon = line.firstIndex(of: ":") else { continue }
             let name = line[..<colon].trimmingCharacters(in: .whitespaces).lowercased()
             let value = line[line.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+            if scopedConnectionID != nil,
+               name.hasPrefix("access-control-") || name == "set-cookie" || name == "authorization" {
+                continue
+            }
             switch name {
             case "connection", "keep-alive":
                 continue
@@ -538,6 +553,11 @@ final class RelayConnection: @unchecked Sendable {
         idleTimer?.cancel()
         let now = Date().timeIntervalSince1970
         upstream?.cancel()
+        remoteTask?.cancel()
+        remoteSession?.invalidateAndCancel()
+        if let id = scopedConnectionID {
+            usage.clientConnections?.markClientUse(connectionID: id, successful: (200..<300).contains(status))
+        }
         client.send(content: nil, contentContext: .finalMessage, isComplete: true, completion: .contentProcessed { [client] _ in
             client.cancel()
         })
@@ -584,6 +604,8 @@ final class RelayConnection: @unchecked Sendable {
                 .utf8)
         message.append(body)
         upstream?.cancel()
+        remoteTask?.cancel()
+        remoteSession?.invalidateAndCancel()
         client.send(content: message, completion: .contentProcessed { [client] _ in client.cancel() })
     }
 }

@@ -24,6 +24,7 @@ import { useApp, usePoll } from "../lib/state";
 import type { BenchmarkStatus, Gateway, ProfileStatus, StatusPayload } from "../lib/types";
 import { ProfileEditor } from "../components/ProfileEditor";
 import { Confirm, CopyButton, Empty, Modal, Notice, SectionCard, StatusPill, Switch } from "../components/ui";
+import { ConnectAppsLauncher, ConnectAppsSection } from "../components/ConnectApps";
 import { DeleteModelDialog, DownloadedModelsSection, DownloadsSection, useHFData } from "../components/Downloads";
 import { openHuggingFace } from "../components/HuggingFace";
 
@@ -123,8 +124,9 @@ function ProfileCard({
           <RotateCcw size={12} /> Restart
         </button>
         <button className="btn sm" disabled={!!busy} onClick={() => startBenchmark([status.profile], "quick", {}, gateway)}>
-          <Gauge size={12} /> Bench
+          <Gauge size={13} /> Bench
         </button>
+        <ConnectAppsLauncher profileKey={key} host={gateway} />
         {status.base_url && <CopyButton text={status.base_url} label="URL" />}
         {!gateway && relayUrl && <CopyButton text={relayUrl} label="Relay" />}
         <span className="grow" />
@@ -486,6 +488,10 @@ export function ServersPage({ editorRequest, clearEditorRequest }: { editorReque
             <Plus size={14} /> New profile
           </button>
         </div>
+      </div>
+
+      <div style={{ marginBottom: 28 }}>
+        <ConnectAppsSection />
       </div>
 
       <section id="profiles" className="section">

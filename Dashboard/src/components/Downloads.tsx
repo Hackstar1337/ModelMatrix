@@ -4,6 +4,7 @@ import { eta, hf, isActive, size, stateWords, type HFDownload, type HFDownloaded
 import { useApp, usePoll } from "../lib/state";
 import { DOWNLOADS_CHANGED, openHuggingFace } from "./HuggingFace";
 import { CopyButton, Empty, Modal, Notice, SectionCard } from "./ui";
+import { ConnectAppsLauncher } from "./ConnectApps";
 
 /* ---------------- Shared poller ---------------- */
 
@@ -364,6 +365,7 @@ export function DownloadedModelsSection() {
                   </td>
                   <td className="num">
                     <div className="row" style={{ justifyContent: "flex-end" }}>
+                      {m.profile && <ConnectAppsLauncher profileKey={m.profile} host={m.host} />}
                       {m.profile_state !== "ready" && m.profile_state !== "starting" && (
                         <button className="btn sm" disabled={starting === m.id} onClick={() => start(m)}>
                           {starting === m.id ? <Loader2 size={13} className="spin" /> : <Play size={13} />} Start

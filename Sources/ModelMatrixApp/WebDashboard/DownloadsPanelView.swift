@@ -15,6 +15,7 @@ struct DownloadsPanelView: View {
     let accent: Color
     @State var cancelling: String?
     @State var deleting: String?
+    @State var connectTarget: ConnectAppsTarget?
 
     var client: WebDashboardClient { WebDashboardClient.local(store) }
 
@@ -31,6 +32,15 @@ struct DownloadsPanelView: View {
                 if let report = check.report { reportSection(report) }
                 downloadsCard
                 modelsCard
+                if !monitor.models.isEmpty { downloadedConnectCard }
+                if let connectTarget {
+                    ConnectAppsPanelView(
+                        store: store,
+                        theme: theme,
+                        accent: accent,
+                        initialTarget: connectTarget
+                    )
+                }
                 HFSettingsCard(client: client, theme: theme, accent: accent)
                 HStack(spacing: 8) {
                     SettingsLinkButton(title: "Open Web Dashboard", theme: theme, accent: accent) {
@@ -105,6 +115,37 @@ struct DownloadsPanelView: View {
     func freshCheck() {
         check.context = nil
         check.check(client)
+    }
+
+    /// A separate compact entrypoint keeps the existing downloaded-model row
+    /// renderer untouched while making every local and remote model connectable.
+    var downloadedConnectCard: some View {
+        UsageCard(title: "CONNECT A DOWNLOADED MODEL", meta: "\(monitor.models.count)", theme: theme) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Choose a downloaded model to open the same profile picker, qualified app targets, approval plan and connection list used by Profiles.")
+                    .font(.system(size: 9.5)).foregroundStyle(theme.faint)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(monitor.models) { model in
+                    HStack(spacing: 7) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(model.string("display_name") ?? model.string("repo") ?? "Downloaded model")
+                                .font(.system(size: 10.5, weight: .semibold)).foregroundStyle(theme.label)
+                                .lineLimit(1).truncationMode(.middle)
+                            Text([model.string("profile"), model.string("host_name") ?? "This Mac", connectTarget(for: model).modelID]
+                                .compactMap { $0 }.joined(separator: " · "))
+                                .font(.system(size: 9, design: .monospaced)).foregroundStyle(theme.sub)
+                                .lineLimit(1).truncationMode(.middle)
+                        }
+                        Spacer(minLength: 0)
+                        SettingsLinkButton(title: "Connect…", emphasized: true, theme: theme, accent: accent) {
+                            connectTarget = connectTarget(for: model)
+                        }
+                    }
+                    .padding(.vertical, 3)
+                }
+            }
+            .padding(10)
+        }
     }
 }
 

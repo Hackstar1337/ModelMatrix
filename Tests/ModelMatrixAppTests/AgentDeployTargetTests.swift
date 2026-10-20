@@ -59,6 +59,7 @@ import ModelMatrixCore
         coreSourceURL: sources.core,
         discoverySourceURL: sources.discovery,
         huggingFaceSourceURL: sources.huggingFace,
+        connectionSourceURL: sources.connection,
         installerURL: sources.installer,
         sshDeadline: 1
     )

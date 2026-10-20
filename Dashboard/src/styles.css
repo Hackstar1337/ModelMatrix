@@ -1711,6 +1711,165 @@ a.btn {
   margin: 16px 0;
 }
 
+/* ---------- Connect Apps ---------- */
+.connect-section-intro,
+.connect-picker-head,
+.connect-row,
+.connect-plan-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.connect-section-intro {
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
+.connect-list-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.connect-row {
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.connect-row-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.connect-states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.connect-states .badge {
+  font-size: 10px;
+}
+
+.connect-states .dot {
+  width: 6px;
+  height: 6px;
+}
+
+.connect-target-block,
+.connect-manager,
+.connect-secret,
+.connect-details {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.connect-targets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.connect-target {
+  min-width: 0;
+  min-height: 98px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.connect-target:hover:not(:disabled),
+.connect-target.selected {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.connect-target:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.connect-target-title {
+  font-weight: 700;
+}
+
+.connect-target-note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.connect-label {
+  display: block;
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.connect-copy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.connect-copy-grid .code {
+  align-items: flex-start;
+  min-height: 54px;
+}
+
+.connect-copy-grid .code > span {
+  min-width: 0;
+}
+
+.connect-default,
+.connect-approval {
+  padding: 11px 12px;
+  border-radius: 9px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+
+.connect-approval {
+  color: var(--accent-2);
+  border-color: var(--accent-line);
+}
+
+.connect-list {
+  margin: 6px 0 0;
+  padding-left: 22px;
+  color: var(--text-2);
+}
+
+.connect-list li + li {
+  margin-top: 4px;
+}
+
+.connect-secret-value {
+  margin-top: 10px;
+  color: var(--accent-2);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1500px) {
   .tiles-8 {
@@ -1752,6 +1911,14 @@ a.btn {
   }
   .brand-title {
     font-size: 19px;
+  }
+  .connect-targets,
+  .connect-copy-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .connect-row {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

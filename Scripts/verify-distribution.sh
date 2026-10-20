@@ -26,7 +26,19 @@ find "$APP_PATH" -type f -name '*.py' -print | while IFS= read -r py_file; do
   esac
 done
 
-codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+# File Provider can reattach Finder metadata after build-app signs the bundle.
+# Remove only Apple's disallowed metadata; do not change bytes or replace the signature.
+signature_ok=0
+for attempt in 1 2 3; do
+  xattr -r -d com.apple.FinderInfo "$APP_PATH" >/dev/null 2>&1 || true
+  xattr -r -d com.apple.ResourceFork "$APP_PATH" >/dev/null 2>&1 || true
+  if codesign --verify --deep --strict --verbose=2 "$APP_PATH"; then
+    signature_ok=1
+    break
+  fi
+  sleep "$attempt"
+done
+[[ "$signature_ok" == "1" ]] || { echo "Strict app signature verification failed" >&2; exit 1; }
 "$ROOT_DIR/Scripts/verify-privacy.sh" "$APP_PATH"
 
 SIGNATURE_INFO="$(codesign -dv --verbose=4 "$APP_PATH" 2>&1 || true)"
